@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>탐페레 한 달 살기 대시보드 🇫🇮</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        nordic: { 900: '#2E3440', 800: '#3B4252', 100: '#ECEFF4', 50: '#F5F7FA' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 타임라인 가로 스크롤바 커스텀 */
+        .timeline-scroll::-webkit-scrollbar { height: 8px; }
+        .timeline-scroll::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
+        .timeline-scroll::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }
+        .dark .timeline-scroll::-webkit-scrollbar-track { background: #4C566A; }
+        .dark .timeline-scroll::-webkit-scrollbar-thumb { background: #d1d5db; }
+    </style>
+</head>
+<body class="bg-nordic-50 text-gray-800 dark:bg-nordic-900 dark:text-nordic-100 transition-colors duration-300 font-sans p-4 md:p-8">
+
+    <!-- Header 영역 -->
+    <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 border-gray-300 dark:border-gray-700">
+        <div>
+            <h1 class="text-3xl font-bold mb-2">🇫🇮 2027 탐페레 대시보드</h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400">따뜻한 사우나, 하얀 겨울 호수, 그리고 몰입의 독서</p>
+        </div>
+        <div class="flex items-center gap-6 mt-4 md:mt-0">
+            <!-- D-Day 카운터 (2026.12.31 출국 기준) -->
+            <div class="text-right">
+                <p class="text-xs text-gray-500 dark:text-gray-400">출국일 (26.12.31)</p>
+                <p id="dday-counter" class="text-2xl font-bold text-blue-600 dark:text-blue-400">D-Day 계산중...</p>
+            </div>
+            <!-- 다크모드 토글 버튼 -->
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                <span id="theme-icon">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 메인 타임라인 (Hero Section) -->
+    <section class="mb-10">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🧭 4주 로드맵 타임라인</h2>
+        <!-- 타임라인 카드 컨테이너 (가로 스크롤) -->
+        <div class="flex gap-4 overflow-x-auto timeline-scroll pb-4" id="timeline-container">
+            <!-- 자바스크립트로 카드 렌더링 됨 -->
+        </div>
+    </section>
+
+    <!-- 하단 2단 그리드 (루틴 & 트래커) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- 왼쪽 컬럼: 루틴 및 일조량 -->
+        <section class="bg-white dark:bg-nordic-800 p-6 rounded-xl shadow-sm">
+            <h2 class="text-lg font-bold mb-4">⏰ 평일 표준 루틴 (일출 09:30 ~ 일몰 15:30)</h2>
+            <ul class="space-y-4">
+                <li class="flex items-start gap-4">
+                    <span class="font-bold text-gray-500 w-16">09:00</span>
+                    <div>
+                        <p class="font-semibold">[1차 숙소 몰입]</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">가장 무거운 전공 서적 정독 (스탠드 조명 필수)</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-4">
+                    <span class="font-bold text-orange-500 w-16">12:00</span>
+                    <div>
+                        <p class="font-semibold text-orange-600 dark:text-orange-400">[골든타임 햇빛 산책]</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">점심 식사 후 호숫가/도심 30분 산책 (자연광 쬐기)</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-4">
+                    <span class="font-bold text-gray-500 w-16">13:30</span>
+                    <div>
+                        <p class="font-semibold">[2차 도서관 몰입]</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">메초(Metso) 도서관 / 핀란드어 단어 암기 및 복습</p>
+                    </div>
+                </li>
+                <li class="flex items-start gap-4">
+                    <span class="font-bold text-blue-500 w-16">20:00</span>
+                    <div>
+                        <p class="font-semibold text-blue-600 dark:text-blue-400">[야간 루틴 & 사우나]</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">주 2~3회 로컬 사우나 또는 숙소 독서 마무리</p>
+                    </div>
+                </li>
+            </ul>
+        </section>
+
+        <!-- 오른쪽 컬럼: 학습 트래커 & 예산 관리 -->
+        <div class="space-y-8">
+            <!-- 학습 트래커 -->
+            <section class="bg-white dark:bg-nordic-800 p-6 rounded-xl shadow-sm">
+                <h2 class="text-lg font-bold mb-4">📚 학습 트래커 (저장됨)</h2>
+                <div class="space-y-2" id="study-tracker">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="chk-study-1" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span>전공 서적 1주차 목표 완독</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="chk-study-2" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span>Yle 핀란드어 뉴스 오디오 청취 (오늘)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="chk-study-3" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span>필수 생활 회화 (Moi, Kiitos) 실전 사용</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- 예산 트래커 -->
+            <section class="bg-white dark:bg-nordic-800 p-6 rounded-xl shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">💶 예산 관리 (€2,500 기준)</h2>
+                </div>
+                <div class="mb-4">
+                    <p class="text-sm text-gray-500 mb-1">잔여 예산</p>
+                    <p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                        €<span id="remaining-budget">2500</span>
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <input type="number" id="expense-input" placeholder="지출 금액 (€)" class="flex-1 border rounded p-2 dark:bg-gray-700 dark:border-gray-600">
+                    <button id="add-expense-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded transition">차감</button>
+                    <button id="reset-budget-btn" class="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded transition">초기화</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. 다크 모드 토글 로직 ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const htmlElement = document.documentElement;
+        
+        // 로컬 스토리지 테마 확인
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlElement.classList.add('dark');
+            themeIcon.textContent = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            if (htmlElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.textContent = '☀️';
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.textContent = '🌙';
+            }
+        });
+
+        // --- 2. D-Day 카운터 로직 (2026.12.31 기준) ---
+        const ddayElement = document.getElementById('dday-counter');
+        const departureDate = new Date('2026-12-31T23:45:00').getTime();
+        
+        function updateDday() {
+            const now = new Date().getTime();
+            const distance = departureDate - now;
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            
+            if (days > 0) {
+                ddayElement.textContent = `D-${days}`;
+            } else if (days === 0) {
+                ddayElement.textContent = `D-Day!`;
+            } else {
+                ddayElement.textContent = `D+${Math.abs(days)}`;
+            }
+        }
+        updateDday();
+
+        // --- 3. 타임라인 데이터 및 렌더링 로직 ---
+        const itineraryData = [
+            { day: "D+1", date: "01/01", location: "헬싱키 ➔ 탈린", title: "핀란드 입국 및 페리 이동", color: "bg-blue-600" },
+            { day: "D+2", date: "01/02", location: "에스토니아 탈린", title: "올드타운 및 카페 탐방", color: "bg-blue-600" },
+            { day: "D+3", date: "01/03", location: "탈린 ➔ 탐페레", title: "거점 체크인 및 마트 장보기", color: "bg-gray-600" },
+            { day: "D+4", date: "01/04", location: "탐페레 (일상)", title: "1차 몰입 학습 루틴 시작", color: "bg-emerald-600" },
+            { day: "D+5", date: "01/05", location: "탐페레 (일상)", title: "대학 도서관(Linna) 스터디", color: "bg-emerald-600" },
+            { day: "D+6", date: "01/06", location: "탐페레 (휴일)", title: "주현절 / 라야포르티 사우나", color: "bg-emerald-600" },
+            { day: "D+16", date: "01/16", location: "영국 런던", title: "토트넘 홋스퍼 직관 (예정)", color: "bg-red-600" },
+            { day: "D+32", date: "02/01", location: "탐페레 ➔ 코펜하겐", title: "귀국 및 레이오버 시내 관광", color: "bg-gray-600" }
+        ];
+
+        const timelineContainer = document.getElementById('timeline-container');
+        itineraryData.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "flex-shrink-0 w-64 bg-white dark:bg-nordic-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden";
+            card.innerHTML = `
+                <div class="${item.color} text-white px-4 py-2 flex justify-between items-center">
+                    <span class="font-bold">${item.day}</span>
+                    <span class="text-sm">${item.date}</span>
+                </div>
+                <div class="p-4">
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">📍 ${item.location}</p>
+                    <h3 class="font-bold text-gray-800 dark:text-white">${item.title}</h3>
+                </div>
+            `;
+            timelineContainer.appendChild(card);
+        });
+
+        // --- 4. 체크박스 상태 로컬 스토리지 연동 ---
+        const checkboxes = document.querySelectorAll('#study-tracker input[type="checkbox"]');
+        checkboxes.forEach(chk => {
+            // 초기 상태 불러오기
+            const savedState = localStorage.getItem(chk.id);
+            if (savedState === 'true') chk.checked = true;
+
+            // 상태 변경 시 저장
+            chk.addEventListener('change', (e) => {
+                localStorage.setItem(chk.id, e.target.checked);
+            });
+        });
+
+        // --- 5. 예산 관리 로컬 스토리지 연동 ---
+        const INITIAL_BUDGET = 2500;
+        const budgetElement = document.getElementById('remaining-budget');
+        const expenseInput = document.getElementById('expense-input');
+        const addExpenseBtn = document.getElementById('add-expense-btn');
+        const resetBudgetBtn = document.getElementById('reset-budget-btn');
+
+        // 예산 불러오기
+        let currentBudget = localStorage.getItem('budget');
+        if (currentBudget === null) {
+            currentBudget = INITIAL_BUDGET;
+        } else {
+            currentBudget = parseFloat(currentBudget);
+        }
+        budgetElement.textContent = currentBudget;
+
+        // 지출 차감
+        addExpenseBtn.addEventListener('click', () => {
+            const expense = parseFloat(expenseInput.value);
+            if (!isNaN(expense) && expense > 0) {
+                currentBudget -= expense;
+                localStorage.setItem('budget', currentBudget);
+                budgetElement.textContent = currentBudget;
+                expenseInput.value = '';
+            }
+        });
+
+        // 예산 초기화
+        resetBudgetBtn.addEventListener('click', () => {
+            if(confirm('예산을 초기화하시겠습니까?')) {
+                currentBudget = INITIAL_BUDGET;
+                localStorage.setItem('budget', currentBudget);
+                budgetElement.textContent = currentBudget;
+            }
+        });
+    </script>
+</body>
+</html>
