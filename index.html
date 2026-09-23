@@ -2,9 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>탐페레 한 달 살기 대시보드 🇫🇮</title>
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2027 핀란드 한 달 살기 🇫🇮</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -12,154 +11,264 @@
             theme: {
                 extend: {
                     colors: {
-                        nordic: { 900: '#2E3440', 800: '#3B4252', 100: '#ECEFF4', 50: '#F5F7FA' }
+                        // 딥 다크 모드 배경색 유지
+                        nordic: { 950: '#15181E', 900: '#232834', 800: '#2E3440', 100: '#ECEFF4', 50: '#F5F7FA' }
                     }
                 }
             }
         }
     </script>
     <style>
-        /* 타임라인 가로 스크롤바 커스텀 */
-        .timeline-scroll::-webkit-scrollbar { height: 8px; }
-        .timeline-scroll::-webkit-scrollbar-track { background: #e5e7eb; border-radius: 4px; }
-        .timeline-scroll::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }
-        .dark .timeline-scroll::-webkit-scrollbar-track { background: #333436; }
-        .dark .timeline-scroll::-webkit-scrollbar-thumb { background: #d1d5db; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="bg-nordic-50 text-gray-800 dark:bg-nordic-900 dark:text-nordic-100 transition-colors duration-300 font-sans p-4 md:p-8">
+<body class="bg-nordic-50 text-gray-800 dark:bg-nordic-950 dark:text-nordic-100 transition-colors duration-300 font-sans pb-20">
 
-    <!-- Header 영역 -->
-    <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b pb-4 border-gray-300 dark:border-gray-700">
+    <!-- 상단 헤더 -->
+    <header class="sticky top-0 bg-nordic-50/90 dark:bg-nordic-950/90 backdrop-blur-sm z-10 border-b border-gray-200 dark:border-gray-800 p-4 flex justify-between items-center">
         <div>
-            <h1 class="text-3xl font-bold mb-2">🇫🇮 2027 탐페레 대시보드</h1>
-            <p class="text-sm text-gray-600 dark:text-gray-400">따뜻한 사우나, 하얀 겨울 호수, 그리고 몰입의 독서</p>
+            <h1 class="text-xl font-bold">✈️ 2027 북유럽 여정</h1>
         </div>
-        <div class="flex items-center gap-6 mt-4 md:mt-0">
-            <!-- D-Day 카운터 (2026.12.31 출국 기준) -->
-            <div class="text-right">
-                <p class="text-xs text-gray-500 dark:text-gray-400">출국일 (26.12.31)</p>
-                <p id="dday-counter" class="text-2xl font-bold text-blue-600 dark:text-blue-400">D-Day 계산중...</p>
-            </div>
-            <!-- 다크모드 토글 버튼 -->
-            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                <span id="theme-icon">🌙</span>
-            </button>
-        </div>
+        
+        <!-- On/Off 토글 스위치 (이모지 적용) -->
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="theme-toggle-checkbox" class="sr-only peer">
+            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-gray-600"></div>
+            <span class="ml-2 text-xl" id="theme-label">☀️</span>
+        </label>
     </header>
 
-    <!-- 메인 타임라인 (Hero Section) -->
-    <section class="mb-10">
-        <h2 class="text-xl font-bold mb-4 flex items-center gap-2">🧭 4주 로드맵 타임라인</h2>
-        <!-- 타임라인 카드 컨테이너 (가로 스크롤) -->
-        <div class="flex gap-4 overflow-x-auto timeline-scroll pb-4" id="timeline-container">
-            <!-- 자바스크립트로 카드 렌더링 됨 -->
-        </div>
-    </section>
-
-    <!-- 하단 2단 그리드 (루틴 & 트래커) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="p-4 md:p-8 max-w-3xl mx-auto">
         
-        <!-- 왼쪽 컬럼: 루틴 및 일조량 -->
-        <section class="bg-white dark:bg-nordic-800 p-6 rounded-xl shadow-sm">
-            <h2 class="text-lg font-bold mb-4">⏰ 평일 표준 루틴 (일출 09:30 ~ 일몰 15:30)</h2>
+        <!-- 1. 메인 대시보드 탭 -->
+        <section id="tab-main" class="tab-content active">
+            <h2 class="text-2xl font-bold mb-4">🏠 오버뷰 대시보드</h2>
+            
+            <div class="bg-white dark:bg-nordic-900 p-6 rounded-xl shadow-sm mb-6 text-center border dark:border-gray-800">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">출국일: 26년 12월 31일</p>
+                <p id="dday-counter" class="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">D-Day 계산중...</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">탐페레(Tampere) 한 달 살기 프로젝트</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm border dark:border-gray-800">
+                    <p class="text-xs text-gray-500">목표 예산</p>
+                    <!-- 예산 강조색 복구 (에메랄드) -->
+                    <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400">€2,500</p>
+                </div>
+                <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm border dark:border-gray-800">
+                    <p class="text-xs text-gray-500">주요 일정</p>
+                    <p class="text-sm font-bold">탈린 ➔ 탐페레 ➔ 런던</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 출발 전 탭 -->
+        <section id="tab-prep" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">🧳 출발 전 준비 및 바우처</h2>
+            
+            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-l-4 border-blue-500 dark:border-blue-600">
+                <h3 class="font-bold text-lg mb-2">🛫 출국 항공편 (SAS)</h3>
+                <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-300">
+                    <li>• 12.31 23:45 인천 출발 (SK988)</li>
+                    <li>• 코펜하겐 2시간 30분 대기</li>
+                    <li>• 01.01 07:55 코펜하겐 ➔ 헬싱키 (SK1706)</li>
+                </ul>
+            </div>
+
+            <h3 class="font-bold mb-3">✅ 필수 패킹 리스트</h3>
+            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm space-y-2 text-sm border dark:border-gray-800">
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>종이책 전용 휴대용 충전식 LED 독서등</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>접이식 휴대용 독서대 (북스탠드)</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>겨울 방한 부츠 및 보온 내의</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>비타민 D 및 일회용 인공눈물</span></label>
+            </div>
+        </section>
+
+        <!-- 3. 에스토니아 탭 -->
+        <section id="tab-estonia" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">🇪🇪 탈린 주말 여행 (1주차)</h2>
+            <!-- 에스토니아 강조색 복구 (파랑) -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl mb-4 border border-blue-100 dark:border-blue-800">
+                <p class="font-semibold text-blue-800 dark:text-blue-300 mb-2">📍 일정: 1월 1일 ~ 1월 3일 (2박 3일)</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">헬싱키 도착 직후 페리를 타고 에스토니아 탈린으로 이동하여 주말을 보낸 뒤 탐페레로 입성하는 일정입니다.</p>
+            </div>
+            
             <ul class="space-y-4">
-                <li class="flex items-start gap-4">
-                    <span class="font-bold text-gray-500 w-16">09:00</span>
-                    <div>
-                        <p class="font-semibold">[1차 숙소 몰입]</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">가장 무거운 전공 서적 정독 (스탠드 조명 필수)</p>
-                    </div>
+                <li class="bg-white dark:bg-nordic-900 p-4 rounded-lg shadow-sm border dark:border-gray-800">
+                    <span class="text-xs font-bold bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">Day 1</span>
+                    <p class="mt-2 text-sm">헬싱키 공항 도착 ➔ 헬싱키 중앙역/페리 터미널 이동 ➔ 올드타운 2박 체크인</p>
                 </li>
-                <li class="flex items-start gap-4">
-                    <span class="font-bold text-orange-500 w-16">12:00</span>
-                    <div>
-                        <p class="font-semibold text-orange-600 dark:text-orange-400">[골든타임 햇빛 산책]</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">점심 식사 후 호숫가/도심 30분 산책 (자연광 쬐기)</p>
-                    </div>
+                <li class="bg-white dark:bg-nordic-900 p-4 rounded-lg shadow-sm border dark:border-gray-800">
+                    <span class="text-xs font-bold bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">Day 2</span>
+                    <p class="mt-2 text-sm">툼페아 언덕 전망대, 탈린 올드타운 카페 탐방</p>
                 </li>
-                <li class="flex items-start gap-4">
-                    <span class="font-bold text-gray-500 w-16">13:30</span>
-                    <div>
-                        <p class="font-semibold">[2차 도서관 몰입]</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">메초(Metso) 도서관 / 핀란드어 단어 암기 및 복습</p>
-                    </div>
-                </li>
-                <li class="flex items-start gap-4">
-                    <span class="font-bold text-blue-500 w-16">20:00</span>
-                    <div>
-                        <p class="font-semibold text-blue-600 dark:text-blue-400">[야간 루틴 & 사우나]</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-300">주 2~3회 로컬 사우나 또는 숙소 독서 마무리</p>
-                    </div>
+                <li class="bg-white dark:bg-nordic-900 p-4 rounded-lg shadow-sm border dark:border-gray-800">
+                    <span class="text-xs font-bold bg-gray-200 dark:bg-gray-800 px-2 py-1 rounded text-gray-700 dark:text-gray-300">Day 3</span>
+                    <p class="mt-2 text-sm">오후 페리로 헬싱키 복귀 ➔ VR 기차 탑승 ➔ 탐페레 에어비앤비 입성</p>
                 </li>
             </ul>
         </section>
 
-        <!-- 오른쪽 컬럼: 학습 트래커 & 예산 관리 -->
-        <div class="space-y-8">
-            <!-- 학습 트래커 -->
-            <section class="bg-white dark:bg-nordic-800 p-6 rounded-xl shadow-sm">
-                <h2 class="text-lg font-bold mb-4">📚 학습 트래커 (저장됨)</h2>
-                <div class="space-y-2" id="study-tracker">
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" id="chk-study-1" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <span>전공 서적 1주차 목표 완독</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" id="chk-study-2" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <span>Yle 핀란드어 뉴스 오디오 청취 (오늘)</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer">
-                        <input type="checkbox" id="chk-study-3" class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <span>필수 생활 회화 (Moi, Kiitos) 실전 사용</span>
-                    </label>
+        <!-- 4. 핀란드 탭 (메인 거점) -->
+        <section id="tab-finland" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">🇫🇮 탐페레 한 달 살기 & 학습</h2>
+            
+            <!-- 핀란드 루틴 강조색 복구 (초록/오렌지 등) -->
+            <h3 class="font-bold mb-3 text-emerald-600 dark:text-emerald-400">⏰ 평일 표준 루틴</h3>
+            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 space-y-4 border dark:border-gray-800">
+                <div class="flex gap-3">
+                    <span class="font-bold w-12 text-gray-500 dark:text-gray-400">09:00</span>
+                    <div><p class="font-semibold text-sm">[숙소 몰입] 무거운 전공 서적 정독</p></div>
                 </div>
-            </section>
+                <div class="flex gap-3">
+                    <span class="font-bold w-12 text-orange-500 dark:text-orange-400">12:00</span>
+                    <div><p class="font-semibold text-sm">[골든타임] 점심 및 햇빛 30분 산책</p></div>
+                </div>
+                <div class="flex gap-3">
+                    <span class="font-bold w-12 text-gray-500 dark:text-gray-400">13:30</span>
+                    <div><p class="font-semibold text-sm">[도서관] 메초(Metso) / 린나(Linna) 복습</p></div>
+                </div>
+                <div class="flex gap-3">
+                    <span class="font-bold w-12 text-blue-500 dark:text-blue-400">20:00</span>
+                    <div><p class="font-semibold text-sm">[야간 루틴] 저녁 식사 및 주 2~3회 로컬 사우나</p></div>
+                </div>
+            </div>
 
-            <!-- 예산 트래커 -->
-            <section class="bg-white dark:bg-nordic-800 p-6 rounded-xl shadow-sm">
+            <h3 class="font-bold mb-3">🧖‍♂️ 사우나 도장깨기</h3>
+            <div class="space-y-2 text-sm bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border dark:border-gray-800">
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>라야포르티 (가장 오래된 대중 사우나)</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>라우하니에미 (호수 아반토 냉수욕)</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>사우나 레스토랑 쿠마</span></label>
+            </div>
+            
+            <h3 class="font-bold mb-3">📚 핀란드어 독학</h3>
+            <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm text-sm border dark:border-gray-800">
+                <p>• Yle Selkouutiset (쉬운 뉴스) 매일 듣기</p>
+                <p>• 마트 실전 표현: Moi, Kiitos, Kuitti kiitos</p>
+            </div>
+        </section>
+
+        <!-- 5. 잉글랜드 탭 -->
+        <section id="tab-england" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">🇬🇧 런던 토트넘 원정</h2>
+            <!-- 잉글랜드 강조색 복구 (검정/회색) -->
+            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-t-4 border-gray-900 dark:border-gray-100">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold">💶 예산 관리 (€2,500 기준)</h2>
+                    <h3 class="font-bold text-lg">⚽ 토트넘 홋스퍼 직관</h3>
+                    <span class="bg-gray-100 dark:bg-gray-800 text-xs px-2 py-1 rounded">3주차/4주차 주말</span>
                 </div>
-                <div class="mb-4">
-                    <p class="text-sm text-gray-500 mb-1">잔여 예산</p>
-                    <p class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
-                        €<span id="remaining-budget">2500</span>
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <input type="number" id="expense-input" placeholder="지출 금액 (€)" class="flex-1 border rounded p-2 dark:bg-gray-700 dark:border-gray-600">
-                    <button id="add-expense-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded transition">차감</button>
-                    <button id="reset-budget-btn" class="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white px-4 py-2 rounded transition">초기화</button>
-                </div>
-            </section>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">탐페레(또는 헬싱키)에서 항공편을 이용해 런던으로 이동하여 프리미어리그 홈경기를 관람합니다.</p>
+                <h4 class="font-semibold text-sm mb-2 text-gray-500">체크리스트</h4>
+                <ul class="text-sm space-y-2">
+                    <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>토트넘 경기 일정 및 티켓 확정</span></label>
+                    <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>런던행 왕복 항공권 예약</span></label>
+                    <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>런던 2박 3일 숙소 예약</span></label>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 6. 귀국 전 탭 -->
+        <section id="tab-return" class="tab-content">
+            <h2 class="text-2xl font-bold mb-4">🛬 귀국 전 덴마크 레이오버</h2>
+            <!-- 귀국 탭 강조색 복구 (빨강) -->
+            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-l-4 border-red-500">
+                <h3 class="font-bold text-lg mb-2">2월 1일 귀국편 (SAS)</h3>
+                <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-300">
+                    <li>• 16:05 탐페레 체크아웃 후 헬싱키 공항 출발 (SK1713)</li>
+                    <li>• 16:45 코펜하겐 공항 도착</li>
+                    <li>• <span class="font-bold text-red-500">6시간 25분 코펜하겐 레이오버</span></li>
+                    <li>• 23:20 코펜하겐 출발 ➔ 인천행 (SK987)</li>
+                </ul>
+            </div>
+
+            <div class="bg-red-50 dark:bg-red-900/20 p-5 rounded-xl border border-red-100 dark:border-red-800">
+                <h3 class="font-bold text-red-800 dark:text-red-300 mb-2">🇩🇰 코펜하겐 3시간 핵심 투어</h3>
+                <p class="text-sm text-gray-700 dark:text-gray-400">
+                    수하물을 부친 후 M2 메트로를 타고 시내(15분 소요)로 이동합니다. 
+                    뉘하운(Nyhavn) 운하에서 겨울 야경을 감상하며 따뜻한 저녁 식사를 하고 공항으로 돌아옵니다.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 하단 탭 메뉴 -->
+    <nav class="fixed bottom-0 w-full bg-white dark:bg-nordic-950 border-t border-gray-200 dark:border-gray-800 z-50">
+        <div class="flex overflow-x-auto hide-scrollbar pb-safe">
+            <button onclick="switchTab('tab-main', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-blue-600 dark:text-blue-400 font-bold">
+                <span class="text-lg">🏠</span>메인
+            </button>
+            <button onclick="switchTab('tab-prep', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🧳</span>출발 전
+            </button>
+            <button onclick="switchTab('tab-estonia', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🇪🇪</span>에스토니아
+            </button>
+            <button onclick="switchTab('tab-finland', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🇫🇮</span>핀란드
+            </button>
+            <button onclick="switchTab('tab-england', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">⚽</span>잉글랜드
+            </button>
+            <button onclick="switchTab('tab-return', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🛬</span>귀국 전
+            </button>
         </div>
-    </div>
+    </nav>
 
     <script>
-        // --- 1. 다크 모드 토글 로직 ---
-        const themeToggle = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-        const htmlElement = document.documentElement;
-        
-        // 로컬 스토리지 테마 확인
-        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            htmlElement.classList.add('dark');
-            themeIcon.textContent = '☀️';
+        // 1. 하단 탭 전환 로직
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600', 'dark:text-blue-400', 'font-bold');
+                btn.classList.add('text-gray-500');
+            });
+            btnElement.classList.remove('text-gray-500');
+            btnElement.classList.add('text-blue-600', 'dark:text-blue-400', 'font-bold');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        themeToggle.addEventListener('click', () => {
-            htmlElement.classList.toggle('dark');
-            if (htmlElement.classList.contains('dark')) {
+        // 2. 다크모드 On/Off 토글 로직 (이모지 반영)
+        const themeCheckbox = document.getElementById('theme-toggle-checkbox');
+        const themeLabel = document.getElementById('theme-label');
+        const htmlElement = document.documentElement;
+        
+        function updateThemeUI(isDark) {
+            if (isDark) {
+                htmlElement.classList.add('dark');
+                themeCheckbox.checked = true;
+                themeLabel.textContent = '🌙';
                 localStorage.setItem('theme', 'dark');
-                themeIcon.textContent = '☀️';
             } else {
+                htmlElement.classList.remove('dark');
+                themeCheckbox.checked = false;
+                themeLabel.textContent = '☀️';
                 localStorage.setItem('theme', 'light');
-                themeIcon.textContent = '🌙';
             }
+        }
+
+        // 초기 로드 시 테마 확인
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            updateThemeUI(true);
+        } else {
+            updateThemeUI(false);
+        }
+
+        // 토글 스위치 이벤트 리스너
+        themeCheckbox.addEventListener('change', (e) => {
+            updateThemeUI(e.target.checked);
         });
 
-        // --- 2. D-Day 카운터 로직 (2026.12.31 기준) ---
+        // 3. D-Day 카운터
         const ddayElement = document.getElementById('dday-counter');
         const departureDate = new Date('2026-12-31T23:45:00').getTime();
         
@@ -177,84 +286,6 @@
             }
         }
         updateDday();
-
-        // --- 3. 타임라인 데이터 및 렌더링 로직 ---
-        const itineraryData = [
-            { day: "D+1", date: "01/01", location: "헬싱키 ➔ 탈린", title: "핀란드 입국 및 페리 이동", color: "bg-blue-600" },
-            { day: "D+2", date: "01/02", location: "에스토니아 탈린", title: "올드타운 및 카페 탐방", color: "bg-blue-600" },
-            { day: "D+3", date: "01/03", location: "탈린 ➔ 탐페레", title: "거점 체크인 및 마트 장보기", color: "bg-gray-600" },
-            { day: "D+4", date: "01/04", location: "탐페레 (일상)", title: "1차 몰입 학습 루틴 시작", color: "bg-emerald-600" },
-            { day: "D+5", date: "01/05", location: "탐페레 (일상)", title: "대학 도서관(Metso) 스터디", color: "bg-emerald-600" },
-            { day: "D+6", date: "01/06", location: "탐페레 (휴일)", title: "주현절 / 라야포르티 사우나", color: "bg-emerald-600" },
-            { day: "D+16", date: "01/16", location: "영국 런던", title: "토트넘 홋스퍼 직관 (예정)", color: "bg-red-600" },
-            { day: "D+32", date: "02/01", location: "탐페레 ➔ 코펜하겐", title: "귀국 및 레이오버 시내 관광", color: "bg-gray-600" }
-        ];
-
-        const timelineContainer = document.getElementById('timeline-container');
-        itineraryData.forEach(item => {
-            const card = document.createElement('div');
-            card.className = "flex-shrink-0 w-64 bg-white dark:bg-nordic-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden";
-            card.innerHTML = `
-                <div class="${item.color} text-white px-4 py-2 flex justify-between items-center">
-                    <span class="font-bold">${item.day}</span>
-                    <span class="text-sm">${item.date}</span>
-                </div>
-                <div class="p-4">
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">📍 ${item.location}</p>
-                    <h3 class="font-bold text-gray-800 dark:text-white">${item.title}</h3>
-                </div>
-            `;
-            timelineContainer.appendChild(card);
-        });
-
-        // --- 4. 체크박스 상태 로컬 스토리지 연동 ---
-        const checkboxes = document.querySelectorAll('#study-tracker input[type="checkbox"]');
-        checkboxes.forEach(chk => {
-            // 초기 상태 불러오기
-            const savedState = localStorage.getItem(chk.id);
-            if (savedState === 'true') chk.checked = true;
-
-            // 상태 변경 시 저장
-            chk.addEventListener('change', (e) => {
-                localStorage.setItem(chk.id, e.target.checked);
-            });
-        });
-
-        // --- 5. 예산 관리 로컬 스토리지 연동 ---
-        const INITIAL_BUDGET = 2500;
-        const budgetElement = document.getElementById('remaining-budget');
-        const expenseInput = document.getElementById('expense-input');
-        const addExpenseBtn = document.getElementById('add-expense-btn');
-        const resetBudgetBtn = document.getElementById('reset-budget-btn');
-
-        // 예산 불러오기
-        let currentBudget = localStorage.getItem('budget');
-        if (currentBudget === null) {
-            currentBudget = INITIAL_BUDGET;
-        } else {
-            currentBudget = parseFloat(currentBudget);
-        }
-        budgetElement.textContent = currentBudget;
-
-        // 지출 차감
-        addExpenseBtn.addEventListener('click', () => {
-            const expense = parseFloat(expenseInput.value);
-            if (!isNaN(expense) && expense > 0) {
-                currentBudget -= expense;
-                localStorage.setItem('budget', currentBudget);
-                budgetElement.textContent = currentBudget;
-                expenseInput.value = '';
-            }
-        });
-
-        // 예산 초기화
-        resetBudgetBtn.addEventListener('click', () => {
-            if(confirm('예산을 초기화하시겠습니까?')) {
-                currentBudget = INITIAL_BUDGET;
-                localStorage.setItem('budget', currentBudget);
-                budgetElement.textContent = currentBudget;
-            }
-        });
     </script>
 </body>
 </html>
