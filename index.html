@@ -221,7 +221,7 @@
         </section>
 
         <!-- 2. 출발 전 탭 -->
-        <section id="tab-prep" class="tab-content">
+        <section id="tab-prep" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
             <h2 class="text-2xl font-bold mb-4">🧳 출발 전 준비 및 바우처</h2>
             
             <!-- 1) 여행 준비 타임라인 (가로 스크롤 카드) -->
@@ -263,6 +263,57 @@
                         <li class="flex gap-1"><span>⬜</span> 바우처/여권 사본 오프라인 저장</li>
                     </ul>
                 </div>
+
+                <!-- 우측 끝 여백 (끝까지 스크롤 시 화면에 붙지 않게) -->
+                <div class="flex-shrink-0 w-4 pointer-events-none"></div>
+            </div>
+
+            <!-- 1.5) 당일 공항 이동 및 수속 로드맵 -->
+            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">🚌 12.31 당일 공항 여정 & 수속</h3>
+            <div class="flex overflow-x-auto hide-scrollbar gap-6 mb-8 py-2 px-1 items-center">
+                
+                <!-- Step 1 -->
+                <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
+                    <!-- 연결 점선 (다음 카드로 이어짐) -->
+                    <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
+                    <div class="text-2xl mb-2">🏡</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">무안/광주 출발</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">오후 2시경</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
+                    <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
+                    <div class="text-2xl mb-2">🧳</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">인천공항 도착</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">19:30 수하물 위탁</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
+                    <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
+                    <div class="text-2xl mb-2">🛂</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">보안검색/심사</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">20:30 출국장 진입</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
+                    <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
+                    <div class="text-2xl mb-2">🍜</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">라운지/휴식</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">21:00 저녁 식사</p>
+                </div>
+
+                <!-- Step 5 (마지막 카드는 점선 없음) -->
+                <div class="relative flex-shrink-0 w-28 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 shadow-sm z-10 text-center">
+                    <div class="text-2xl mb-2">🛫</div>
+                    <h4 class="font-bold text-xs text-blue-800 dark:text-blue-300">탑승 & 이륙</h4>
+                    <p class="text-[10px] text-blue-600 dark:text-blue-400 mt-1">23:45 SK988</p>
+                </div>
+                
+                <!-- 우측 스크롤 여유 공간 (더 넓게 확보) -->
+                <div class="flex-shrink-0 w-4 pointer-events-none"></div>
             </div>
 
             <!-- 2) 비행기 상세 바우처 정보 -->
