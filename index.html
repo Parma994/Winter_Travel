@@ -221,24 +221,116 @@
         </section>
 
         <!-- 2. 출발 전 탭 -->
-        <section id="tab-prep" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
+        <section id="tab-prep" class="tab-content">
             <h2 class="text-2xl font-bold mb-4">🧳 출발 전 준비 및 바우처</h2>
             
-            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-l-4 border-blue-500 dark:border-blue-600">
-                <h3 class="font-bold text-lg mb-2">🛫 출국 항공편 (SAS)</h3>
-                <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-300">
-                    <li>• 12.31 23:45 인천 출발 (SK988)</li>
-                    <li>• 코펜하겐 2시간 30분 대기</li>
-                    <li>• 01.01 07:55 코펜하겐 ➔ 헬싱키 (SK1706)</li>
-                </ul>
+            <!-- 1) 여행 준비 타임라인 (가로 스크롤 카드) -->
+            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">📅 준비 로드맵</h3>
+            <div class="flex overflow-x-auto hide-scrollbar gap-4 mb-8 pb-2">
+                
+                <!-- D-60 카드 -->
+                <div class="flex-shrink-0 w-52 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">
+                    <div class="text-xs font-bold text-gray-400 mb-1">D-60 (10~11월)</div>
+                    <h4 class="font-bold text-sm mb-2 text-gray-800 dark:text-gray-200">교통 & 핵심 숙소</h4>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
+                        <li class="flex gap-1"><span>✅</span> 항공권 발권 (완료)</li>
+                        <li class="flex gap-1"><span>⬜</span> 탐페레 에어비앤비 예약</li>
+                        <li class="flex gap-1"><span>⬜</span> 국가 간 이동편 예약</li>
+                        <li class="flex gap-1"><span>⬜</span> 여권 유효기간(6개월) 확인</li>
+                    </ul>
+                </div>
+
+                <!-- D-30 카드 -->
+                <div class="flex-shrink-0 w-52 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 rounded-xl p-4 shadow-sm">
+                    <div class="text-xs font-bold text-blue-500 mb-1">D-30 (12월)</div>
+                    <h4 class="font-bold text-sm mb-2 text-gray-800 dark:text-gray-200">세부 동선 & 투어</h4>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
+                        <li class="flex gap-1"><span>⬜</span> 일자별 세부 동선 확정</li>
+                        <li class="flex gap-1"><span>⬜</span> 토트넘 직관 티켓팅</li>
+                        <li class="flex gap-1"><span>⬜</span> 트래블카드 발급 & 환전</li>
+                        <li class="flex gap-1"><span>⬜</span> 여행자 보험 가입</li>
+                    </ul>
+                </div>
+
+                <!-- D-7 카드 (가장 촘촘하고 강조됨) -->
+                <div class="flex-shrink-0 w-52 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm">
+                    <div class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">D-7 (12월 말)</div>
+                    <h4 class="font-bold text-sm mb-2 text-blue-900 dark:text-blue-200">최종 점검 & 패킹</h4>
+                    <ul class="text-xs text-blue-800/70 dark:text-blue-300/70 space-y-1.5">
+                        <li class="flex gap-1"><span>⬜</span> 현지 e-SIM/유심 구매</li>
+                        <li class="flex gap-1"><span>⬜</span> 겨울 방한 의류 압축 패킹</li>
+                        <li class="flex gap-1"><span>⬜</span> 비상약 및 상비약 챙기기</li>
+                        <li class="flex gap-1"><span>⬜</span> 바우처/여권 사본 오프라인 저장</li>
+                    </ul>
+                </div>
             </div>
 
-            <h3 class="font-bold mb-3">✅ 필수 패킹 리스트</h3>
+            <!-- 2) 비행기 상세 바우처 정보 -->
+            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">✈️ 항공편 바우처 (SAS)</h3>
+            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-8 border dark:border-gray-800">
+                
+                <!-- 출국편 -->
+                <div class="mb-5 pb-5 border-b border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded">출국</span>
+                        <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm">2026.12.31 (목)</h4>
+                    </div>
+                    <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-400">
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">23:45</span> 인천(ICN) 출발</span>
+                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK988</span>
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">05:25(+1)</span> 코펜하겐(CPH) 도착</span>
+                        </li>
+                        <li class="text-xs font-medium text-blue-500 bg-blue-50 dark:bg-blue-900/20 py-1.5 px-3 rounded-lg my-1 inline-block w-full text-center">
+                            ⏳ 코펜하겐 대기 2시간 30분
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">07:55</span> 코펜하겐(CPH) 출발</span>
+                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK1706</span>
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">10:35</span> 헬싱키(HEL) 도착</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 귀국편 -->
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 text-xs font-bold px-2 py-1 rounded">귀국</span>
+                        <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm">2027.02.01 (월)</h4>
+                    </div>
+                    <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-400">
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">16:05</span> 헬싱키(HEL) 출발</span>
+                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK1713</span>
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">16:45</span> 코펜하겐(CPH) 도착</span>
+                        </li>
+                        <li class="text-xs font-medium text-red-500 bg-red-50 dark:bg-red-900/20 py-1.5 px-3 rounded-lg my-1 inline-block w-full text-center">
+                            ⏳ 코펜하겐 레이오버 6시간 25분 (뉘하운 시내 관광)
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">23:20</span> 코펜하겐(CPH) 출발</span>
+                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK987</span>
+                        </li>
+                        <li class="flex justify-between items-center">
+                            <span><span class="font-bold text-gray-800 dark:text-gray-200">17:45(+1)</span> 인천(ICN) 도착</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3) 패킹 리스트 (종이책 중심) -->
+            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">✅ 필수 패킹 리스트</h3>
             <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm space-y-2 text-sm border dark:border-gray-800">
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>종이책 전용 휴대용 충전식 LED 독서등</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>접이식 휴대용 독서대 (북스탠드)</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>겨울 방한 부츠 및 보온 내의</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>비타민 D 및 일회용 인공눈물</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>종이책 전용 휴대용 충전식 LED 독서등</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>접이식 휴대용 독서대 (북스탠드)</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>겨울 방한 부츠 및 보온 내의</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>비타민 D 및 일회용 인공눈물</span></label>
             </div>
         </section>
 
@@ -353,7 +445,10 @@
     <!-- 하단 탭 메뉴 -->
     <nav class="fixed bottom-0 w-full bg-white dark:bg-nordic-950 border-t border-gray-200 dark:border-gray-800 z-50">
         <div class="flex overflow-x-auto hide-scrollbar pb-safe">
-            <button onclick="switchTab('tab-main', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-blue-600 dark:text-blue-400 font-bold">
+            <!-- 1. 양쪽 끝 탭 중앙 정렬을 위한 시작점 빈 공간 (화면의 절반 - 버튼 크기의 절반) -->
+            <div class="flex-shrink-0 w-[calc(50vw-35px)] pointer-events-none"></div>
+            
+            <button onclick="switchTab('tab-main', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-blue-600 dark:text-blue-500 font-bold">
                 <span class="text-lg">🏠</span>메인
             </button>
             <button onclick="switchTab('tab-prep', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
@@ -371,6 +466,9 @@
             <button onclick="switchTab('tab-return', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🛬</span>귀국 전
             </button>
+
+            <!-- 2. 양쪽 끝 탭 중앙 정렬을 위한 끝점 빈 공간 -->
+            <div class="flex-shrink-0 w-[calc(50vw-35px)] pointer-events-none"></div>
         </div>
     </nav>
 
@@ -381,15 +479,22 @@
             document.getElementById(tabId).classList.add('active');
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('text-blue-600', 'dark:text-blue-400', 'font-bold');
+                btn.classList.remove('text-blue-600', 'dark:text-blue-500', 'font-bold');
                 btn.classList.add('text-gray-500');
             });
             btnElement.classList.remove('text-gray-500');
-            btnElement.classList.add('text-blue-600', 'dark:text-blue-400', 'font-bold');
+            btnElement.classList.add('text-blue-600', 'dark:text-blue-500', 'font-bold');
+            
+            // 💡 선택된 탭 메뉴를 화면 가운데로 부드럽게 스크롤
+            const navContainer = btnElement.parentElement;
+            const scrollPosition = btnElement.offsetLeft - (navContainer.offsetWidth / 2) + (btnElement.offsetWidth / 2);
+            navContainer.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+
+            // 컨텐츠 페이지 상단으로 이동
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 2. 다크모드 On/Off 토글 로직 (이모지 반영)
+        // 2. 다크모드 On/Off 토글 로직
         const themeCheckbox = document.getElementById('theme-toggle-checkbox');
         const themeLabel = document.getElementById('theme-label');
         const htmlElement = document.documentElement;
