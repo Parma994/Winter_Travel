@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>2027 핀란드 한 달 살기 🇫🇮</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS 및 JS CDN 추가 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -93,25 +96,29 @@
 
             <!-- 하단 그리드 (다시 중앙 제한 영역으로) -->
             <div class="max-w-3xl mx-auto px-4 md:px-8">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm border dark:border-gray-800">
-                        <p class="text-xs text-gray-500">목표 예산</p>
-                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">€2,500</p>
-                    </div>
-                    <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm border dark:border-gray-800">
-                        <p class="text-xs text-gray-500">주요 일정</p>
-                        <p class="text-sm font-bold">탈린 ➔ 탐페레 ➔ 런던</p>
+                
+                <!-- 지도 영역 (기존 예산/일정 카드 대체) -->
+                <div class="relative w-full h-64 md:h-80 bg-gray-200 dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border dark:border-gray-800">
+                    <!-- Leaflet 커스텀 지도 렌더링 영역 -->
+                    <div id="map" class="absolute inset-0 z-0 filter dark:brightness-90"></div>
+                    
+                    <!-- 일정 오버레이 배지 -->
+                    <div class="absolute top-3 left-3 bg-white/95 dark:bg-nordic-950/95 backdrop-blur-sm text-xs md:text-sm font-bold px-4 py-2 rounded-full shadow-sm text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-800 z-10 flex items-center gap-1.5">
+                        <span>📍</span> 탈린 ➔ 탐페레 ➔ 런던
                     </div>
                 </div>
 
-                <div class="mt-6 bg-white dark:bg-nordic-900 rounded-xl shadow-sm border dark:border-gray-800 overflow-hidden mb-8">
-                    <!-- 토글 버튼 -->
+                <div class="mt-4 bg-white dark:bg-nordic-900 rounded-xl shadow-sm border dark:border-gray-800 overflow-hidden mb-8">
+                    <!-- 토글 버튼 (총 예산 액수 통합) -->
                     <button onclick="toggleBudgetTable()" class="w-full flex justify-between items-center p-4 focus:outline-none hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">💶</span>
                             <h3 class="font-bold text-gray-800 dark:text-gray-100">상세 예산 계획표</h3>
                         </div>
-                        <span id="budget-toggle-icon" class="text-gray-500 transform transition-transform duration-300">▼</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg font-black text-blue-600 dark:text-blue-400">€2,500</span>
+                            <span id="budget-toggle-icon" class="text-gray-500 transform transition-transform duration-300">▼</span>
+                        </div>
                     </button>
                     
                     <!-- 토글 시 펼쳐지는 상세 내역 (카테고리별 이중 토글) -->
@@ -524,6 +531,9 @@
     </nav>
 
     <script>
+        // 커스텀 지도 변수
+        let map;
+
         // 1. 하단 탭 전환 로직
         function switchTab(tabId, btnElement) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -541,9 +551,50 @@
             const scrollPosition = btnElement.offsetLeft - (navContainer.offsetWidth / 2) + (btnElement.offsetWidth / 2);
             navContainer.scrollTo({ left: scrollPosition, behavior: 'smooth' });
 
-            // 컨텐츠 페이지 상단으로 이동
             window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // 💡 메인 탭으로 돌아왔을 때 지도가 깨지는(회색 화면) 현상 방지
+            if(tabId === 'tab-main' && map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
         }
+
+        // 1-1. 지도 초기화 및 핀 꽂기 로직
+        function initMap() {
+            if (map) return;
+            // 지도의 중심점을 핀란드/에스토니아 사이 쯤으로 설정 (줌 레벨 4)
+            map = L.map('map', { zoomControl: false }).setView([58.0, 15.0], 4);
+
+            // 완전히 무료로 개방된 공식 OpenStreetMap 타일 주소로 변경
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            // 3개국 좌표 설정
+            const tampere = [61.4978, 23.7610];
+            const tallinn = [59.4370, 24.7536];
+            const london = [51.5074, -0.1278];
+
+            // 이모지 핀 스타일 생성기
+            const createIcon = (emoji) => L.divIcon({
+                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
+                className: 'bg-transparent border-0',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30] // 핀의 끝점이 정확한 좌표에 오도록 설정
+            });
+
+            // 지도에 국기 핀 꽂기
+            L.marker(tampere, {icon: createIcon('🇫🇮')}).bindPopup('<b>탐페레</b><br>거점').addTo(map);
+            L.marker(tallinn, {icon: createIcon('🇪🇪')}).bindPopup('<b>탈린</b><br>1주차').addTo(map);
+            L.marker(london, {icon: createIcon('🇬🇧')}).bindPopup('<b>런던</b><br>3주차').addTo(map);
+
+            // 경로 이어주기 (파란 점선)
+            L.polyline([tallinn, tampere, london], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
+        }
+
+        // 페이지가 열리자마자 지도 생성
+        setTimeout(initMap, 100);
 
         // 2. 다크모드 On/Off 토글 로직
         const themeCheckbox = document.getElementById('theme-toggle-checkbox');
