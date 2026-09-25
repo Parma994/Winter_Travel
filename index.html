@@ -233,17 +233,17 @@
             
             <!-- 1) 여행 준비 타임라인 (가로 스크롤 카드) -->
             <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">📅 준비 로드맵</h3>
-            <div class="flex overflow-x-auto hide-scrollbar gap-4 mb-8 pb-2">
+            <div class="flex overflow-x-auto hide-scrollbar gap-4 mb-8 pb-2 md:justify-center">
                 
                 <!-- D-60 카드 -->
                 <div class="flex-shrink-0 w-52 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 shadow-sm">
                     <div class="text-xs font-bold text-gray-400 mb-1">D-60 (10~11월)</div>
                     <h4 class="font-bold text-sm mb-2 text-gray-800 dark:text-gray-200">교통 & 핵심 숙소</h4>
-                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
-                        <li class="flex gap-1"><span>✅</span> 항공권 발권 (완료)</li>
-                        <li class="flex gap-1"><span>⬜</span> 탐페레 에어비앤비 예약</li>
-                        <li class="flex gap-1"><span>⬜</span> 국가 간 이동편 예약</li>
-                        <li class="flex gap-1"><span>⬜</span> 여권 유효기간(6개월) 확인</li>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-2">
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">항공권 발권 (완료)</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">탐페레 에어비앤비 예약</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">국가 간 이동편 예약</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">여권 유효기간(6개월) 확인</span></label></li>
                     </ul>
                 </div>
 
@@ -251,11 +251,11 @@
                 <div class="flex-shrink-0 w-52 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 rounded-xl p-4 shadow-sm">
                     <div class="text-xs font-bold text-blue-500 mb-1">D-30 (12월)</div>
                     <h4 class="font-bold text-sm mb-2 text-gray-800 dark:text-gray-200">세부 동선 & 투어</h4>
-                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
-                        <li class="flex gap-1"><span>⬜</span> 일자별 세부 동선 확정</li>
-                        <li class="flex gap-1"><span>⬜</span> 토트넘 직관 티켓팅</li>
-                        <li class="flex gap-1"><span>⬜</span> 트래블카드 발급 & 환전</li>
-                        <li class="flex gap-1"><span>⬜</span> 여행자 보험 가입</li>
+                    <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-2">
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">일자별 세부 동선 확정</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">토트넘 직관 티켓팅</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">트래블카드 발급 & 환전</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">여행자 보험 가입</span></label></li>
                     </ul>
                 </div>
 
@@ -263,53 +263,53 @@
                 <div class="flex-shrink-0 w-52 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 shadow-sm">
                     <div class="text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">D-7 (12월 말)</div>
                     <h4 class="font-bold text-sm mb-2 text-blue-900 dark:text-blue-200">최종 점검 & 패킹</h4>
-                    <ul class="text-xs text-blue-800/70 dark:text-blue-300/70 space-y-1.5">
-                        <li class="flex gap-1"><span>⬜</span> 현지 e-SIM/유심 구매</li>
-                        <li class="flex gap-1"><span>⬜</span> 겨울 방한 의류 압축 패킹</li>
-                        <li class="flex gap-1"><span>⬜</span> 비상약 및 상비약 챙기기</li>
-                        <li class="flex gap-1"><span>⬜</span> 바우처/여권 사본 오프라인 저장</li>
+                    <ul class="text-xs text-blue-800/70 dark:text-blue-300/70 space-y-2">
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-blue-900 dark:hover:text-blue-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">현지 e-SIM/유심 구매</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-blue-900 dark:hover:text-blue-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">겨울 방한 의류 압축 패킹</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-blue-900 dark:hover:text-blue-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">비상약 및 상비약 챙기기</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-blue-900 dark:hover:text-blue-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">바우처/여권 사본 오프라인 저장</span></label></li>
                     </ul>
                 </div>
 
                 <!-- 우측 끝 여백 (끝까지 스크롤 시 화면에 붙지 않게) -->
-                <div class="flex-shrink-0 w-4 pointer-events-none"></div>
+                <div class="flex-shrink-0 w-4 pointer-events-none md:hidden"></div>
             </div>
 
             <!-- 1.5) 당일 공항 이동 및 수속 로드맵 -->
             <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">🚌 12.31 당일 공항 여정 & 수속</h3>
-            <div class="flex overflow-x-auto hide-scrollbar gap-6 mb-8 py-2 px-1 items-center">
+            <div class="flex overflow-x-auto hide-scrollbar gap-6 mb-8 py-2 px-1 items-center md:justify-center">
                 
                 <!-- Step 1 -->
                 <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
                     <!-- 연결 점선 (다음 카드로 이어짐) -->
                     <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
-                    <div class="text-2xl mb-2">🏡</div>
-                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">무안/광주 출발</h4>
-                    <p class="text-[10px] text-gray-500 mt-1">오후 2시경</p>
+                    <div class="text-2xl mb-2">🚄</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">목포역 출발</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">16:32 KTX</p>
                 </div>
 
                 <!-- Step 2 -->
                 <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
                     <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
-                    <div class="text-2xl mb-2">🧳</div>
-                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">인천공항 도착</h4>
-                    <p class="text-[10px] text-gray-500 mt-1">19:30 수하물 위탁</p>
+                    <div class="text-2xl mb-2">🔄</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">광명역 환승</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">19:30 공항버스</p>
                 </div>
 
                 <!-- Step 3 -->
                 <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
                     <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
-                    <div class="text-2xl mb-2">🛂</div>
-                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">보안검색/심사</h4>
-                    <p class="text-[10px] text-gray-500 mt-1">20:30 출국장 진입</p>
+                    <div class="text-2xl mb-2">🧳</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">인천공항 T2</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">20:40 도착</p>
                 </div>
 
                 <!-- Step 4 -->
                 <div class="relative flex-shrink-0 w-28 bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 shadow-sm z-10 text-center">
                     <div class="absolute top-1/2 -right-6 w-6 h-0 border-t-2 border-dotted border-gray-400 dark:border-gray-600" style="margin-top: -1px;"></div>
-                    <div class="text-2xl mb-2">🍜</div>
-                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">라운지/휴식</h4>
-                    <p class="text-[10px] text-gray-500 mt-1">21:00 저녁 식사</p>
+                    <div class="text-2xl mb-2">🛂</div>
+                    <h4 class="font-bold text-xs text-gray-800 dark:text-gray-200">수속 & 식사</h4>
+                    <p class="text-[10px] text-gray-500 mt-1">20:45 ~ 22:30</p>
                 </div>
 
                 <!-- Step 5 (마지막 카드는 점선 없음) -->
@@ -320,65 +320,211 @@
                 </div>
                 
                 <!-- 우측 스크롤 여유 공간 (더 넓게 확보) -->
-                <div class="flex-shrink-0 w-4 pointer-events-none"></div>
+                <div class="flex-shrink-0 w-4 pointer-events-none md:hidden"></div>
             </div>
 
             <!-- 2) 비행기 상세 바우처 정보 -->
-            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">✈️ 항공편 바우처 (SAS)</h3>
-            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-8 border dark:border-gray-800">
-                
-                <!-- 출국편 -->
-                <div class="mb-5 pb-5 border-b border-gray-100 dark:border-gray-800">
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2 py-1 rounded">출국</span>
-                        <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm">2026.12.31 (목)</h4>
-                    </div>
-                    <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-400">
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">23:45</span> 인천(ICN) 출발</span>
-                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK988</span>
-                        </li>
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">05:25(+1)</span> 코펜하겐(CPH) 도착</span>
-                        </li>
-                        <li class="text-xs font-medium text-blue-500 bg-blue-50 dark:bg-blue-900/20 py-1.5 px-3 rounded-lg my-1 inline-block w-full text-center">
-                            ⏳ 코펜하겐 대기 2시간 30분
-                        </li>
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">07:55</span> 코펜하겐(CPH) 출발</span>
-                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK1706</span>
-                        </li>
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">10:35</span> 헬싱키(HEL) 도착</span>
-                        </li>
-                    </ul>
-                </div>
+            <div class="w-full mb-10 max-w-xl mx-auto">
+                <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">✈️ 항공편 바우처 (SAS)</h3>
+                <div class="space-y-4">
+                    
+                    <!-- 출국편 토글 (기본 펼침) -->
+                    <details class="group bg-white dark:bg-nordic-900 rounded-xl shadow-sm border dark:border-gray-800 overflow-hidden" open>
+                        <summary class="flex justify-between items-center p-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs font-bold px-2.5 py-1 rounded-md">출국편</span>
+                                <h4 class="font-bold text-gray-800 dark:text-gray-200">2026.12.31 (목) ➔ 헬싱키(HEL)</h4>
+                            </div>
+                            <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
+                        </summary>
+                        <div class="p-4 pt-1 border-t border-gray-100 dark:border-gray-800">
+                            
+                            <!-- 구간 1: 인천 -> 코펜하겐 (좌측 정렬 타임라인 뷰) -->
+                            <div class="grid grid-cols-[auto_1fr] gap-5 bg-gray-50 dark:bg-nordic-950 p-5 rounded-xl border dark:border-gray-800 mb-2">
+                                <!-- 좌측: 시간 & 점선 -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">23:45</span>
+                                    <!-- 더 길어진 점선 -->
+                                    <div class="flex-1 min-h-[5.5rem] my-2 border-l-2 border-dashed border-gray-300 dark:border-gray-600 relative">
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -top-1 -left-[3px]"></div>
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -bottom-1 -left-[3px]"></div>
+                                    </div>
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">05:25</span>
+                                </div>
+                                
+                                <!-- 우측: 공항 & 비행 정보 -->
+                                <div class="flex flex-col justify-between py-1">
+                                    <!-- 출발지 정보 -->
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">ICN</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">인천</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">12.31 (목) 출발</span>
+                                    </div>
+                                    
+                                    <!-- 비행기 아이콘 & 편명 -->
+                                    <div class="flex items-center gap-2 my-2">
+                                        <span class="text-gray-400 text-sm">✈️</span>
+                                        <span class="text-xs font-mono font-bold bg-white dark:bg-gray-800 px-2.5 py-0.5 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">SK988</span>
+                                        <span class="text-xs font-medium text-gray-500">13h 40m</span>
+                                    </div>
+                                    
+                                    <!-- 도착지 정보 -->
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">CPH</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">코펜하겐</span>
+                                            <span class="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">+1일</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">01.01 (금) 도착</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                <!-- 귀국편 -->
-                <div>
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 text-xs font-bold px-2 py-1 rounded">귀국</span>
-                        <h4 class="font-bold text-gray-800 dark:text-gray-200 text-sm">2027.02.01 (월)</h4>
-                    </div>
-                    <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-400">
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">16:05</span> 헬싱키(HEL) 출발</span>
-                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK1713</span>
-                        </li>
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">16:45</span> 코펜하겐(CPH) 도착</span>
-                        </li>
-                        <li class="text-xs font-medium text-red-500 bg-red-50 dark:bg-red-900/20 py-1.5 px-3 rounded-lg my-1 inline-block w-full text-center">
-                            ⏳ 코펜하겐 레이오버 6시간 25분 (뉘하운 시내 관광)
-                        </li>
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">23:20</span> 코펜하겐(CPH) 출발</span>
-                            <span class="text-xs font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border dark:border-gray-700">SK987</span>
-                        </li>
-                        <li class="flex justify-between items-center">
-                            <span><span class="font-bold text-gray-800 dark:text-gray-200">17:45(+1)</span> 인천(ICN) 도착</span>
-                        </li>
-                    </ul>
+                            <!-- 레이오버 하이라이트 (좌측 여백을 주어 우측 정보칸과 라인 맞춤) -->
+                            <div class="pl-[6.5rem] my-3">
+                                <span class="inline-block text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100/50 dark:bg-blue-900/30 py-1.5 px-3 rounded-lg border border-blue-200 dark:border-blue-800/50 shadow-sm">
+                                    ⏳ 코펜하겐 대기 2시간 30분
+                                </span>
+                            </div>
+
+                            <!-- 구간 2: 코펜하겐 -> 헬싱키 (좌측 정렬 타임라인 뷰) -->
+                            <div class="grid grid-cols-[auto_1fr] gap-5 bg-gray-50 dark:bg-nordic-950 p-5 rounded-xl border dark:border-gray-800">
+                                <!-- 좌측: 시간 & 점선 -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">07:55</span>
+                                    <div class="flex-1 min-h-[5.5rem] my-2 border-l-2 border-dashed border-gray-300 dark:border-gray-600 relative">
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -top-1 -left-[3px]"></div>
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -bottom-1 -left-[3px]"></div>
+                                    </div>
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">10:35</span>
+                                </div>
+                                
+                                <!-- 우측: 공항 & 비행 정보 -->
+                                <div class="flex flex-col justify-between py-1">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">CPH</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">코펜하겐</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">01.01 (금) 출발</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 my-2">
+                                        <span class="text-gray-400 text-sm">✈️</span>
+                                        <span class="text-xs font-mono font-bold bg-white dark:bg-gray-800 px-2.5 py-0.5 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">SK1706</span>
+                                        <span class="text-xs font-medium text-gray-500">1h 40m</span>
+                                    </div>
+                                    
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">HEL</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">헬싱키</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">01.01 (금) 도착</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- 귀국편 토글 (기본 닫힘) -->
+                    <details class="group bg-white dark:bg-nordic-900 rounded-xl shadow-sm border dark:border-gray-800 overflow-hidden">
+                        <summary class="flex justify-between items-center p-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 text-xs font-bold px-2.5 py-1 rounded-md">귀국편</span>
+                                <h4 class="font-bold text-gray-800 dark:text-gray-200">2027.02.01 (월) ➔ 인천(ICN)</h4>
+                            </div>
+                            <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
+                        </summary>
+                        <div class="p-4 pt-1 border-t border-gray-100 dark:border-gray-800">
+                            
+                            <!-- 구간 1: 헬싱키 -> 코펜하겐 (좌측 정렬 타임라인 뷰) -->
+                            <div class="grid grid-cols-[auto_1fr] gap-5 bg-gray-50 dark:bg-nordic-950 p-5 rounded-xl border dark:border-gray-800 mb-2">
+                                <!-- 좌측: 시간 & 점선 -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">16:05</span>
+                                    <div class="flex-1 min-h-[5.5rem] my-2 border-l-2 border-dashed border-gray-300 dark:border-gray-600 relative">
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -top-1 -left-[3px]"></div>
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -bottom-1 -left-[3px]"></div>
+                                    </div>
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">16:45</span>
+                                </div>
+                                
+                                <!-- 우측: 공항 & 비행 정보 -->
+                                <div class="flex flex-col justify-between py-1">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">HEL</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">헬싱키</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">02.01 (월) 출발</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 my-2">
+                                        <span class="text-gray-400 text-sm">✈️</span>
+                                        <span class="text-xs font-mono font-bold bg-white dark:bg-gray-800 px-2.5 py-0.5 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">SK1713</span>
+                                        <span class="text-xs font-medium text-gray-500">1h 40m</span>
+                                    </div>
+                                    
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">CPH</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">코펜하겐</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">02.01 (월) 도착</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 레이오버 하이라이트 -->
+                            <div class="pl-[6.5rem] my-3">
+                                <span class="inline-block text-xs font-bold text-red-700 dark:text-red-300 bg-red-100/50 dark:bg-red-900/30 py-1.5 px-3 rounded-lg border border-red-200 dark:border-red-800/50 shadow-sm">
+                                    ⏳ 코펜하겐 대기 6시간 25분 (시내관광)
+                                </span>
+                            </div>
+                            
+                            <!-- 구간 2: 코펜하겐 -> 인천 (좌측 정렬 타임라인 뷰) -->
+                            <div class="grid grid-cols-[auto_1fr] gap-5 bg-gray-50 dark:bg-nordic-950 p-5 rounded-xl border dark:border-gray-800">
+                                <!-- 좌측: 시간 & 점선 -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">23:20</span>
+                                    <div class="flex-1 min-h-[5.5rem] my-2 border-l-2 border-dashed border-gray-300 dark:border-gray-600 relative">
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -top-1 -left-[3px]"></div>
+                                        <div class="absolute w-2 h-2 rounded-full bg-gray-400 dark:bg-gray-500 -bottom-1 -left-[3px]"></div>
+                                    </div>
+                                    <span class="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">17:45</span>
+                                </div>
+                                
+                                <!-- 우측: 공항 & 비행 정보 -->
+                                <div class="flex flex-col justify-between py-1">
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">CPH</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">코펜하겐</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">02.01 (월) 출발</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-2 my-2">
+                                        <span class="text-gray-400 text-sm">✈️</span>
+                                        <span class="text-xs font-mono font-bold bg-white dark:bg-gray-800 px-2.5 py-0.5 rounded-md shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">SK987</span>
+                                        <span class="text-xs font-medium text-gray-500">10h 25m</span>
+                                    </div>
+                                    
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xl font-bold text-blue-600 dark:text-blue-400">ICN</span>
+                                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">인천</span>
+                                            <span class="text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded">+1일</span>
+                                        </div>
+                                        <span class="text-xs text-gray-500">02.02 (화) 도착</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
 
@@ -658,17 +804,17 @@
                 const m = String(minutes).padStart(2, '0');
                 const s = String(seconds).padStart(2, '0');
                 
-                // 각 단위별 텍스트 업데이트 (D-는 하얀색, 숫자는 지정하신 #003580 딥블루 적용)
-                document.getElementById('d-val').innerHTML = `<span class="text-white">D-</span><span class="text-[#003580] drop-shadow-md">${days}</span>`;
+                // 💡 수정된 부분: 하얀색 배경 배지(bg-white)를 깔고 딥블루 글씨를 넣어 핀란드 국기 테마와 가독성 동시 확보
+                document.getElementById('d-val').innerHTML = `<span class="text-white mr-1 drop-shadow-md">D-</span><span class="inline-block bg-white text-[#003580] px-2.5 py-0.5 rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)] transform -translate-y-0.5">${days}</span><span class="text-white ml-2 mr-3 opacity-50">|</span>`;
                 animateValue('h-val', h);
                 animateValue('m-val', m);
                 animateValue('s-val', s);
                 
             } else if (distance > -86400000) {
-                document.getElementById('d-val').innerHTML = `<span class="text-[#003580] drop-shadow-md">D-Day!</span>`;
+                document.getElementById('d-val').innerHTML = `<span class="inline-block bg-white text-[#003580] px-3 py-1 rounded-lg shadow-lg">D-Day!</span>`;
             } else {
                 const pastDays = Math.floor(Math.abs(distance) / (1000 * 60 * 60 * 24));
-                document.getElementById('d-val').innerHTML = `<span class="text-white">D+</span><span class="text-[#003580] drop-shadow-md">${pastDays}</span>`;
+                document.getElementById('d-val').innerHTML = `<span class="text-white mr-1 drop-shadow-md">D+</span><span class="inline-block bg-white text-[#003580] px-2.5 py-0.5 rounded-lg shadow-[0_4px_10px_rgba(0,0,0,0.5)] transform -translate-y-0.5">${pastDays}</span><span class="text-white ml-2 mr-3 opacity-50">|</span>`;
             }
         }
         
