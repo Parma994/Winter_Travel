@@ -584,7 +584,41 @@
         <!-- 4. 핀란드 탭 (메인 거점) -->
         <section id="tab-finland" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
             <h2 class="text-2xl font-bold mb-4">🇫🇮 탐페레 한 달 살기 & 학습</h2>
-            
+            <!-- 탐페레 베이스캠프 에어비앤비 정보 카드 & 지도 -->
+            <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5 mb-6">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs font-bold px-2 py-0.5 rounded">예약 완료</span>
+                        <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mt-1">🏠 탐페레 베이스캠프 (68m² 투룸)</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Hatanpään Valtatie 4 B (5층, 엘리베이터 있음)</p>
+                    </div>
+                    <span class="text-xl">🔑</span>
+                </div>
+
+                <!-- 숙소 지도 영역 -->
+                <div class="relative w-full h-52 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 my-3">
+                    <div id="map-tampere" class="w-full h-full z-0"></div>
+                    <div class="absolute top-2 left-2 z-[400] bg-white/90 dark:bg-nordic-900/90 backdrop-blur-sm px-2.5 py-1 rounded text-[11px] font-bold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                        📍 Koskipuisto & 탐페레역 도보 5분
+                    </div>
+                </div>
+
+                <!-- 체크인 및 열쇠 수령 안내 -->
+                <div class="space-y-2 mt-4 text-xs text-gray-600 dark:text-gray-300">
+                    <div class="p-3 bg-gray-50 dark:bg-nordic-950 rounded-lg border border-gray-100 dark:border-gray-800">
+                        <p class="font-bold text-gray-800 dark:text-gray-200 mb-1">🗝️ 체크인 & 열쇠 수령 동선</p>
+                        <ul class="list-disc list-inside space-y-1 text-gray-500 dark:text-gray-400">
+                            <li>Verkatehtaankatu 뒷마당의 마스터락(키박스)에서 물리키 수령</li>
+                            <li>B동 출입구 전자키 태그 후 5층 엘리베이터 이동</li>
+                            <li>체크인: 1월 3일 15:00부터 / 체크아웃: 2월 1일 12:00</li>
+                        </ul>
+                    </div>
+                    <div class="flex justify-between items-center pt-1 text-gray-400">
+                        <span>난방 쾌적 · 식기세척기 · 창가 원목 테이블</span>
+                        <a href="https://maps.google.com/?q=Hatanpään+Valtatie+4+Tampere" target="_blank" class="text-blue-500 font-bold hover:underline">Google 지도 열기 ↗</a>
+                    </div>
+                </div>
+            </div>
             <!-- 핀란드 루틴 강조색 복구 (초록/오렌지 등) -->
             <h3 class="font-bold mb-3 text-emerald-600 dark:text-emerald-400">⏰ 평일 표준 루틴</h3>
             <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 space-y-4 border dark:border-gray-800">
@@ -697,6 +731,7 @@
     <script>
         // 커스텀 지도 변수
         let map;
+        let mapTampere;
 
         // 1. 하단 탭 전환 로직
         function switchTab(tabId, btnElement) {
@@ -721,40 +756,74 @@
             if(tabId === 'tab-main' && map) {
                 setTimeout(() => map.invalidateSize(), 100);
             }
+            
+            // 💡 핀란드 탭으로 돌아왔을 때 숙소 지도가 깨지는 현상 방지
+            if(tabId === 'tab-finland' && mapTampere) {
+                setTimeout(() => mapTampere.invalidateSize(), 100);
+            }
         }
 
         // 1-1. 지도 초기화 및 핀 꽂기 로직
         function initMap() {
-            if (map) return;
-            // 지도의 중심점을 핀란드/에스토니아 사이 쯤으로 설정 (줌 레벨 4)
-            map = L.map('map', { zoomControl: false }).setView([58.0, 15.0], 4);
+            const mapEl = document.getElementById('map');
+            if (mapEl && !map) {
+                // 지도를 렌더링할 뼈대 생성 (중심과 줌은 아래 fitBounds에서 화면에 꽉 차게 자동 계산됨)
+                map = L.map('map', { zoomControl: false });
 
-            // 완전히 무료로 개방된 공식 OpenStreetMap 타일 주소로 변경
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
+                // 완전히 무료로 개방된 공식 OpenStreetMap 타일 주소로 변경
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
 
-            // 3개국 좌표 설정
-            const tampere = [61.4978, 23.7610];
-            const tallinn = [59.4370, 24.7536];
-            const london = [51.5074, -0.1278];
+                // 3개국 좌표 설정
+                const tampere = [61.4978, 23.7610];
+                const tallinn = [59.4370, 24.7536];
+                const london = [51.5074, -0.1278];
 
-            // 이모지 핀 스타일 생성기
-            const createIcon = (emoji) => L.divIcon({
-                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
-                className: 'bg-transparent border-0',
-                iconSize: [30, 30],
-                iconAnchor: [15, 30] // 핀의 끝점이 정확한 좌표에 오도록 설정
-            });
+                // 이모지 핀 스타일 생성기
+                const createIcon = (emoji) => L.divIcon({
+                    html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
+                    className: 'bg-transparent border-0',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 30] // 핀의 끝점이 정확한 좌표에 오도록 설정
+                });
 
-            // 지도에 국기 핀 꽂기
-            L.marker(tampere, {icon: createIcon('🇫🇮')}).bindPopup('<b>탐페레</b><br>거점').addTo(map);
-            L.marker(tallinn, {icon: createIcon('🇪🇪')}).bindPopup('<b>탈린</b><br>1주차').addTo(map);
-            L.marker(london, {icon: createIcon('🇬🇧')}).bindPopup('<b>런던</b><br>3주차').addTo(map);
+                // 지도에 국기 핀 꽂기
+                L.marker(tampere, {icon: createIcon('🇫🇮')}).bindPopup('<b>탐페레</b><br>거점').addTo(map);
+                L.marker(tallinn, {icon: createIcon('🇪🇪')}).bindPopup('<b>탈린</b><br>1주차').addTo(map);
+                L.marker(london, {icon: createIcon('🇬🇧')}).bindPopup('<b>런던</b><br>3주차').addTo(map);
 
-            // 경로 이어주기 (파란 점선)
-            L.polyline([tallinn, tampere, london], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
+                // 경로 이어주기 (파란 점선)
+                L.polyline([tallinn, tampere, london], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
+
+                // 💡 3개의 지역(탈린, 탐페레, 런던)이 빈공간 없이 화면에 꽉 차도록 자동 포커싱
+                map.fitBounds([tampere, tallinn, london], { padding: [30, 30] });
+            }
+
+            // 💡 핀란드 탭의 숙소 지도 렌더링 (컨테이너 요소가 실제로 있을 때만 안전하게 초기화)
+            const mapTampereEl = document.getElementById('map-tampere');
+            if (mapTampereEl && !mapTampere) {
+                mapTampere = L.map('map-tampere', { zoomControl: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(mapTampere);
+                
+                // 탐페레 에어비앤비 좌표 (Hatanpään Valtatie 4)
+                const airbnbLocation = [61.4968, 23.7675];
+                mapTampere.setView(airbnbLocation, 15);
+                
+                // 숙소 전용 집 모양 아이콘
+                L.marker(airbnbLocation, {
+                    icon: L.divIcon({
+                        html: `<div style="font-size: 26px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">🏠</div>`,
+                        className: 'bg-transparent border-0',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 30]
+                    })
+                }).bindPopup('<b>탐페레 베이스캠프</b><br>Hatanpään Valtatie 4 B').addTo(mapTampere);
+            }
         }
 
         // 페이지가 열리자마자 지도 생성
@@ -838,6 +907,7 @@
         
         updateDday(); // 로딩 시 즉시 한 번 계산
         setInterval(updateDday, 1000); // 이후 1초마다 반복 갱신
+
         // 4. 탐페레 실시간 시간 및 날씨 (Open-Meteo 무료 API 연동)
         function updateTampereTime() {
             const timeEl = document.getElementById('tampere-time');
@@ -900,8 +970,8 @@
         updateTampereTime();
         setInterval(updateTampereTime, 60000); // 현지 시간은 1분마다 갱신
         fetchTampereWeather(); // 날씨는 페이지 로드 시 1회 호출
-        
-        // 4. 상세 예산표 토글 로직
+
+        // 5. 상세 예산표 토글 로직
         function toggleBudgetTable() {
             const content = document.getElementById('budget-table-content');
             const icon = document.getElementById('budget-toggle-icon');
