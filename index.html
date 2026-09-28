@@ -93,7 +93,25 @@
                     </div>
                 </div>
             </div>
-
+            <!-- 실시간 날씨 & 시간 위젯 (플로팅 카드 스타일) -->
+            <div class="relative z-30 max-w-3xl mx-auto px-4 md:px-8 -mt-10 mb-6">
+                <div class="bg-white/95 dark:bg-nordic-900/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span id="weather-icon" class="text-3xl">☁️</span>
+                        <div>
+                            <div class="flex items-baseline gap-1">
+                                <span id="weather-temp" class="text-xl font-black text-gray-800 dark:text-gray-100">-°C</span>
+                                <span id="weather-desc" class="text-sm font-medium text-gray-500 dark:text-gray-400">로딩중...</span>
+                            </div>
+                            <p id="weather-sun" class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">일출 계산중 · 일몰 계산중</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">탐페레 현지 시간</p>
+                        <span id="tampere-time" class="text-xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">--:--</span>
+                    </div>
+                </div>
+            </div>
             <!-- 하단 그리드 (다시 중앙 제한 영역으로) -->
             <div class="max-w-3xl mx-auto px-4 md:px-8">
                 
@@ -820,7 +838,69 @@
         
         updateDday(); // 로딩 시 즉시 한 번 계산
         setInterval(updateDday, 1000); // 이후 1초마다 반복 갱신
+        // 4. 탐페레 실시간 시간 및 날씨 (Open-Meteo 무료 API 연동)
+        function updateTampereTime() {
+            const timeEl = document.getElementById('tampere-time');
+            if (!timeEl) return;
+            const now = new Date();
+            // 유럽/헬싱키 타임존으로 자동 변환 (24시간제)
+            const options = { timeZone: 'Europe/Helsinki', hour: '2-digit', minute: '2-digit', hour12: false };
+            timeEl.textContent = now.toLocaleTimeString('ko-KR', options);
+        }
+        
+        async function fetchTampereWeather() {
+            try {
+                // 가입 및 API키 불필요한 Open-Meteo 무료 API 사용 (탐페레 위도: 61.4978, 경도: 23.7610)
+                // daily=sunrise,sunset 파라미터를 추가하여 실제 일출/일몰 시간을 가져옵니다.
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=61.4978&longitude=23.7610&current=temperature_2m,weather_code&daily=sunrise,sunset&timezone=Europe%2FHelsinki');
+                const data = await res.json();
+                
+                const temp = Math.round(data.current.temperature_2m);
+                const code = data.current.weather_code;
+                
+                // 오늘 날짜의 일출/일몰 시간 추출 (예: "2026-09-28T07:14" -> "07:14")
+                const sunriseTime = data.daily.sunrise[0].split('T')[1];
+                const sunsetTime = data.daily.sunset[0].split('T')[1];
+                
+                // WMO 날씨 코드 해석 및 이모지 매핑
+                let icon = '☁️';
+                let desc = '흐림';
+                
+                if (code === 0) { icon = '☀️'; desc = '맑음'; }
+                else if (code === 1 || code === 2 || code === 3) { icon = '⛅'; desc = '구름 조금'; }
+                else if (code === 45 || code === 48) { icon = '🌫️'; desc = '안개'; }
+                else if (code >= 51 && code <= 67) { icon = '🌧️'; desc = '비'; }
+                else if (code >= 71 && code <= 77) { icon = '❄️'; desc = '눈'; }
+                else if (code >= 80 && code <= 82) { icon = '🌦️'; desc = '소나기'; }
+                else if (code >= 85 && code <= 86) { icon = '🌨️'; desc = '눈보라'; }
+                else if (code >= 95) { icon = '⛈️'; desc = '뇌우'; }
+                
+                // 💡 요소가 존재하는지 확인 후 텍스트 삽입 (에러 방지)
+                const tempEl = document.getElementById('weather-temp');
+                const iconEl = document.getElementById('weather-icon');
+                const descEl = document.getElementById('weather-desc');
+                const sunEl = document.getElementById('weather-sun');
+                
+                if (tempEl) tempEl.textContent = `${temp}°C`;
+                if (iconEl) iconEl.textContent = icon;
+                if (descEl) descEl.textContent = desc;
+                if (sunEl) sunEl.textContent = `일출 ${sunriseTime} · 일몰 ${sunsetTime}`;
+                
+            } catch (error) {
+                console.error("날씨 정보를 불러오는 데 실패했습니다.", error);
+                const tempEl = document.getElementById('weather-temp');
+                const descEl = document.getElementById('weather-desc');
+                const sunEl = document.getElementById('weather-sun');
+                if (tempEl) tempEl.textContent = "N/A";
+                if (descEl) descEl.textContent = "확인 불가";
+                if (sunEl) sunEl.textContent = "일출/일몰 확인 불가";
+            }
+        }
 
+        updateTampereTime();
+        setInterval(updateTampereTime, 60000); // 현지 시간은 1분마다 갱신
+        fetchTampereWeather(); // 날씨는 페이지 로드 시 1회 호출
+        
         // 4. 상세 예산표 토글 로직
         function toggleBudgetTable() {
             const content = document.getElementById('budget-table-content');
