@@ -126,22 +126,37 @@
                     </div>
                 </div>
 
+                <!-- 실시간 환율 정보 배너 -->
+                <div class="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex justify-between items-center shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl drop-shadow-sm">💶</span>
+                        <div>
+                            <h4 class="font-bold text-sm text-emerald-800 dark:text-emerald-300">실시간 유로 환율</h4>
+                            <p id="exchange-date" class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">국제 외환시장 데이터를 불러오는 중...</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="exchange-rate-val" class="font-black text-lg text-emerald-700 dark:text-emerald-400">계산 중</span>
+                    </div>
+                </div>
+
+                <!-- 상세 예산 계획표 -->
                 <div class="mt-4 bg-white dark:bg-nordic-900 rounded-xl shadow-sm border dark:border-gray-800 overflow-hidden mb-8">
-                    <!-- 토글 버튼 (총 예산 액수 통합) -->
                     <button onclick="toggleBudgetTable()" class="w-full flex justify-between items-center p-4 focus:outline-none hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
                         <div class="flex items-center gap-2">
                             <span class="text-lg">💶</span>
                             <h3 class="font-bold text-gray-800 dark:text-gray-100">상세 예산 계획표</h3>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="text-lg font-black text-blue-600 dark:text-blue-400">€2,500</span>
+                            <div class="text-right">
+                                <span class="text-lg font-black text-blue-600 dark:text-blue-400">€2,500</span>
+                                <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="2500"></span>
+                            </div>
                             <span id="budget-toggle-icon" class="text-gray-500 transform transition-transform duration-300">▼</span>
                         </div>
                     </button>
                     
-                    <!-- 토글 시 펼쳐지는 상세 내역 (카테고리별 이중 토글) -->
                     <div id="budget-table-content" class="hidden border-t dark:border-gray-800 p-2">
-                        
                         <!-- 1. 교통 및 항공권 -->
                         <details class="group border-b dark:border-gray-800 last:border-0">
                             <summary class="flex justify-between items-center font-semibold cursor-pointer list-none [&::-webkit-details-marker]:hidden p-3 hover:bg-gray-50 dark:hover:bg-nordic-800 rounded-lg transition-colors">
@@ -150,15 +165,18 @@
                                     <span class="text-sm text-gray-800 dark:text-gray-200">교통 및 항공권</span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">€440</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">€440</span>
+                                        <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="440"></span>
+                                    </div>
                                     <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
                                 </div>
                             </summary>
                             <div class="text-xs text-gray-500 dark:text-gray-400 px-3 pb-3 space-y-2">
-                                <div class="flex justify-between"><span>영국 런던 왕복 항공권</span><span>€200</span></div>
-                                <div class="flex justify-between"><span>헬싱키 ↔ 탐페레 기차(VR)</span><span>€120</span></div>
-                                <div class="flex justify-between"><span>탈린 왕복 페리</span><span>€60</span></div>
-                                <div class="flex justify-between"><span>탐페레 대중교통(Nysse) 30일권</span><span>€60</span></div>
+                                <div class="flex justify-between"><span>영국 런던 왕복 항공권</span><span>€200 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="200"></span></span></div>
+                                <div class="flex justify-between"><span>헬싱키 ↔ 탐페레 기차(VR)</span><span>€120 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="120"></span></span></div>
+                                <div class="flex justify-between"><span>탈린 왕복 페리</span><span>€60 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="60"></span></span></div>
+                                <div class="flex justify-between"><span>탐페레 대중교통(Nysse) 30일권</span><span>€60 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="60"></span></span></div>
                             </div>
                         </details>
 
@@ -170,14 +188,17 @@
                                     <span class="text-sm text-gray-800 dark:text-gray-200">식비 및 생활비</span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">€850</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">€850</span>
+                                        <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="850"></span>
+                                    </div>
                                     <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
                                 </div>
                             </summary>
                             <div class="text-xs text-gray-500 dark:text-gray-400 px-3 pb-3 space-y-2">
-                                <div class="flex justify-between"><span>탐페레 한 달 마트 식재료</span><span>€650</span></div>
-                                <div class="flex justify-between"><span>영국 런던 2박 3일 식비</span><span>€100</span></div>
-                                <div class="flex justify-between"><span>에스토니아 탈린 2박 3일 식비</span><span>€100</span></div>
+                                <div class="flex justify-between"><span>탐페레 한 달 마트 식재료</span><span>€650 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="650"></span></span></div>
+                                <div class="flex justify-between"><span>영국 런던 2박 3일 식비</span><span>€100 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="100"></span></span></div>
+                                <div class="flex justify-between"><span>에스토니아 탈린 2박 3일 식비</span><span>€100 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="100"></span></span></div>
                             </div>
                         </details>
 
@@ -189,13 +210,16 @@
                                     <span class="text-sm text-gray-800 dark:text-gray-200">추가 숙박비 (탐페레 제외)</span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">€420</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">€420</span>
+                                        <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="420"></span>
+                                    </div>
                                     <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
                                 </div>
                             </summary>
                             <div class="text-xs text-gray-500 dark:text-gray-400 px-3 pb-3 space-y-2">
-                                <div class="flex justify-between"><span>영국 런던 2박 3일 숙소</span><span>€300</span></div>
-                                <div class="flex justify-between"><span>에스토니아 탈린 2박 3일 숙소</span><span>€120</span></div>
+                                <div class="flex justify-between"><span>영국 런던 2박 3일 숙소</span><span>€300 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="300"></span></span></div>
+                                <div class="flex justify-between"><span>에스토니아 탈린 2박 3일 숙소</span><span>€120 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="120"></span></span></div>
                             </div>
                         </details>
 
@@ -207,14 +231,17 @@
                                     <span class="text-sm text-gray-800 dark:text-gray-200">문화 및 액티비티</span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">€330</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">€330</span>
+                                        <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="330"></span>
+                                    </div>
                                     <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
                                 </div>
                             </summary>
                             <div class="text-xs text-gray-500 dark:text-gray-400 px-3 pb-3 space-y-2">
-                                <div class="flex justify-between"><span>탐페레 로컬 사우나 (주 2~3회)</span><span>€130</span></div>
-                                <div class="flex justify-between"><span>토트넘 홋스퍼 경기 직관 티켓</span><span>€100</span></div>
-                                <div class="flex justify-between"><span>현지 박물관 및 관광 입장료</span><span>€100</span></div>
+                                <div class="flex justify-between"><span>탐페레 로컬 사우나 (주 2~3회)</span><span>€130 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="130"></span></span></div>
+                                <div class="flex justify-between"><span>토트넘 홋스퍼 경기 직관 티켓</span><span>€100 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="100"></span></span></div>
+                                <div class="flex justify-between"><span>현지 박물관 및 관광 입장료</span><span>€100 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="100"></span></span></div>
                             </div>
                         </details>
 
@@ -226,20 +253,17 @@
                                     <span class="text-sm text-gray-800 dark:text-gray-200">비상 예비비</span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <span class="font-bold text-blue-600 dark:text-blue-400">€460</span>
+                                    <div class="text-right">
+                                        <span class="font-bold text-blue-600 dark:text-blue-400">€460</span>
+                                        <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="460"></span>
+                                    </div>
                                     <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
                                 </div>
                             </summary>
                             <div class="text-xs text-gray-500 dark:text-gray-400 px-3 pb-3 space-y-2">
-                                <div class="flex justify-between"><span>환율 변동 및 돌발 상황 여유 자금</span><span>€460</span></div>
+                                <div class="flex justify-between"><span>환율 변동 및 돌발 상황 여유 자금</span><span>€460 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="460"></span></span></div>
                             </div>
                         </details>
-
-                        <!-- 총합 -->
-                        <div class="border-t dark:border-gray-800 pt-3 px-3 pb-2 flex justify-between items-center mt-2">
-                            <span class="font-bold text-gray-800 dark:text-gray-100">총 목표 예산</span>
-                            <span class="text-lg font-black text-blue-600 dark:text-blue-400">€2,500</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -258,8 +282,8 @@
                     <div class="text-xs font-bold text-gray-400 mb-1">D-60 (10~11월)</div>
                     <h4 class="font-bold text-sm mb-2 text-gray-800 dark:text-gray-200">교통 & 핵심 숙소</h4>
                     <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-2">
-                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">항공권 발권 (완료)</span></label></li>
-                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">탐페레 에어비앤비 예약</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">항공권 발권</span></label></li>
+                        <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" checked class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">탐페레 에어비앤비 예약</span></label></li>
                         <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">국가 간 이동편 예약</span></label></li>
                         <li><label class="flex items-start gap-2 cursor-pointer hover:text-gray-900 dark:hover:text-gray-200 transition-colors"><input type="checkbox" class="mt-0.5 w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"> <span class="leading-snug">여권 유효기간(6개월) 확인</span></label></li>
                     </ul>

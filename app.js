@@ -225,3 +225,61 @@ function toggleBudgetTable() {
         icon.classList.remove('rotate-180');
     }
 }
+
+// 8. 실시간 환율 API 연동 및 원화 계산 (10원 단위 반올림)
+async function fetchExchangeRateAndCalculate() {
+    const rateValEl = document.getElementById('exchange-rate-val');
+    const dateEl = document.getElementById('exchange-date');
+    const krwElements = document.querySelectorAll('.krw-calc');
+
+    try {
+        const response = await fetch('https://open.er-api.com/v6/latest/EUR');
+        const data = await response.json();
+
+        if (data && data.rates && data.rates.KRW) {
+            const eurToKrw = data.rates.KRW;
+            
+            // 1. 환율 텍스트 업데이트
+            if (rateValEl) {
+                rateValEl.textContent = `€1 = ${eurToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}원`;
+            }
+            
+            // 2. 시간은 빼고 날짜까지만 축약 표기 (예: "기준일: 2026. 10. 7.")
+            if (dateEl) {
+                const updateDate = new Date(data.time_last_update_utc);
+                dateEl.textContent = `기준일: ${updateDate.toLocaleDateString('ko-KR')}`;
+            }
+
+            // 3. 예산표 원화 10원 단위 반올림 계산
+            krwElements.forEach(el => {
+                const eurAmount = parseFloat(el.getAttribute('data-eur'));
+                if (!isNaN(eurAmount)) {
+                    const rawKrw = eurAmount * eurToKrw;
+                    const roundedKrw = Math.round(rawKrw / 10) * 10;
+                    el.textContent = `(약 ${roundedKrw.toLocaleString('ko-KR')}원)`;
+                }
+            });
+        } else {
+            throw new Error("환율 데이터를 불러올 수 없습니다.");
+        }
+    } catch (error) {
+        console.error("환율 API 호출 실패:", error);
+        
+        if (rateValEl) rateValEl.textContent = "불러오기 실패";
+        if (dateEl) dateEl.textContent = "오프라인 상태이거나 API 응답이 지연되고 있습니다.";
+        
+        // 오류 시 임시 고정 환율 처리
+        const fallbackRate = 1450;
+        krwElements.forEach(el => {
+            const eurAmount = parseFloat(el.getAttribute('data-eur'));
+            if (!isNaN(eurAmount)) {
+                const rawKrw = eurAmount * fallbackRate;
+                const roundedKrw = Math.round(rawKrw / 10) * 10;
+                el.textContent = `(약 ${roundedKrw.toLocaleString('ko-KR')}원 *임시환율)`;
+            }
+        });
+    }
+}
+
+// 스크립트 로드 시 환율 계산 함수 즉시 실행
+fetchExchangeRateAndCalculate();
