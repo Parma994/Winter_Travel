@@ -3,6 +3,8 @@
 // 1. 지도 변수 선언
 let map;
 let mapTampere;
+let mapTallinn; // 탈린 숙소 지도용
+let mapHelsinki; // 헬싱키 숙소 지도용
 
 // 2. 하단 탭 전환 로직
 function switchTab(tabId, btnElement) {
@@ -29,6 +31,10 @@ function switchTab(tabId, btnElement) {
     }
     if(tabId === 'tab-finland' && mapTampere) {
         setTimeout(() => mapTampere.invalidateSize(), 100);
+    }
+    if(tabId === 'tab-estonia') {
+        if(mapTallinn) setTimeout(() => mapTallinn.invalidateSize(), 100);
+        if(mapHelsinki) setTimeout(() => mapHelsinki.invalidateSize(), 100);
     }
 }
 
@@ -84,6 +90,52 @@ function initMap() {
                 iconAnchor: [15, 30]
             })
         }).bindPopup('<b>탐페레 베이스캠프</b><br>Hatanpään Valtatie 4 B').addTo(mapTampere);
+    }
+
+    // (추가) 탈린 1박 숙소 지도 (시티박스)
+    const mapTallinnEl = document.getElementById('map-tallinn');
+    if (mapTallinnEl && !mapTallinn) {
+        mapTallinn = L.map('map-tallinn', { zoomControl: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(mapTallinn);
+        
+        // 시티박스 탈린 대략적 좌표 (로테르만 지구)
+        const cityboxLocation = [59.4412, 24.7565];
+        mapTallinn.setView(cityboxLocation, 14);
+        
+        L.marker(cityboxLocation, {
+            icon: L.divIcon({
+                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">🏨</div>`,
+                className: 'bg-transparent border-0',
+                iconSize: [26, 26],
+                iconAnchor: [13, 26]
+            })
+        }).bindPopup('<b>시티박스 탈린</b><br>무인 체크인').addTo(mapTallinn);
+    }
+
+    // (추가) 헬싱키 1박 숙소 지도 (호텔 아서)
+    const mapHelsinkiEl = document.getElementById('map-helsinki');
+    if (mapHelsinkiEl && !mapHelsinki) {
+        mapHelsinki = L.map('map-helsinki', { zoomControl: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(mapHelsinki);
+        
+        // 호텔 아서 좌표 (카이사니에미 인근)
+        const arthurLocation = [60.1729, 24.9477];
+        mapHelsinki.setView(arthurLocation, 14);
+        
+        L.marker(arthurLocation, {
+            icon: L.divIcon({
+                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">🏨</div>`,
+                className: 'bg-transparent border-0',
+                iconSize: [26, 26],
+                iconAnchor: [13, 26]
+            })
+        }).bindPopup('<b>호텔 아서</b><br>중앙역 도보 5분').addTo(mapHelsinki);
     }
 }
 setTimeout(initMap, 100);
@@ -283,3 +335,21 @@ async function fetchExchangeRateAndCalculate() {
 
 // 스크립트 로드 시 환율 계산 함수 즉시 실행
 fetchExchangeRateAndCalculate();
+
+// 10. 토글 열림 시 지도 새로고침 로직
+document.addEventListener('DOMContentLoaded', () => {
+    const detailsEls = document.querySelectorAll('details');
+    detailsEls.forEach(detail => {
+        detail.addEventListener('toggle', (e) => {
+            if (detail.open) {
+                // 어떤 지도가 포함되어 있는지 확인 후 새로고침
+                if (detail.querySelector('#map-tallinn') && mapTallinn) {
+                    setTimeout(() => mapTallinn.invalidateSize(), 50);
+                }
+                if (detail.querySelector('#map-helsinki') && mapHelsinki) {
+                    setTimeout(() => mapHelsinki.invalidateSize(), 50);
+                }
+            }
+        });
+    });
+});

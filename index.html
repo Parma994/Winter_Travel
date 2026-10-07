@@ -583,7 +583,6 @@
         <!-- 3. 에스토니아 탭 -->
         <section id="tab-estonia" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
             <h2 class="text-2xl font-bold mb-4">🇪🇪 탈린 & 헬싱키 투어 (1주차)</h2>
-            <!-- 에스토니아 강조색 복구 (파랑) -->
             <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl mb-6 border border-blue-100 dark:border-blue-800">
                 <p class="font-semibold text-blue-800 dark:text-blue-300 mb-2">📍 일정: 1월 1일 ~ 1월 3일 (탈린 1박 + 헬싱키 1박)</p>
                 <p class="text-sm text-gray-600 dark:text-gray-400">헬싱키 도착 직후 페리를 타고 에스토니아 탈린으로 이동하여 하루를 보낸 뒤 헬싱키 시내 투어를 마치고 탐페레로 입성하는 일정입니다.</p>
@@ -640,8 +639,8 @@
                                 <div class="flex items-start gap-3">
                                     <span class="font-bold text-blue-600 dark:text-blue-400 w-11 flex-shrink-0 mt-0.5 text-sm">17:45</span>
                                     <div>
-                                        <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm">탈린 도착 및 숙소 체크인 🇪🇪</h5>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">항구에서 Bolt 택시로 시티박스 탈린(Citybox) 등 숙소 이동</p>
+                                        <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm">탈린 도착 🇪🇪</h5>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">항구에서 Bolt 택시로 이동 및 체크인 준비</p>
                                     </div>
                                 </div>
                             </div>
@@ -656,7 +655,31 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- 탈린 1박 숙소 (시티박스) - 일정 최하단 배치 -->
+                        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 mt-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <span class="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded">1.1 (금) 1박 / 무인 체크인</span>
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-100 mt-1.5">시티박스 탈린 (Citybox Tallinn)</h4>
+                                </div>
+                                <span class="text-lg">🇪🇪</span>
+                            </div>
                             
+                            <div class="relative w-full h-52 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 my-3">
+                                <div id="map-tallinn" class="absolute inset-0 z-0"></div>
+                            </div>
+                            
+                            <div class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                                <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-3 pt-1 text-gray-500 dark:text-gray-400">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>페리 터미널 및 올드타운 정문 사이 로테르만 지구 위치</li>
+                                        <li>1층 키오스크를 통한 24시간 비대면 셀프 체크인</li>
+                                    </ul>
+                                    <a href="https://maps.google.com/?q=Citybox+Tallinn" target="_blank" class="text-blue-500 font-bold hover:underline text-right whitespace-nowrap">Google 지도 열기 ↗</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </details>
@@ -711,8 +734,8 @@
                                 <div class="flex items-start gap-3">
                                     <span class="font-bold text-blue-600 dark:text-blue-400 w-11 flex-shrink-0 mt-0.5 text-sm">15:00</span>
                                     <div>
-                                        <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm">헬싱키 숙소 스마트 체크인 📱</h5>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">오메나(Omena) 등 무인 호텔 체크인 및 짐 풀기</p>
+                                        <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm">헬싱키 시내 진입 🇫🇮</h5>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">중앙역 방향으로 이동 및 숙소 체크인 준비</p>
                                     </div>
                                 </div>
                             </div>
@@ -727,7 +750,31 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- 헬싱키 1박 숙소 (호텔 아서) - 일정 최하단 배치 -->
+                        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 mt-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <span class="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded">1.2 (토) 1박 / 24시간 리셉션</span>
+                                    <h4 class="font-bold text-gray-800 dark:text-gray-100 mt-1.5">호텔 아서 (Hotel Arthur)</h4>
+                                </div>
+                                <span class="text-lg">🇫🇮</span>
+                            </div>
                             
+                            <div class="relative w-full h-52 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 my-3">
+                                <div id="map-helsinki" class="absolute inset-0 z-0"></div>
+                            </div>
+                            
+                            <div class="space-y-2 text-xs text-gray-600 dark:text-gray-300">
+                                <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-3 pt-1 text-gray-500 dark:text-gray-400">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>헬싱키 중앙역 도보 4~5분 거리의 클래식 호텔</li>
+                                        <li>원로원 광장 및 헬싱키 대성당 도보 3분 컷 접근성</li>
+                                    </ul>
+                                    <a href="https://maps.google.com/?q=Hotel+Arthur+Helsinki" target="_blank" class="text-blue-500 font-bold hover:underline text-right whitespace-nowrap">Google 지도 열기 ↗</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </details>
