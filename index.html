@@ -1032,10 +1032,10 @@
                 <form id="expense-form" class="space-y-3">
                     <!-- 첫 번째 줄: 날짜와 카테고리 (1:1 비율) -->
                     <div class="grid grid-cols-2 gap-2 md:gap-3">
-                        <!-- 날짜 입력칸에 min-w-0, appearance-none 추가 -->
+                        <!-- 날짜 입력칸에 min-w-0, appearance-none, 텍스트 색상 명시 추가 -->
                         <input type="date" id="exp-date" required class="w-full min-w-0 appearance-none text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 dark:text-gray-200">
                         
-                        <!-- 카테고리 입력칸에도 혹시 모를 겹침을 방지하기 위해 min-w-0 추가 -->
+                        <!-- 카테고리 선택칸에 min-w-0 추가 -->
                         <select id="exp-category" required class="w-full min-w-0 text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                             <option value="교통">✈️ 교통</option>
                             <option value="숙박">🏠 숙박</option>
