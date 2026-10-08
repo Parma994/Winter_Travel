@@ -310,7 +310,7 @@ async function fetchExchangeRateAndCalculate() {
             // 1. 메인 환율 배너 (유로-원, 파운드-원 병기)
             if (rateValEl) {
                 rateValEl.innerHTML = `
-                    <div class="text-lg font-black text-[#22c55e]">€1 = ${rateEurKrwFmt}원</div>
+                    <div class="text-lg font-black text-blue-600 dark:text-blue-400">€1 = ${rateEurKrwFmt}원</div>
                     <div class="text-lg font-black text-[#f87171] tracking-tight">£1 = ${rateGbpKrwFmt}원</div>
                 `;
             }
