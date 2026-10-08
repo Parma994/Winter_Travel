@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2027 핀란드 한 달 살기 🇫🇮</title>
+    <title>🇫🇮 2027 핀란드 한 달 살기 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS 및 JS CDN 추가 -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -43,7 +43,7 @@
     <!-- 상단 헤더 -->
     <header class="sticky top-0 bg-nordic-50/90 dark:bg-nordic-950/90 backdrop-blur-sm z-10 border-b border-gray-200 dark:border-gray-800 p-4 flex justify-between items-center">
         <div>
-            <h1 class="text-xl font-bold">✈️ 2027 북유럽 여정</h1>
+            <h1 class="text-2xl font-bold">✈️ 2027 북유럽 여정</h1>
         </div>
         
         <!-- On/Off 토글 스위치 (이모지 적용) -->
@@ -127,17 +127,25 @@
                 </div>
 
                 <!-- 실시간 환율 정보 배너 -->
-                <div class="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex justify-between items-center shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl drop-shadow-sm">💶</span>
-                        <div>
-                            <h4 class="font-bold text-sm text-emerald-800 dark:text-emerald-300">실시간 유로 환율</h4>
-                            <p id="exchange-date" class="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5">국제 외환시장 데이터를 불러오는 중...</p>
+                <div class="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex justify-between items-stretch shadow-sm">
+                    
+                    <!-- 좌측 영역 -->
+                    <div class="flex items-stretch gap-3">
+                        <div class="flex items-center">
+                            <span class="text-2xl drop-shadow-sm">💰</span>
+                        </div>
+                        <!-- 2. 텍스트: 상단(타이틀)과 하단(기준일자)으로 완전히 분리 -->
+                        <div class="flex flex-col justify-between py-0.5">
+                            <h4 class="font-bold text-lg text-emerald-800 dark:text-emerald-300">실시간 환율</h4>
+                            <p id="exchange-date" class="text-[10px] text-emerald-600 dark:text-emerald-400">국제 외환시장 데이터를 불러오는 중...</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <span id="exchange-rate-val" class="font-black text-lg text-emerald-700 dark:text-emerald-400">계산 중</span>
+
+                    <!-- 우측 영역: JS에서 유로(상단)와 파운드(하단)를 채워 넣음 -->
+                    <div class="text-right flex flex-col justify-between leading-tight" id="exchange-rate-val">
+                        <span class="font-black text-lg text-emerald-700 dark:text-emerald-400">계산 중</span>
                     </div>
+                    
                 </div>
 
                 <!-- 상세 예산 계획표 -->
@@ -264,6 +272,35 @@
                                 <div class="flex justify-between"><span>환율 변동 및 돌발 상황 여유 자금</span><span>€460 <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="460"></span></span></div>
                             </div>
                         </details>
+                    </div>
+                </div>
+                
+                <div onclick="const budgetBtn = document.querySelector('button[onclick*=\'tab-budget\']'); switchTab('tab-budget', budgetBtn);" 
+                 class="mt-6 bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5 cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 hover:shadow-md transition-all group">
+                <!-- 상단: 예산 요약 -->
+                <div class="flex justify-between items-end mb-3">
+                    <div>
+                        <h3 class="font-bold text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">📊 실시간 지출 현황</h3>
+                        <p class="text-[11px] text-gray-500 mt-0.5">클릭하여 전체 가계부 보기 ➔</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm text-gray-500 dark:text-gray-400 mr-1">잔액</span>
+                        <span class="text-xl font-black text-blue-600 dark:text-blue-400" id="main-budget-balance">€2,500</span>
+                        <span class="block text-[10px] text-gray-400" id="main-budget-balance-krw">(약 0원)</span>
+                    </div>
+                </div>
+                
+                <!-- 중간: 프로그레스 바 -->
+                <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5 mb-4">
+                    <div id="main-budget-progress" class="bg-emerald-400 h-2.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+                </div>
+
+                <!-- 하단: 최근 지출 3건 리스트 영역 추가 -->
+                <div class="border-t border-gray-100 dark:border-gray-800 pt-3">
+                    <h4 class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">최근 지출 내역</h4>
+                    <!-- JS에서 최근 3건이 이 안에 렌더링됩니다 -->
+                    <div id="main-recent-expenses" class="space-y-2">
+                        <p class="text-xs text-gray-400 text-center py-2">데이터 로딩 중...</p>
                     </div>
                 </div>
             </div>
@@ -955,17 +992,93 @@
                 </p>
             </div>
         </section>
+        <!-- 7. 가계부 탭 -->
+        <section id="tab-budget" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
+            <h2 class="text-2xl font-bold mb-4">💶 실시간 지출 가계부</h2>
+            
+            <!-- 예산 요약 뷰 -->
+            <div class="bg-blue-600 dark:bg-blue-800 text-white p-5 rounded-xl mb-6 shadow-md relative">
+                <!-- 추가: 우측 상단 실시간 환율 뱃지 -->
+                <div class="absolute top-4 right-4 text-[10px] bg-black/20 px-2 py-1 rounded border border-white/10 flex flex-col items-end">
+                    <span class="opacity-80 mb-0.5" id="budget-exchange-date">환율 로딩중...</span>
+                    <span class="font-bold" id="budget-exchange-rate">€1 = 0원</span>
+                </div>
+
+                <div class="flex flex-col mb-3">
+                    <span class="text-sm opacity-80">총 예산 (€2,500) 대비 잔액</span>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span class="text-2xl font-black" id="budget-balance">€2,500</span>
+                        <!-- 원화 표기용 태그 추가 -->
+                        <span class="text-xs font-medium opacity-70" id="budget-balance-krw">(약 0원)</span>
+                    </div>
+                </div>
+                
+                <!-- 프로그레스 바 -->
+                <div class="w-full bg-black/20 rounded-full h-2.5 mb-2">
+                    <div id="budget-progress" class="bg-emerald-400 h-2.5 rounded-full transition-all duration-500" style="width: 100%"></div>
+                </div>
+                
+                <div class="flex justify-end items-baseline gap-1.5 text-[11px] opacity-90">
+                    <span>총 지출:</span>
+                    <span class="font-bold" id="budget-spent">€0</span>
+                    <!-- 원화 표기용 태그 추가 -->
+                    <span class="opacity-70" id="budget-spent-krw">(약 0원)</span>
+                </div>
+            </div>
+
+            <!-- 새 지출 입력 폼 -->
+            <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm border dark:border-gray-800 mb-6">
+                <h3 class="font-bold text-sm mb-3">새 지출 입력</h3>
+                <form id="expense-form" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="date" id="exp-date" required class="w-full text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <select id="exp-category" required class="w-full text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="교통">✈️ 교통</option>
+                            <option value="숙박">🏠 숙박</option>
+                            <option value="식비">🍔 식비</option>
+                            <option value="액티비티">⚽ 액티비티</option>
+                            <option value="기타">🛒 기타</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-[1fr_auto] gap-3">
+                        <input type="text" id="exp-desc" placeholder="지출 내용 (예: S-Market 장보기)" required class="w-full text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <div class="relative flex items-center w-[110px] md:w-32">
+                            <!-- 통화 드롭다운 (기본값 EUR) -->
+                            <select id="exp-currency" class="absolute left-1 bg-transparent text-gray-700 dark:text-gray-200 font-bold border-none outline-none text-sm cursor-pointer pl-1 pr-4 z-10 appearance-none">
+                                <option value="EUR">€</option>
+                                <option value="GBP">£</option>
+                            </select>
+                            <span class="absolute left-[26px] top-[14px] text-[8px] text-gray-400 pointer-events-none z-10">▼</span>
+                            
+                            <input type="number" step="0.01" id="exp-amount" placeholder="0.00" required class="w-full text-sm py-2 pr-2 pl-[42px] bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors text-sm shadow-sm">
+                        추가하기
+                    </button>
+                </form>
+            </div>
+
+            <!-- 지출 내역 리스트 -->
+            <h3 class="font-bold mb-3 text-gray-800 dark:text-gray-200">지출 내역</h3>
+            <div id="expense-list" class="space-y-3 mb-10">
+                <!-- 자바스크립트로 내역이 여기에 생성됩니다 -->
+            </div>
+        </section>
 
     </main>
 
     <!-- 하단 탭 메뉴 -->
     <nav class="fixed bottom-0 w-full bg-white dark:bg-nordic-950 border-t border-gray-200 dark:border-gray-800 z-50">
         <div class="flex overflow-x-auto hide-scrollbar pb-safe">
-            <!-- 1. 양쪽 끝 탭 중앙 정렬을 위한 시작점 빈 공간 (화면의 절반 - 버튼 크기의 절반) -->
             <div class="flex-shrink-0 w-[calc(50vw-35px)] pointer-events-none"></div>
             
             <button onclick="switchTab('tab-main', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-blue-600 dark:text-blue-500 font-bold">
                 <span class="text-lg">🏠</span>메인
+            </button>
+            <!-- 가계부 탭 추가 -->
+            <button onclick="switchTab('tab-budget', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">💶</span>가계부
             </button>
             <button onclick="switchTab('tab-prep', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🧳</span>출발 전
@@ -983,7 +1096,6 @@
                 <span class="text-lg">🛬</span>귀국 전
             </button>
 
-            <!-- 2. 양쪽 끝 탭 중앙 정렬을 위한 끝점 빈 공간 -->
             <div class="flex-shrink-0 w-[calc(50vw-35px)] pointer-events-none"></div>
         </div>
     </nav>
