@@ -395,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let expenses = []; // 불러온 데이터를 저장할 배열
+    let expenseChart = null;
 
     // 폼 날짜 입력칸 기본값을 오늘 날짜로 세팅
     const today = new Date().toISOString().split('T')[0];
@@ -505,6 +506,116 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="font-bold text-red-500 text-xs">-€${parseFloat(exp.amount).toFixed(2)}</span>
                     `;
                     mainRecentEl.appendChild(row);
+                });
+            }
+        }
+        const ctx = document.getElementById('expense-chart');
+        if (ctx) {
+            // 카테고리별 누적 금액 계산 (유로 기준)
+            const categoryTotals = {
+                '교통': 0, '숙박': 0, '식비': 0, '액티비티': 0, '기타': 0
+            };
+            
+            let hasAnyExpense = false;
+
+            expenses.forEach(exp => {
+                const amt = parseFloat(exp.amount) || 0;
+                if (amt > 0) {
+                    // 카테고리가 맵핑에 없으면 기타로 처리
+                    const cat = categoryTotals[exp.category] !== undefined ? exp.category : '기타';
+                    categoryTotals[cat] += amt;
+                    hasAnyExpense = true;
+                }
+            });
+
+            // 기존 차트가 있으면 파괴하고 새로 그림 (중복 렌더링 방지)
+            if (expenseChart) {
+                expenseChart.destroy();
+            }
+
+            // 지출이 하나도 없을 경우 빈 회색 차트 표시
+            if (!hasAnyExpense) {
+                expenseChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['지출 없음'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#e5e7eb'], // tailwind gray-200
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+                    }
+                });
+            } else {
+                // 실제 데이터로 도넛 차트 생성
+                expenseChart = new Chart(ctx, {
+                    type: 'doughnut', // 파이 차트로 완전히 꽉 차게 하려면 'pie'로 변경해도 됩니다.
+                    data: {
+                        labels: ['✈️ 교통', '🏠 숙박', '🍔 식비', '⚽ 액티비티', '🛒 기타'],
+                        datasets: [{
+                            data: [
+                                categoryTotals['교통'],
+                                categoryTotals['숙박'],
+                                categoryTotals['식비'],
+                                categoryTotals['액티비티'],
+                                categoryTotals['기타']
+                            ],
+                            backgroundColor: [
+                                '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'
+                            ],
+                            borderWidth: 2,
+                            borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        // 비율 유지를 해제하여 부모 래퍼(<div class="relative w-full...">) 크기에 꽉 차도록 설정
+                        maintainAspectRatio: false, 
+                        
+                        // 도넛 구멍의 크기입니다. 파이 차트처럼 속을 꽉 채우려면 '0%'로 변경하세요.
+                        cutout: '50%', 
+                        
+                        // 차트 바깥쪽 여백을 없애 캔버스에 꽉 차게 렌더링
+                        layout: {
+                            padding: 0
+                        },
+                        
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'right', // 범례를 구역 오른쪽에 배치
+                                align: 'center', // 범례 항목을 수직 중앙에 정렬
+                                labels: {
+                                    usePointStyle: true, // 범례 아이콘을 동그라미로 변경
+                                    boxWidth: 8,         // 동그라미 크기 축소
+                                    padding: 12,         // 범례 항목 간의 간격
+                                    font: { 
+                                        size: 12, 
+                                        family: "'Pretendard', sans-serif" 
+                                    },
+                                    color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += '€' + context.parsed.toFixed(2);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 });
             }
         }
