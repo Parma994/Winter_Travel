@@ -293,25 +293,60 @@ async function fetchExchangeRateAndCalculate() {
     const budgetDateEl = document.getElementById('budget-exchange-date');
 
     try {
-        const response = await fetch('https://open.er-api.com/v6/latest/EUR');
-        const data = await response.json();
+        // 1. 최신 데이터를 먼저 호출
+        const latestRes = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json');
+        const data = await latestRes.json();
 
-        if (data && data.rates && data.rates.KRW && data.rates.GBP) {
-            currentEurToKrw = data.rates.KRW;
-            currentEurToGbp = data.rates.GBP;
+        // 2. 최신 데이터의 실제 기준일(date)을 확인한 후 하루 전 날짜 계산
+        const latestDate = new Date(data.date);
+        latestDate.setDate(latestDate.getDate() - 1);
+        const prevDateStr = latestDate.toISOString().split('T')[0];
+
+        // 3. 계산된 전날 날짜로 과거 데이터 호출
+        const prevRes = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${prevDateStr}/v1/currencies/eur.json`);
+        const yestData = await prevRes.json();
+
+        if (data && data.eur && data.eur.krw && data.eur.gbp) {
+            currentEurToKrw = data.eur.krw;
+            currentEurToGbp = data.eur.gbp;
             
             // 내부 계산용 유로-파운드 환율을 이용해 1파운드당 원화 도출
             currentGbpToKrw = currentEurToKrw / currentEurToGbp;
             
+            // 직전 날짜(전일) 환율 설정
+            const yestEurToKrw = yestData.eur.krw;
+            const yestEurToGbp = yestData.eur.gbp;
+            const yestGbpToKrw = yestEurToKrw / yestEurToGbp;
+
+            // 변동폭 계산 (현재 환율 - 전일 환율)
+            const eurDiff = currentEurToKrw - yestEurToKrw;
+            const gbpDiff = currentGbpToKrw - yestGbpToKrw;
+            
             const rateEurKrwFmt = currentEurToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             const rateGbpKrwFmt = currentGbpToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            const updateDate = new Date(data.time_last_update_utc).toLocaleDateString('ko-KR');
+            const updateDate = new Date(data.date).toLocaleDateString('ko-KR');
             
-            // 1. 메인 환율 배너 (유로-원, 파운드-원 병기)
+            // 변동폭 UI 생성 함수 (한국식 표기: 상승=빨간색▲, 하락=파란색▼)
+            const getDiffHtml = (diff) => {
+                if (diff === 0) return `<span class="text-[11px] ml-1.5 text-gray-500 font-bold">- 0.00원</span>`;
+                const isUp = diff > 0;
+                const color = isUp ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400';
+                const sign = isUp ? '▲' : '▼';
+                const val = Math.abs(diff).toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                return `<span class="text-[11px] ml-1.5 font-bold ${color}">${sign} ${val}원</span>`;
+            };
+
+            // 1. 메인 환율 배너 (유로-원, 파운드-원 병기 + 변동폭 표시)
             if (rateValEl) {
                 rateValEl.innerHTML = `
-                    <div class="text-lg font-black text-blue-600 dark:text-blue-400">€1 = ${rateEurKrwFmt}원</div>
-                    <div class="text-lg font-black text-[#f87171] tracking-tight">£1 = ${rateGbpKrwFmt}원</div>
+                    <div class="flex items-center justify-end">
+                        <div class="text-lg font-black text-blue-600 dark:text-blue-400">€1 = ${rateEurKrwFmt}원</div>
+                        ${getDiffHtml(eurDiff)}
+                    </div>
+                    <div class="flex items-center justify-end mt-0.5">
+                        <div class="text-lg font-black text-[#f87171] tracking-tight">£1 = ${rateGbpKrwFmt}원</div>
+                        ${getDiffHtml(gbpDiff)}
+                    </div>
                 `;
             }
             if (dateEl) dateEl.textContent = `기준일: ${updateDate}`;
@@ -718,4 +753,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 페이지 시작 시 구글 시트 데이터 1회 불러오기
     fetchExpenses();
+});
+
+// 12. 패킹 리스트 로컬 스토리지 연동 (Save & Load)
+document.addEventListener('DOMContentLoaded', () => {
+    // pack-chk 클래스를 가진 모든 체크박스를 찾습니다.
+    const checkboxes = document.querySelectorAll('.pack-chk');
+    
+    // 1. 페이지 로드 시: 로컬 스토리지에서 값을 읽어와 체크 상태 복구
+    checkboxes.forEach(chk => {
+        const savedState = localStorage.getItem(chk.id);
+        if (savedState === 'true') {
+            chk.checked = true;
+            // 체크된 항목의 텍스트에 취소선(가독성) 추가
+            chk.nextElementSibling.classList.add('line-through', 'opacity-50');
+        }
+        
+        // 2. 상태 변경 시: 클릭할 때마다 로컬 스토리지에 저장 (true/false)
+        chk.addEventListener('change', (e) => {
+            localStorage.setItem(e.target.id, e.target.checked);
+            
+            // 시각적 피드백 (취소선 토글)
+            if (e.target.checked) {
+                e.target.nextElementSibling.classList.add('line-through', 'opacity-50');
+            } else {
+                e.target.nextElementSibling.classList.remove('line-through', 'opacity-50');
+            }
+        });
+    });
 });

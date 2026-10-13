@@ -608,13 +608,57 @@
                 </div>
             </div>
 
-            <!-- 3) 패킹 리스트 (종이책 중심) -->
-            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">✅ 필수 패킹 리스트</h3>
-            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm space-y-2 text-sm border dark:border-gray-800">
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>종이책 전용 휴대용 충전식 LED 독서등</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>접이식 휴대용 독서대 (북스탠드)</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>겨울 방한 부츠 및 보온 내의</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 text-blue-600 focus:ring-blue-500"><span>비타민 D 및 일회용 인공눈물</span></label>
+            <!-- 3) 패킹 리스트 (로컬 스토리지 연동) -->
+            <h3 class="font-bold mb-3 text-blue-600 dark:text-blue-400">✅ 한 달 살기 실전 패킹 리스트</h3>
+            <div class="space-y-4">
+                <!-- 백팩 항목 -->
+                 <details class="group bg-white dark:bg-nordic-900 rounded-xl shadow-sm border dark:border-gray-800 overflow-hidden">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <span class="text-base">🎒</span>
+                            <h4 class="font-bold text-gray-800 dark:text-gray-200">기내 수하물 (백팩)</h4>
+                        </div>
+                        <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
+                    </summary>
+
+                    <div class="p-4 pt-2 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                        <div>
+                            <h4 class="font-bold text-red-500 mb-2"> 🛂서류 및 금융</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-passport" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">여권 (6개월 이상) & UK ETA 승인서</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-cards" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">트래블로그/비상용 신용카드 & 소액 환전</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-boucher" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">바우처 캡처본 or 인쇄본</span></label>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-yellow-500 mb-2">🔌전자기기</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-battery" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">대용량 보조배터리</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-charger" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">충전기 및 케이블</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-headphones" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">이어폰</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-camera" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">브이로그용 카메라</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-hotpack" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">핫팩</span></label>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-green-500 mb-2">🧥 의류 (단기여행용)</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-underwear" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">속옷 및 양말</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-heattex" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">히트텍</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-swimsuit" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">수영복 (사우나용)</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-toothbrush" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">세면도구 세트</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-moisturizer" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">보습제 및 인공눈물</span></label>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-green-500 mb-2">💊 비상약품</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-medicine" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">각종 상비약</span></label>
+                                <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="chk-sleepmedicine" class="pack-chk w-4 h-4 text-blue-600 focus:ring-blue-500"><span class="text-gray-700 dark:text-gray-300">수면약</span></label>
+                            </div>
+                        </div>
+                    </div>
+                </details>
             </div>
         </section>
 
