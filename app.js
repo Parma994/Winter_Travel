@@ -755,30 +755,39 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchExpenses();
 });
 
-// 12. 패킹 리스트 로컬 스토리지 연동 (Save & Load)
+// 12. 체크리스트 로컬 스토리지 통합 연동 (준비 로드맵 & 패킹 리스트)
 document.addEventListener('DOMContentLoaded', () => {
-    // pack-chk 클래스를 가진 모든 체크박스를 찾습니다.
     const checkboxes = document.querySelectorAll('.pack-chk');
     
-    // 1. 페이지 로드 시: 로컬 스토리지에서 값을 읽어와 체크 상태 복구
+    // 취소선 스타일 토글 함수
+    const updateLabelStyle = (chk) => {
+        const labelSpan = chk.nextElementSibling;
+        if (!labelSpan) return;
+        if (chk.checked) {
+            labelSpan.classList.add('line-through', 'opacity-50');
+        } else {
+            labelSpan.classList.remove('line-through', 'opacity-50');
+        }
+    };
+
     checkboxes.forEach(chk => {
         const savedState = localStorage.getItem(chk.id);
-        if (savedState === 'true') {
-            chk.checked = true;
-            // 체크된 항목의 텍스트에 취소선(가독성) 추가
-            chk.nextElementSibling.classList.add('line-through', 'opacity-50');
+        
+        // 1. 로컬 스토리지에 저장된 기록이 있으면 그 값을 따름
+        if (savedState !== null) {
+            chk.checked = (savedState === 'true');
+        } else if (chk.checked) {
+            // 저장된 기록이 없는데 HTML에 기본 checked가 되어 있다면 로컬 스토리지에 초기 저장
+            localStorage.setItem(chk.id, 'true');
         }
         
-        // 2. 상태 변경 시: 클릭할 때마다 로컬 스토리지에 저장 (true/false)
+        // 초기 화면 렌더링 시 취소선 적용
+        updateLabelStyle(chk);
+        
+        // 2. 클릭하여 상태 변경 시 로컬 스토리지 업데이트 및 취소선 토글
         chk.addEventListener('change', (e) => {
             localStorage.setItem(e.target.id, e.target.checked);
-            
-            // 시각적 피드백 (취소선 토글)
-            if (e.target.checked) {
-                e.target.nextElementSibling.classList.add('line-through', 'opacity-50');
-            } else {
-                e.target.nextElementSibling.classList.remove('line-through', 'opacity-50');
-            }
+            updateLabelStyle(e.target);
         });
     });
 });
