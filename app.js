@@ -283,7 +283,7 @@ function toggleBudgetTable() {
     }
 }
 
-// 8. 실시간 환율 API 연동 (유로 및 파운드 ➔ 원화)
+// 8. 실시간 환율 API 연동 (실시간 최신 환율 + 로컬스토리지/CDN 하이브리드 변동폭 계산)
 async function fetchExchangeRateAndCalculate() {
     const rateValEl = document.getElementById('exchange-rate-val');
     const dateEl = document.getElementById('exchange-date');
@@ -293,89 +293,122 @@ async function fetchExchangeRateAndCalculate() {
     const budgetDateEl = document.getElementById('budget-exchange-date');
 
     try {
-        // 1. 최신 데이터를 먼저 호출
-        const latestRes = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/eur.json');
-        const data = await latestRes.json();
+        // 1. 실시간 최신 환율 호출 (open.er-api.com)
+        const liveRes = await fetch('https://open.er-api.com/v6/latest/EUR');
+        const liveData = await liveRes.json();
 
-        // 2. 최신 데이터의 실제 기준일(date)을 확인한 후 하루 전 날짜 계산
-        const latestDate = new Date(data.date);
-        latestDate.setDate(latestDate.getDate() - 1);
-        const prevDateStr = latestDate.toISOString().split('T')[0];
-
-        // 3. 계산된 전날 날짜로 과거 데이터 호출
-        const prevRes = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${prevDateStr}/v1/currencies/eur.json`);
-        const yestData = await prevRes.json();
-
-        if (data && data.eur && data.eur.krw && data.eur.gbp) {
-            currentEurToKrw = data.eur.krw;
-            currentEurToGbp = data.eur.gbp;
-            
-            // 내부 계산용 유로-파운드 환율을 이용해 1파운드당 원화 도출
-            currentGbpToKrw = currentEurToKrw / currentEurToGbp;
-            
-            // 직전 날짜(전일) 환율 설정
-            const yestEurToKrw = yestData.eur.krw;
-            const yestEurToGbp = yestData.eur.gbp;
-            const yestGbpToKrw = yestEurToKrw / yestEurToGbp;
-
-            // 변동폭 계산 (현재 환율 - 전일 환율)
-            const eurDiff = currentEurToKrw - yestEurToKrw;
-            const gbpDiff = currentGbpToKrw - yestGbpToKrw;
-            
-            const rateEurKrwFmt = currentEurToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            const rateGbpKrwFmt = currentGbpToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            const updateDate = new Date(data.date).toLocaleDateString('ko-KR');
-            
-            // 변동폭 UI 생성 함수 (한국식 표기: 상승=빨간색▲, 하락=파란색▼)
-            const getDiffHtml = (diff) => {
-                if (diff === 0) return `<span class="text-[11px] ml-1.5 text-gray-500 font-bold">- 0.00원</span>`;
-                const isUp = diff > 0;
-                const color = isUp ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400';
-                const sign = isUp ? '▲' : '▼';
-                const val = Math.abs(diff).toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                return `<span class="text-[11px] ml-1.5 font-bold ${color}">${sign} ${val}원</span>`;
-            };
-
-            // 1. 메인 환율 배너 (유로-원, 파운드-원 병기 + 변동폭 표시)
-            if (rateValEl) {
-                rateValEl.innerHTML = `
-                    <div class="flex items-center justify-end">
-                        <div class="text-lg font-black text-blue-600 dark:text-blue-400">€1 = ${rateEurKrwFmt}원</div>
-                        ${getDiffHtml(eurDiff)}
-                    </div>
-                    <div class="flex items-center justify-end mt-0.5">
-                        <div class="text-lg font-black text-[#f87171] tracking-tight">£1 = ${rateGbpKrwFmt}원</div>
-                        ${getDiffHtml(gbpDiff)}
-                    </div>
-                `;
-            }
-            if (dateEl) dateEl.textContent = `기준일: ${updateDate}`;
-
-            // 2. 가계부 탭 미니 배너 업데이트
-            if (budgetRateEl) {
-                budgetRateEl.innerHTML = `€1 = ${rateEurKrwFmt}원<br>£1 = ${rateGbpKrwFmt}원`;
-                budgetRateEl.classList.add('leading-tight', 'text-right');
-            }
-            if (budgetDateEl) budgetDateEl.textContent = `환율 기준: ${updateDate}`;
-
-            // 3. 메인 탭 예산표 원화 계산 (100원 단위 반올림)
-            krwElements.forEach(el => {
-                const eurAmount = parseFloat(el.getAttribute('data-eur'));
-                if (!isNaN(eurAmount)) {
-                    const rawKrw = eurAmount * currentEurToKrw;
-                    const roundedKrw = Math.round(rawKrw / 100) * 100;
-                    el.textContent = `(약 ${roundedKrw.toLocaleString('ko-KR')}원)`;
-                }
-            });
-            
-            // 4. 강제 새로고침 트리거
-            if (typeof window.triggerRenderExpenses === 'function') {
-                window.triggerRenderExpenses();
-            }
-
-        } else {
-            throw new Error("환율 데이터를 불러올 수 없습니다.");
+        if (!liveData || !liveData.rates) {
+            throw new Error("실시간 환율 데이터를 불러올 수 없습니다.");
         }
+
+        currentEurToKrw = liveData.rates.KRW;
+        currentEurToGbp = liveData.rates.GBP;
+        currentGbpToKrw = currentEurToKrw / currentEurToGbp;
+
+        const updateDateObj = new Date(liveData.time_last_update_utc);
+        const updateDate = updateDateObj.toLocaleDateString('ko-KR');
+        const todayKey = updateDateObj.toISOString().split('T')[0];
+
+        // 2. 변동폭 계산 (로컬 스토리지 우선 확인 -> 없으면 CDN 과거 데이터 호출)
+        let eurDiff = 0;
+        let gbpDiff = 0;
+
+        // 기기에 저장된 이전 환율 기록 불러오기
+        const savedHistory = JSON.parse(localStorage.getItem('rateHistory') || '{}');
+
+        // 만약 기기에 '오늘 이전 날짜'에 저장된 환율이 있다면 그 값과 비교
+        if (savedHistory.prevDate && savedHistory.prevDate !== todayKey && savedHistory.eur) {
+            eurDiff = currentEurToKrw - savedHistory.eur;
+            gbpDiff = currentGbpToKrw - savedHistory.gbp;
+        } else if (savedHistory.todayDate === todayKey && savedHistory.eurDiff !== undefined) {
+            // 오늘 이미 계산해 둔 변동폭이 있다면 그대로 재사용
+            eurDiff = savedHistory.eurDiff;
+            gbpDiff = savedHistory.gbpDiff;
+        } else {
+            // 기기에 기록이 없는 첫 접속일 경우: 3일 전 데이터를 CDN에서 가져와 비교 (시차/주말 중복 완벽 회피)
+            try {
+                const compareDate = new Date(updateDateObj);
+                compareDate.setDate(compareDate.getDate() - 3);
+                const compareDateStr = compareDate.toISOString().split('T')[0];
+
+                const histRes = await fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${compareDateStr}/v1/currencies/eur.json`);
+                if (histRes.ok) {
+                    const histData = await histRes.json();
+                    const pastEurToKrw = histData.eur.krw;
+                    const pastGbpToKrw = pastEurToKrw / histData.eur.gbp;
+
+                    eurDiff = currentEurToKrw - pastEurToKrw;
+                    gbpDiff = currentGbpToKrw - pastGbpToKrw;
+                }
+            } catch (e) {
+                console.warn("과거 환율 CDN 조회 생략:", e);
+            }
+        }
+
+        // 오늘 환율과 계산된 변동폭을 로컬 스토리지에 백업 (내일 접속 시 비교 기준점이 됨)
+        if (savedHistory.todayDate !== todayKey) {
+            localStorage.setItem('rateHistory', JSON.stringify({
+                prevDate: savedHistory.todayDate || todayKey,
+                eur: savedHistory.todayEur || currentEurToKrw,
+                gbp: savedHistory.todayGbp || currentGbpToKrw,
+                todayDate: todayKey,
+                todayEur: currentEurToKrw,
+                todayGbp: currentGbpToKrw,
+                eurDiff: eurDiff,
+                gbpDiff: gbpDiff
+            }));
+        }
+
+        const rateEurKrwFmt = currentEurToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        const rateGbpKrwFmt = currentGbpToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        // 변동폭 UI 생성 함수 (상승=빨간색▲, 하락=파란색▼)
+        const getDiffHtml = (diff) => {
+            if (Math.abs(diff) < 0.01) return `<span class="text-[11px] ml-1.5 text-gray-400 font-bold">- 0.00원</span>`;
+            const isUp = diff > 0;
+            const color = isUp ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400';
+            const sign = isUp ? '▲' : '▼';
+            const val = Math.abs(diff).toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            return `<span class="text-[11px] ml-1.5 font-bold ${color}">${sign} ${val}원</span>`;
+        };
+
+        // 1. 메인 환율 배너 업데이트
+        if (rateValEl) {
+            rateValEl.innerHTML = `
+                <div class="flex items-center justify-end">
+                    <div class="text-lg font-black text-blue-600 dark:text-blue-400">€1 = ${rateEurKrwFmt}원</div>
+                    ${getDiffHtml(eurDiff)}
+                </div>
+                <div class="flex items-center justify-end mt-0.5">
+                    <div class="text-lg font-black text-[#f87171] tracking-tight">£1 = ${rateGbpKrwFmt}원</div>
+                    ${getDiffHtml(gbpDiff)}
+                </div>
+            `;
+        }
+        if (dateEl) dateEl.textContent = `기준일: ${updateDate}`;
+
+        // 2. 가계부 탭 미니 배너 업데이트
+        if (budgetRateEl) {
+            budgetRateEl.innerHTML = `€1 = ${rateEurKrwFmt}원<br>£1 = ${rateGbpKrwFmt}원`;
+            budgetRateEl.classList.add('leading-tight', 'text-right');
+        }
+        if (budgetDateEl) budgetDateEl.textContent = `환율 기준: ${updateDate}`;
+
+        // 3. 메인 탭 예산표 원화 계산 (100원 단위 반올림)
+        krwElements.forEach(el => {
+            const eurAmount = parseFloat(el.getAttribute('data-eur'));
+            if (!isNaN(eurAmount)) {
+                const rawKrw = eurAmount * currentEurToKrw;
+                const roundedKrw = Math.round(rawKrw / 100) * 100;
+                el.textContent = `(약 ${roundedKrw.toLocaleString('ko-KR')}원)`;
+            }
+        });
+        
+        // 4. 가계부 지출 내역 원화 환산 강제 새로고침 트리거
+        if (typeof window.triggerRenderExpenses === 'function') {
+            window.triggerRenderExpenses();
+        }
+
     } catch (error) {
         console.error("환율 API 호출 실패:", error);
         if (rateValEl) rateValEl.innerHTML = "불러오기 실패";
