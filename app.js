@@ -449,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🔥 아래 따옴표 안에 구글 배포 후 받은 웹 앱 URL(exec로 끝나는 주소)을 넣으세요.
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8aKRlruKIgUlRWpEAAOzLqog6Sm3ZulxbnqNLU6byGMBd3k4ec0tz6pZqdFvldA8k/exec"; 
     
-    const TOTAL_BUDGET = 2500;
+    const TOTAL_BUDGET = BUDGET_TOTAL; // data/budget.js 예산 계획표 합계
     const form = document.getElementById('expense-form');
     const expenseList = document.getElementById('expense-list');
     const balanceEl = document.getElementById('budget-balance');
