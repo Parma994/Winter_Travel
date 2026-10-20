@@ -788,7 +788,23 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchExpenses();
 });
 
-// 12. 체크리스트 로컬 스토리지 통합 연동 (준비 로드맵 & 패킹 리스트)
+// 12. 핀란드 주차 탭 전환 (탭 클래스 상수는 render.js에 정의)
+document.addEventListener('DOMContentLoaded', () => {
+    const weekTabs = document.querySelectorAll('.week-tab');
+    const weekPanels = document.querySelectorAll('.week-panel');
+
+    weekTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const week = tab.dataset.week;
+            weekTabs.forEach(t => {
+                t.className = `${WEEK_TAB_BASE} ${t.dataset.week === week ? WEEK_TAB_ACTIVE : WEEK_TAB_INACTIVE}`;
+            });
+            weekPanels.forEach(panel => { panel.hidden = panel.dataset.week !== week; });
+        });
+    });
+});
+
+// 13. 체크리스트 로컬 스토리지 통합 연동 (준비 로드맵 & 패킹 리스트)
 document.addEventListener('DOMContentLoaded', () => {
     const checkboxes = document.querySelectorAll('.pack-chk');
     

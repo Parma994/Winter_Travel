@@ -301,7 +301,87 @@ function renderAirportStep(step, isLast) {
         </div>`;
 }
 
-// 11. 실제 렌더링 실행
+// 11. 핀란드 주차별 일정 (카드 하나 안에 주차 탭 + 날짜 행)
+// 탭 클릭 전환은 app.js의 주차 탭 로직이 담당 (아래 클래스 상수를 함께 사용)
+const WEEK_TAB_BASE = 'week-tab flex-1 min-w-[4.5rem] py-3 border-b-2 text-sm font-bold transition-colors';
+const WEEK_TAB_ACTIVE = 'border-emerald-500 text-emerald-600 dark:text-emerald-400';
+const WEEK_TAB_INACTIVE = 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300';
+
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const parseDate = (key) => new Date(`${key}T00:00:00`);
+const toDateKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const formatMonthDay = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
+const formatShortDate = (d) => `${formatMonthDay(d)} (${WEEKDAYS[d.getDay()]})`;
+
+function getDatesInRange(start, end) {
+    const dates = [];
+    for (let d = parseDate(start); d <= parseDate(end); d.setDate(d.getDate() + 1)) {
+        dates.push(new Date(d));
+    }
+    return dates;
+}
+
+function renderFinlandDay(date, todayKey) {
+    const key = toDateKey(date);
+    const day = FINLAND_SCHEDULE[key] || {};
+    const items = day.items || [];
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const isToday = key === todayKey;
+
+    const title = day.title || (items.length ? `일정 ${items.length}개` : '<span class="font-normal text-gray-400">일정 없음</span>');
+    const todayBadge = isToday ? ' <span class="ml-1 text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">오늘</span>' : '';
+    const body = items.length
+        ? `<div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-3 mt-2 mb-2 space-y-6">
+               ${items.map(renderTimelineItem).join('')}
+           </div>`
+        : `<p class="text-xs text-gray-400 py-2 text-center">아직 등록된 일정이 없어요.</p>`;
+    const badgeClass = isWeekend
+        ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300'
+        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300';
+
+    // 카드 안의 한 행 (행 사이는 구분선, 마지막 행은 구분선 없음)
+    return `
+        <details${isToday ? ' open' : ''} class="group border-b border-gray-200 dark:border-gray-700 last:border-0">
+            <summary class="flex justify-between items-center px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
+                <div class="flex items-center gap-3">
+                    <span class="${badgeClass} w-16 text-center text-xs font-bold py-1 rounded-md">${formatShortDate(date)}</span>
+                    <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">${title}${todayBadge}</h4>
+                </div>
+                <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
+            </summary>
+            <div class="px-4 pb-4">
+                ${body}
+            </div>
+        </details>`;
+}
+
+function renderFinlandWeeks(weeks) {
+    const todayKey = toDateKey(new Date());
+    // 오늘이 속한 주차를 먼저 보여주고, 여행 기간이 아니면 1주차
+    const activeIndex = Math.max(0, weeks.findIndex(w => todayKey >= w.start && todayKey <= w.end));
+
+    const tabs = weeks.map((week, i) => `
+        <button type="button" data-week="${i}" class="${WEEK_TAB_BASE} ${i === activeIndex ? WEEK_TAB_ACTIVE : WEEK_TAB_INACTIVE}">
+            ${week.label}
+            <span class="block text-[10px] font-medium opacity-80">${formatMonthDay(parseDate(week.start))} ~ ${formatMonthDay(parseDate(week.end))}</span>
+            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">${week.trip}</span>` : ''}
+        </button>`).join('');
+
+    const panels = weeks.map((week, i) => `
+        <div class="week-panel" data-week="${i}"${i === activeIndex ? '' : ' hidden'}>
+            ${getDatesInRange(week.start, week.end).map(date => renderFinlandDay(date, todayKey)).join('')}
+        </div>`).join('');
+
+    return `
+        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div class="flex overflow-x-auto hide-scrollbar border-b border-gray-200 dark:border-gray-700">
+                ${tabs}
+            </div>
+            ${panels}
+        </div>`;
+}
+
+// 12. 실제 렌더링 실행
 function renderInto(containerId, html) {
     const el = document.getElementById(containerId);
     if (el) el.innerHTML = html;
@@ -313,3 +393,4 @@ renderInto('budget-plan', renderBudgetPlan(BUDGET_PLAN));
 renderInto('flight-list', FLIGHTS.map(renderFlight).join(''));
 renderInto('prep-roadmap', PREP_ROADMAP.map(renderRoadmapCard).join('') + SCROLL_END_SPACER);
 renderInto('airport-steps', AIRPORT_STEPS.map((step, i) => renderAirportStep(step, i === AIRPORT_STEPS.length - 1)).join('') + SCROLL_END_SPACER);
+renderInto('finland-weeks', renderFinlandWeeks(FINLAND_WEEKS));

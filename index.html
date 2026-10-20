@@ -232,11 +232,11 @@
         <!-- 4. 핀란드 탭 (메인 거점) -->
         <section id="tab-finland" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
             <h2 class="text-2xl font-bold mb-4">🇫🇮 탐페레 한 달 살기 & 학습</h2>
+
             <!-- 탐페레 베이스캠프 에어비앤비 정보 카드 & 지도 -->
             <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5 mb-6">
                 <div class="flex justify-between items-start mb-3">
                     <div>
-                        <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 text-xs font-bold px-2 py-0.5 rounded">예약 완료</span>
                         <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mt-1">🏠 탐페레 베이스캠프 (68m² 투룸)</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Hatanpään Valtatie 4 B (5층, 엘리베이터 있음)</p>
                     </div>
@@ -267,26 +267,10 @@
                     </div>
                 </div>
             </div>
-            <!-- 핀란드 루틴 강조색 복구 (초록/오렌지 등) -->
-            <h3 class="font-bold mb-3 text-emerald-600 dark:text-emerald-400">⏰ 평일 표준 루틴</h3>
-            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 space-y-4 border dark:border-gray-800">
-                <div class="flex gap-3">
-                    <span class="font-bold w-12 text-gray-500 dark:text-gray-400">09:00</span>
-                    <div><p class="font-semibold text-sm">[숙소 몰입] 무거운 전공 서적 정독</p></div>
-                </div>
-                <div class="flex gap-3">
-                    <span class="font-bold w-12 text-orange-500 dark:text-orange-400">12:00</span>
-                    <div><p class="font-semibold text-sm">[골든타임] 점심 및 햇빛 30분 산책</p></div>
-                </div>
-                <div class="flex gap-3">
-                    <span class="font-bold w-12 text-gray-500 dark:text-gray-400">13:30</span>
-                    <div><p class="font-semibold text-sm">[도서관] 메초(Metso) / 린나(Linna) 복습</p></div>
-                </div>
-                <div class="flex gap-3">
-                    <span class="font-bold w-12 text-blue-500 dark:text-blue-400">20:00</span>
-                    <div><p class="font-semibold text-sm">[야간 루틴] 저녁 식사 및 주 2~3회 로컬 사우나</p></div>
-                </div>
-            </div>
+
+            <!-- 주차별 일정 (주차 탭 + 날짜별 카드): data/finland.js 데이터로 render.js가 그려줍니다 -->
+            <h3 class="font-bold mb-3 text-emerald-600 dark:text-emerald-400">🗓️ 주차별 일정</h3>
+            <div id="finland-weeks" class="mb-8"></div>
 
             <h3 class="font-bold mb-3">🧖‍♂️ 사우나 도장깨기</h3>
             <div class="space-y-2 text-sm bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border dark:border-gray-800">
@@ -473,6 +457,7 @@
     <script src="data/budget.js"></script>
     <script src="data/flights.js"></script>
     <script src="data/prep.js"></script>
+    <script src="data/finland.js"></script>
     <script src="render.js"></script>
     <script src="app.js"></script>
 </body>
