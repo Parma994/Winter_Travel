@@ -2,16 +2,37 @@
 // 세부 항목 금액(amount)만 적으면 카테고리 합계, 전체 합계, 가계부 총예산이 자동 계산됩니다.
 // currency: 현지 통화로 쓸 때만 적음 (data/currency.js의 코드, 없으면 유로)
 //           → 예산표에 현지 통화로 표시되고 왼쪽에 실시간 환율로 바꾼 유로 금액이 작게 붙음
+// 구분선: 항목 사이에 { divider: '제목' } 한 줄 (제목 없이 선만 원하면 { divider: true }, 합계에는 영향 없음)
+//         오른쪽에 다음 구분선 전까지 항목들의 소계가 자동으로 붙음
 // (data/currency.js 다음에 로드되어야 합니다)
 
 const BUDGET_PLAN = [
     {
         icon: '✈️', title: '교통 및 항공권',
         items: [
-            { label: '영국 런던 왕복 항공권', amount: 200 },
-            { label: '헬싱키 ↔ 탐페레 기차(VR)', amount: 120 },
-            { label: '헬싱키 시내 교통 (HSL)', amount: 60 },
-            { label: '탐페레 대중교통(Nysse) 30일권', amount: 60 }
+            { divider: '0주차 · 헬싱키 & 탐페레' },
+            { label: '공항 ~ 헬싱키 기차', amount: 4.5 },
+            { label: '헬싱키 시내 교통 (HSL)', amount: 15.9 },
+            { label: '헬싱키 ~ 탐페레', amount: 8.9 },
+            { label: '탐페레 대중교통(Nysse) 30일권', amount: 46 },
+
+            { divider: '1주차 · 스톡홀름' },
+            { label: '탐페레 ↔ 투르쿠', amount: 12.2 },
+            { label: '투르쿠 ↔ 스톡홀름 페리', amount: 191 },
+            { label: '스톡홀름 시내 교통', amount: 180, currency: 'SEK' },
+
+            { divider: '2주차 · 잉글랜드' },
+            { label: '탐페레 ↔ 공항 * 2', amount: 31.6 },
+            { label: '영국 런던 왕복 항공권', amount: 57 },
+            { label: '런던 시내 교통', amount: 67, currency: 'GBP' },
+
+            { divider: '3주차 · 로바니에미 & 트롬쇠' },
+            { label: '탐페레 ~ 로바니에미 기차', amount: 79 },
+            { label: '로바니에미 ~ 트롬쇠 항공권', amount: 149 },
+            { label: '트롬쇠 ~ 헬싱키 항공권', amount: 502, currency: 'NOK' },
+
+            { divider: '4주차 · 코펜하겐' },
+            { label: '코펜하겐 지하철', amount: 60, currency: 'DKK' },
         ]
     },
     {
@@ -46,6 +67,10 @@ const BUDGET_PLAN = [
 ];
 
 // 자동 계산 (직접 수정하지 마세요) - 현지 통화 항목은 현재 환율로 유로 환산하므로 환율이 바뀌면 합계도 바뀜
-const itemEur = (item) => toEur(item.amount, item.currency);
+const itemEur = (item) => item.divider ? 0 : toEur(item.amount, item.currency);
 const sumEur = (items) => items.reduce((sum, item) => sum + itemEur(item), 0);
+const groupEur = (items, dividerIndex) => { // 구분선 소계: 다음 구분선(또는 끝) 전까지
+    const nextDivider = items.findIndex((item, i) => i > dividerIndex && item.divider);
+    return sumEur(items.slice(dividerIndex + 1, nextDivider === -1 ? items.length : nextDivider));
+};
 const getBudgetTotal = () => BUDGET_PLAN.reduce((sum, cat) => sum + sumEur(cat.items), 0);

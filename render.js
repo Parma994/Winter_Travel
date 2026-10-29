@@ -135,7 +135,8 @@ function getBudgetEur(key) {
     if (key === 'total') return getBudgetTotal();
     const [catIndex, itemIndex] = String(key).split(':');
     const items = BUDGET_PLAN[catIndex].items;
-    return itemIndex === undefined ? sumEur(items) : itemEur(items[itemIndex]);
+    if (itemIndex === undefined) return sumEur(items);
+    return items[itemIndex].divider ? groupEur(items, Number(itemIndex)) : itemEur(items[itemIndex]);
 }
 
 const renderBudgetEur = (key) => `<span data-budget="${key}">${formatEur(getBudgetEur(key))}</span>`;
@@ -151,9 +152,13 @@ function updateBudgetAmounts() {
 
 function renderBudgetItem(item, catIndex, itemIndex) {
     const key = `${catIndex}:${itemIndex}`;
+    // 구분선 { divider: '1주차 · 스톡홀름' } + 오른쪽에 소계 (맨 위 구분선은 선 없이 제목만)
+    if (item.divider) {
+        return `<div class="flex justify-between pt-2 first:pt-0 border-t first:border-0 border-dashed border-gray-200 dark:border-gray-700 text-[10px] font-bold text-gray-400 dark:text-gray-500"><span>${item.divider === true ? '' : item.divider}</span><span>소계 ${renderBudgetEur(key)}</span></div>`;
+    }
     const amount = item.currency && item.currency !== 'EUR'
         ? `<span class="text-[10px] text-gray-400 mr-1">≈${renderBudgetEur(key)}</span>${formatMoney(item.amount, item.currency)}`
-        : formatEur(item.amount);
+        : formatMoney(item.amount); // 직접 적은 유로 금액은 소수점까지 그대로 (환산값/합계만 반올림)
     return `<div class="flex justify-between gap-2"><span>${item.label}</span><span class="whitespace-nowrap">${amount} ${renderBudgetKrw(key, 'text-[10px] text-gray-400 ml-1')}</span></div>`;
 }
 
