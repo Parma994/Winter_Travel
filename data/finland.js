@@ -5,12 +5,13 @@
 // coords: 있으면 메인 지도에 마커와 점선 표시 / note: 지도 팝업 보조 설명 (선택)
 // from: 점선을 이어줄 출발지 (다른 여행지 키 또는 'helsinki', 없으면 탐페레에서 출발)
 //       자기 주차가 없으면 출발지 여행의 주차를 따름
+// currency: 현지 통화 (data/currency.js의 코드, 유로 지역이면 생략) → 그 주차에 메인 환율 배너에 유로와 함께 표시
 const TRIP_PLACES = {
-    england:   { name: '잉글랜드', icon: '🇬🇧', city: '런던', coords: [51.5074, -0.1278] },
+    england:   { name: '잉글랜드', icon: '🇬🇧', city: '런던', coords: [51.5074, -0.1278], currency: 'GBP' },
     rovaniemi: { name: '로바니에미', icon: '🎅', city: '로바니에미', coords: [66.5039, 25.7294], note: '산타마을' },
-    tromso:    { name: '트롬쇠', icon: '🇳🇴', city: '트롬쇠', coords: [69.6492, 18.9553], from: 'rovaniemi' },
-    stockholm: { name: '스톡홀름', icon: '🇸🇪', city: '스톡홀름', coords: [59.3293, 18.0686] },
-    denmark:   { name: '코펜하겐', icon: '🇩🇰', city: '코펜하겐', coords: [55.6761, 12.5683], from: 'helsinki' } // 귀국편 경유지
+    tromso:    { name: '트롬쇠', icon: '🇳🇴', city: '트롬쇠', coords: [69.6492, 18.9553], from: 'rovaniemi', currency: 'NOK' },
+    stockholm: { name: '스톡홀름', icon: '🇸🇪', city: '스톡홀름', coords: [59.3293, 18.0686], currency: 'SEK' },
+    denmark:   { name: '코펜하겐', icon: '🇩🇰', city: '코펜하겐', coords: [55.6761, 12.5683], from: 'helsinki', currency: 'DKK' } // 귀국편 경유지
 };
 
 // 2. 주차 구간 (start ~ end 사이의 날짜 카드가 자동 생성됨)

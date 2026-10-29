@@ -125,15 +125,39 @@ function renderPackingBag(bag) {
 }
 
 // 7. 상세 예산 계획표 (전체 → 카테고리 → 세부 항목)
+// 현지 통화 항목은 현지 금액 왼쪽에 유로 환산값을 작게 병기
+// data-budget가 붙은 유로 금액은 환율을 받아오면 updateBudgetAmounts가 다시 계산
 // .krw-calc의 원화 환산은 app.js의 환율 로직이 data-eur 값을 읽어서 채움
-const formatEur = (eur) => `€${eur.toLocaleString('en-US')}`;
+const formatEur = (eur) => `€${Math.round(eur).toLocaleString('en-US')}`;
 
-function renderBudgetItem(item) {
-    return `<div class="flex justify-between"><span>${item.label}</span><span>${formatEur(item.eur)} <span class="text-[10px] text-gray-400 ml-1 krw-calc" data-eur="${item.eur}"></span></span></div>`;
+// data-budget 값: 'total' | '카테고리 번호' | '카테고리 번호:항목 번호'
+function getBudgetEur(key) {
+    if (key === 'total') return getBudgetTotal();
+    const [catIndex, itemIndex] = String(key).split(':');
+    const items = BUDGET_PLAN[catIndex].items;
+    return itemIndex === undefined ? sumEur(items) : itemEur(items[itemIndex]);
 }
 
-function renderBudgetCategory(cat) {
-    const total = sumEur(cat.items);
+const renderBudgetEur = (key) => `<span data-budget="${key}">${formatEur(getBudgetEur(key))}</span>`;
+const renderBudgetKrw = (key, className) => `<span class="${className} krw-calc" data-budget="${key}" data-eur="${getBudgetEur(key)}"></span>`;
+
+function updateBudgetAmounts() {
+    document.querySelectorAll('[data-budget]').forEach(el => {
+        const eur = getBudgetEur(el.dataset.budget);
+        if (el.classList.contains('krw-calc')) el.dataset.eur = eur;
+        else el.textContent = formatEur(eur);
+    });
+}
+
+function renderBudgetItem(item, catIndex, itemIndex) {
+    const key = `${catIndex}:${itemIndex}`;
+    const amount = item.currency && item.currency !== 'EUR'
+        ? `<span class="text-[10px] text-gray-400 mr-1">≈${renderBudgetEur(key)}</span>${formatMoney(item.amount, item.currency)}`
+        : formatEur(item.amount);
+    return `<div class="flex justify-between gap-2"><span>${item.label}</span><span class="whitespace-nowrap">${amount} ${renderBudgetKrw(key, 'text-[10px] text-gray-400 ml-1')}</span></div>`;
+}
+
+function renderBudgetCategory(cat, catIndex) {
     return `
         <details class="group border-b dark:border-gray-800 last:border-0">
             <summary class="flex justify-between items-center font-semibold cursor-pointer list-none [&::-webkit-details-marker]:hidden p-3 hover:bg-gray-50 dark:hover:bg-nordic-800 rounded-lg transition-colors">
@@ -143,14 +167,14 @@ function renderBudgetCategory(cat) {
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="text-right">
-                        <span class="font-bold text-blue-600 dark:text-blue-400">${formatEur(total)}</span>
-                        <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="${total}"></span>
+                        <span class="font-bold text-blue-600 dark:text-blue-400">${renderBudgetEur(catIndex)}</span>
+                        ${renderBudgetKrw(catIndex, 'block text-[10px] text-gray-400 font-normal mt-0.5')}
                     </div>
                     <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
                 </div>
             </summary>
             <div class="text-xs text-gray-500 dark:text-gray-400 px-3 pb-3 space-y-2">
-                ${cat.items.map(renderBudgetItem).join('')}
+                ${cat.items.map((item, itemIndex) => renderBudgetItem(item, catIndex, itemIndex)).join('')}
             </div>
         </details>`;
 }
@@ -164,17 +188,21 @@ function renderBudgetPlan(plan) {
             </div>
             <div class="flex items-center gap-3">
                 <div class="text-right">
-                    <span class="text-lg font-black text-blue-600 dark:text-blue-400">${formatEur(BUDGET_TOTAL)}</span>
-                    <span class="block text-[10px] text-gray-400 font-normal mt-0.5 krw-calc" data-eur="${BUDGET_TOTAL}"></span>
+                    <span class="text-lg font-black text-blue-600 dark:text-blue-400">${renderBudgetEur('total')}</span>
+                    ${renderBudgetKrw('total', 'block text-[10px] text-gray-400 font-normal mt-0.5')}
                 </div>
                 <span id="budget-toggle-icon" class="text-gray-500 transform transition-transform duration-300">▼</span>
             </div>
         </button>
 
         <div id="budget-table-content" class="hidden border-t dark:border-gray-800 p-2">
-            ${plan.map(renderBudgetCategory).join('')}
+            ${plan.map((cat, catIndex) => renderBudgetCategory(cat, catIndex)).join('')}
         </div>`;
 }
+
+// 가계부 통화 선택칸 (data/currency.js 순서대로)
+const renderCurrencyOptions = () => Object.entries(CURRENCIES)
+    .map(([code, currency]) => `<option value="${code}">${currency.prefix.trim()}</option>`).join('');
 
 // 8. 항공편 바우처 (출국/귀국 → 구간 + 경유 대기)
 const FLIGHT_TONES = {
@@ -405,6 +433,17 @@ function renderFinlandWeeks(weeks) {
 // 여행지 키('england' 등)로 그 여행이 있는 주차 찾기 (없으면 undefined)
 const findTripWeek = (tripKey) => FINLAND_WEEKS.find(week => week.trip === tripKey);
 
+// 메인 환율 배너에 유로와 함께 보여줄 통화: 오늘이 속한 주차의 여행지(+거기서 이어지는 여행지) 통화
+// 주차 밖(여행 전, 헬싱키 0주차, 귀국 후)이거나 여행지가 유로 지역이면 파운드
+function getFeaturedCurrencies(dateKey = toDateKey(new Date())) {
+    const week = FINLAND_WEEKS.find(w => w.start <= dateKey && dateKey <= w.end);
+    const placeKeys = week && week.trip
+        ? [week.trip, ...Object.keys(TRIP_PLACES).filter(key => TRIP_PLACES[key].from === week.trip)]
+        : [];
+    const codes = [...new Set(placeKeys.map(key => TRIP_PLACES[key].currency).filter(code => code && code !== 'EUR'))];
+    return codes.length ? codes : ['GBP'];
+}
+
 // 메인 지도 아래 주차별 경로 칩 (헬싱키 → 탐페레 거점 → 주차별 여행지 → 주차 미정)
 // 장소 버튼의 data-place 키로 app.js가 지도를 이동시킴 (좌표가 없는 곳은 버튼 대신 글자로만 표시)
 const ROUTE_CHIP_ACTIVE = ['bg-blue-600', 'text-white'];
@@ -451,6 +490,8 @@ renderInto('helsinki-days', HELSINKI_DAYS.map(renderDayCard).join(''));
 renderInto('helsinki-week', HELSINKI_WEEK_LABEL);
 renderInto('packing-list', PACKING_BAGS.map(renderPackingBag).join(''));
 renderInto('budget-plan', renderBudgetPlan(BUDGET_PLAN));
+renderInto('exp-currency', renderCurrencyOptions());
+renderInto('edit-currency', renderCurrencyOptions());
 renderInto('flight-list', FLIGHTS.map(renderFlight).join(''));
 renderInto('prep-roadmap', PREP_ROADMAP.map(renderRoadmapCard).join('') + SCROLL_END_SPACER);
 renderInto('airport-steps', AIRPORT_STEPS.map((step, i) => renderAirportStep(step, i === AIRPORT_STEPS.length - 1)).join('') + SCROLL_END_SPACER);

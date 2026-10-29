@@ -139,7 +139,9 @@
                 <div id="route-chips" class="flex overflow-x-auto hide-scrollbar gap-2 mt-3 pb-1"></div>
 
                 <!-- 실시간 환율 정보 배너 -->
-                <div class="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex justify-between items-stretch shadow-sm">
+                <!-- 누르면 나머지 통화 환율이 아래로 펼쳐짐 (app.js 8번 로직) -->
+                <div onclick="toggleExchangeRates()" class="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 shadow-sm cursor-pointer">
+                <div class="flex justify-between items-stretch">
                     
                     <!-- 좌측 영역 -->
                     <div class="flex items-stretch gap-3">
@@ -148,16 +150,21 @@
                         </div>
                         <!-- 2. 텍스트: 상단(타이틀)과 하단(기준일자)으로 완전히 분리 -->
                         <div class="flex flex-col justify-between py-0.5">
-                            <h4 class="font-bold text-lg text-emerald-800 dark:text-emerald-300">실시간 환율</h4>
+                            <h4 class="font-bold text-lg text-emerald-800 dark:text-emerald-300">실시간 환율 <span id="exchange-toggle-icon" class="inline-block text-[10px] text-emerald-500 transition-transform duration-300">▼</span></h4>
                             <p id="exchange-date" class="text-[10px] text-emerald-600 dark:text-emerald-400">국제 외환시장 데이터를 불러오는 중...</p>
                         </div>
                     </div>
 
-                    <!-- 우측 영역: JS에서 유로(상단)와 파운드(하단)를 채워 넣음 -->
+                    <!-- 우측 영역: JS에서 유로(상단)와 이번 주차 여행지 통화(하단, 여행 전에는 파운드)를 채워 넣음 -->
                     <div class="text-right flex flex-col justify-between leading-tight" id="exchange-rate-val">
                         <span class="font-black text-lg text-emerald-700 dark:text-emerald-400">계산 중</span>
                     </div>
                     
+                </div>
+                <!-- 펼치면 보이는 나머지 통화 (hidden은 display 클래스가 없는 div에 건다) -->
+                <div id="exchange-rate-more" hidden>
+                    <div id="exchange-rate-list" class="mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-800 space-y-2"></div>
+                </div>
                 </div>
 
                 <!-- 상세 예산 계획표 -->
@@ -411,14 +418,13 @@
                         <input type="text" id="exp-desc" placeholder="지출 내용" required class="w-full text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                         
                         <!-- 통화 선택 및 금액 입력 -->
-                        <div class="relative flex items-center w-full">
-                            <select id="exp-currency" class="absolute left-1 bg-transparent text-gray-700 dark:text-gray-200 font-bold border-none outline-none text-sm cursor-pointer pl-1 pr-3 z-10 appearance-none">
-                                <option value="EUR">€</option>
-                                <option value="GBP">£</option>
-                            </select>
-                            <span class="absolute left-[24px] top-[12px] text-[8px] text-gray-400 pointer-events-none z-10">▼</span>
-                            
-                            <input type="number" step="0.01" id="exp-amount" placeholder="0.00" required class="w-full text-sm py-2 pr-2 pl-[38px] bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        <!-- 통화 목록은 data/currency.js 데이터로 render.js가 그려줍니다 (SEK처럼 긴 통화도 들어가게 선택칸과 입력칸을 나란히) -->
+                        <div class="flex items-center w-full min-w-0 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                            <label class="relative flex items-center shrink-0 pl-2 pr-3 cursor-pointer">
+                                <select id="exp-currency" class="bg-transparent text-gray-700 dark:text-gray-200 font-bold border-none outline-none text-sm cursor-pointer appearance-none"></select>
+                                <span class="absolute right-1 text-[8px] text-gray-400 pointer-events-none">▼</span>
+                            </label>
+                            <input type="number" step="0.01" id="exp-amount" placeholder="0.00" required class="w-full min-w-0 text-sm py-2 pr-2 pl-1 bg-transparent outline-none">
                         </div>
                     </div>
                     
@@ -450,13 +456,12 @@
                 </div>
                 <div class="grid grid-cols-[3fr_2fr] gap-2">
                     <input type="text" id="edit-desc" placeholder="지출 내용" required class="w-full min-w-0 text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 dark:text-gray-200">
-                    <div class="relative flex items-center w-full">
-                        <select id="edit-currency" class="absolute left-1 bg-transparent text-gray-700 dark:text-gray-200 font-bold border-none outline-none text-sm cursor-pointer pl-1 pr-3 z-10 appearance-none">
-                            <option value="EUR">€</option>
-                            <option value="GBP">£</option>
-                        </select>
-                        <span class="absolute left-[24px] top-[12px] text-[8px] text-gray-400 pointer-events-none z-10">▼</span>
-                        <input type="number" step="0.01" id="edit-amount" placeholder="0.00" required class="w-full min-w-0 text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-gray-800 dark:text-gray-200 pl-[38px]">
+                    <div class="flex items-center w-full min-w-0 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                        <label class="relative flex items-center shrink-0 pl-2 pr-3 cursor-pointer">
+                            <select id="edit-currency" class="bg-transparent text-gray-700 dark:text-gray-200 font-bold border-none outline-none text-sm cursor-pointer appearance-none"></select>
+                            <span class="absolute right-1 text-[8px] text-gray-400 pointer-events-none">▼</span>
+                        </label>
+                        <input type="number" step="0.01" id="edit-amount" placeholder="0.00" required class="w-full min-w-0 text-sm py-2 pr-2 pl-1 bg-transparent outline-none text-gray-800 dark:text-gray-200">
                     </div>
                 </div>
                 <div class="grid grid-cols-[1fr_2fr] gap-2 pt-1">
@@ -502,6 +507,7 @@
     
     <!-- flights.js를 먼저: 다른 데이터 파일이 항공편 시각을 참조 -->
     <script src="data/flights.js"></script>
+    <script src="data/currency.js"></script>
     <script src="data/helsinki.js"></script>
     <script src="data/packing.js"></script>
     <script src="data/budget.js"></script>
