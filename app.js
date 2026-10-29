@@ -316,7 +316,6 @@ async function fetchExchangeRateAndCalculate() {
     const krwElements = document.querySelectorAll('.krw-calc');
     
     const budgetRateEl = document.getElementById('budget-exchange-rate');
-    const budgetDateEl = document.getElementById('budget-exchange-date');
 
     try {
         // 1. 실시간 최신 환율 호출 (open.er-api.com)
@@ -519,6 +518,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatExpenseDate = (date) => new Date(date).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
     let expenseChart = null;
 
+    // 지출 내용은 사용자가 입력한 글자라 HTML로 해석되지 않게 이스케이프해서 출력
+    const escapeHtml = (text) => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
     // 폼 날짜 입력칸 기본값을 오늘 날짜로 세팅 (toISOString은 UTC 기준이라 새벽에 어제 날짜가 됨 → 현지 날짜 사용)
     const today = toDateKey(new Date());
     const dateInput = document.getElementById('exp-date');
@@ -536,23 +538,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. 가계부 탭의 전체 리스트 그리기
         if (sortedExpenses.length === 0) {
-            expenseList.innerHTML += `<p class="text-center text-sm text-gray-400 py-4">아직 기록된 지출이 없거나 데이터를 불러오는 중입니다.</p>`;
+            // 비밀번호가 없으면 내역을 못 불러온 것이므로 비밀번호 안내 (환율 로딩 후 다시 그려질 때도 유지)
+            expenseList.innerHTML += getKey()
+                ? `<p class="text-center text-sm text-gray-400 py-4">아직 기록된 지출이 없거나 데이터를 불러오는 중입니다.</p>`
+                : `<p class="text-center text-sm text-gray-400 py-4">가계부 비밀번호를 입력하면 지출 내역을 불러와요. 🔒</p>`;
         } else {
             sortedExpenses.forEach(exp => {
                 totalSpent += parseFloat(exp.amount) || 0;
                 
                 const card = document.createElement('div');
-                card.className = "flex justify-between items-center p-3 bg-white dark:bg-nordic-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm";
+                card.className = "flex justify-between items-center p-3 bg-white dark:bg-nordic-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm cursor-pointer hover:border-blue-400 dark:hover:border-blue-600 transition-colors";
+                card.dataset.expenseId = exp.id; // 누르면 수정 창 열림 ([핵심 4])
                 card.innerHTML = `
                     <div class="flex items-center gap-3">
                         <span class="text-2xl">${categoryIcons[exp.category] || '💸'}</span>
                         <div>
-                            <p class="font-bold text-sm text-gray-800 dark:text-gray-200">${exp.desc}</p>
+                            <p class="font-bold text-sm text-gray-800 dark:text-gray-200">${escapeHtml(exp.desc)}</p>
                             <p class="text-[10px] text-gray-500">${formatExpenseDate(exp.date)} · ${exp.category}</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
                         <span class="font-bold text-red-500">-€${parseFloat(exp.amount).toFixed(2)}</span>
+                        <span class="text-gray-300 dark:text-gray-600">›</span>
                     </div>
                 `;
                 expenseList.appendChild(card);
@@ -625,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     row.innerHTML = `
                         <div class="flex items-center gap-2 overflow-hidden">
                             <span class="text-base">${categoryIcons[exp.category] || '💸'}</span>
-                            <span class="text-gray-700 dark:text-gray-300 truncate w-32 md:w-48 text-xs font-medium">${exp.desc}</span>
+                            <span class="text-gray-700 dark:text-gray-300 truncate w-32 md:w-48 text-xs font-medium">${escapeHtml(exp.desc)}</span>
                         </div>
                         <span class="font-bold text-red-500 text-xs">-€${parseFloat(exp.amount).toFixed(2)}</span>
                     `;
@@ -752,26 +759,64 @@ document.addEventListener('DOMContentLoaded', () => {
     window.triggerRenderExpenses = renderExpenses;
 
     // -----------------------------------------------------
-    // [핵심 2] 구글 시트에서 데이터 불러오기 (GET)
+    // [핵심 2] 구글 시트 연결 (비밀번호 + 읽기)
     // -----------------------------------------------------
+    // 비밀번호는 사이트 코드(GitHub 공개)에 넣지 않고, 기기마다 처음 한 번 입력받아 저장
+    const KEY_STORAGE = 'expenseKey';
+    const getKey = () => { try { return localStorage.getItem(KEY_STORAGE) || ''; } catch (e) { return ''; } };
+    const setKey = (key) => { try { key ? localStorage.setItem(KEY_STORAGE, key) : localStorage.removeItem(KEY_STORAGE); } catch (e) {} };
+
+    class AuthError extends Error {}
+
+    const keyCard = document.getElementById('expense-key-card');
+    const keyMessage = document.getElementById('expense-key-message');
+    const keyForm = document.getElementById('expense-key-form');
+    const keyInput = document.getElementById('expense-key-input');
+
+    function showKeyCard(message) {
+        keyMessage.textContent = message;
+        keyCard.hidden = false;
+    }
+
+    // 비밀번호가 틀렸을 때: 저장된 비밀번호를 지우고 다시 입력받기
+    function handleAuthError() {
+        setKey('');
+        showKeyCard('비밀번호가 맞지 않아요. 다시 입력해 주세요.');
+    }
+
     async function loadExpenses() {
-        const response = await fetch(SCRIPT_URL);
+        const response = await fetch(`${SCRIPT_URL}?key=${encodeURIComponent(getKey())}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const list = await response.json();
-        saveSnapshot('expenses', list);
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+            if (data && data.message === 'unauthorized') throw new AuthError('비밀번호 불일치');
+            throw new Error('시트 응답 형식이 올바르지 않음');
+        }
+        saveSnapshot('expenses', data);
         expensesSavedAt = null;
-        return list;
+        return data;
     }
 
     async function fetchExpenses() {
         if (!SCRIPT_URL.includes("script.google.com")) return; // URL 세팅 안 했을 때 멈춤
+        if (!getKey()) {
+            showKeyCard('이 기기에서 처음 한 번만 입력하면 돼요.');
+            expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">가계부 비밀번호를 입력하면 지출 내역을 불러와요. 🔒</p>`;
+            return;
+        }
+        keyCard.hidden = true;
         expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">구글 시트에서 데이터를 불러오는 중... ⏳</p>`;
-        
+
         try {
             expenses = await loadExpenses();
             renderExpenses();
         } catch (error) {
             console.error("데이터 로드 실패:", error);
+            if (error instanceof AuthError) {
+                handleAuthError();
+                expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">가계부 비밀번호를 입력하면 지출 내역을 불러와요. 🔒</p>`;
+                return;
+            }
             const snapshot = loadSnapshot('expenses');
             if (snapshot) {
                 expenses = snapshot.data;
@@ -783,94 +828,257 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    keyForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        setKey(keyInput.value.trim());
+        keyInput.value = '';
+        fetchExpenses();
+    });
+
     // -----------------------------------------------------
-    // [핵심 3] 구글 시트로 새 데이터 전송 (POST)
+    // [핵심 3] 시트에 추가/수정/삭제 보내기 (공통)
     // -----------------------------------------------------
+    // 쓰기 전에 확인: URL 미설정, 오프라인, 비밀번호 없음이면 막음
+    function canWrite() {
+        if (!SCRIPT_URL.includes("script.google.com")) {
+            alert("구글 웹 앱 URL이 설정되지 않았습니다. 앱스 스크립트 주소를 붙여넣어 주세요.");
+            return false;
+        }
+        if (!navigator.onLine) {
+            alert("오프라인 상태라 저장할 수 없어요. 인터넷이 연결되면 다시 시도해 주세요.");
+            return false;
+        }
+        if (!getKey()) {
+            showKeyCard('먼저 가계부 비밀번호를 입력해 주세요.');
+            alert("먼저 가계부 비밀번호를 입력해 주세요.");
+            return false;
+        }
+        return true;
+    }
+
+    // 옛 Apps Script는 수정/삭제 요청도 "새 줄 추가"로 처리해 버리므로, 수정/삭제 전에 버전을 확인
+    let scriptSupportsEdit = false;
+    async function ensureScriptSupportsEdit() {
+        if (scriptSupportsEdit) return true;
+        try {
+            const data = await (await fetch(`${SCRIPT_URL}?action=version`)).json();
+            scriptSupportsEdit = !Array.isArray(data) && data.version >= 2;
+        } catch (error) {
+            console.error("Apps Script 버전 확인 실패:", error);
+            alert("구글 시트 연결을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
+            return false;
+        }
+        if (!scriptSupportsEdit) alert("구글 시트의 Apps Script가 아직 옛 버전이에요. 새 버전으로 배포한 뒤 다시 시도해 주세요.");
+        return scriptSupportsEdit;
+    }
+
+    // 응답만으로는 실제 반영 여부를 알 수 없음 (스크립트 오류도 200으로 올 수 있음)
+    // → 보낸 뒤 시트를 다시 읽어서 isApplied(최신 목록)로 반영됐는지 확인
+    async function sendToSheet(payload, isApplied) {
+        let postError = null;
+        try {
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ ...payload, key: getKey() })
+            });
+            if (!response.ok) postError = new Error(`HTTP ${response.status}`);
+        } catch (error) {
+            postError = error;
+        }
+
+        const latest = await loadExpenses();
+        if (!isApplied(latest)) throw postError || new Error('시트에 반영되지 않음');
+        expenses = latest;
+        renderExpenses();
+    }
+
+    // 버튼을 "처리 중" 상태로 바꾼 채 작업 실행. 실패하면 알림만 띄우고 입력 내용은 그대로 둠
+    async function runWithButton(button, busyText, task, failMessage) {
+        const originalText = button.innerText;
+        button.innerText = busyText;
+        button.disabled = true;
+        button.classList.add('opacity-70');
+        try {
+            await task();
+            return true;
+        } catch (error) {
+            console.error("구글 시트 저장 실패:", error);
+            if (error instanceof AuthError) {
+                handleAuthError();
+                alert("가계부 비밀번호가 맞지 않아요. 비밀번호를 다시 입력해 주세요.");
+            } else {
+                alert(failMessage);
+            }
+            return false;
+        } finally {
+            button.innerText = originalText;
+            button.disabled = false;
+            button.classList.remove('opacity-70');
+        }
+    }
+
+    // 파운드는 유로로 환산해서 저장하고, 실제 결제한 파운드 금액은 내용 뒤에 "(£12.00)"로 남김
+    const GBP_SUFFIX = /\s*\(£([\d.]+)\)$/;
+    const hasGbpRate = () => currentEurToGbp > 0;
+    const GBP_RATE_MISSING = "환율 데이터를 불러오지 못해 파운드 환산이 불가능합니다.";
+
+    // 새 지출 추가
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!SCRIPT_URL.includes("script.google.com")) {
-                alert("구글 웹 앱 URL이 설정되지 않았습니다. 앱스 스크립트 주소를 붙여넣어 주세요.");
-                return;
-            }
-            if (!navigator.onLine) {
-                alert("오프라인 상태라 저장할 수 없어요. 인터넷이 연결되면 다시 입력해 주세요.");
-                return;
-            }
+            if (!canWrite()) return;
 
-            // 제출 버튼 로딩 상태로 변경
-            const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = "전송 중... 🚀";
-            submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-70');
-            
-            // 💡 통화 환산 로직 (내부 계산은 EUR-GBP, 데이터 명시는 원래 통화)
-            const selectedCurrency = document.getElementById('exp-currency').value;
-            const inputAmount = parseFloat(document.getElementById('exp-amount').value);
-            
-            let finalEurAmount = inputAmount;
-            let finalDesc = document.getElementById('exp-desc').value;
-
-            if (selectedCurrency === 'GBP') {
-                if (typeof currentEurToGbp !== 'undefined' && currentEurToGbp > 0) {
-                    // 유로로 환산 (입력 파운드 / 파운드당 유로 환율)
-                    finalEurAmount = inputAmount / currentEurToGbp;
-                    // 지출 내역 뒤에 실제 결제한 파운드 금액 박제
-                    finalDesc = `${finalDesc} (£${inputAmount.toFixed(2)})`;
-                } else {
-                    alert("환율 데이터를 불러오지 못해 파운드 환산이 불가능합니다.");
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
-                    submitBtn.classList.remove('opacity-70');
-                    return;
-                }
-            }
+            const currency = document.getElementById('exp-currency').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            const desc = document.getElementById('exp-desc').value;
+            if (currency === 'GBP' && !hasGbpRate()) { alert(GBP_RATE_MISSING); return; }
 
             const newExpense = {
                 id: Date.now(),
                 date: document.getElementById('exp-date').value,
                 category: document.getElementById('exp-category').value,
-                desc: finalDesc,
-                amount: finalEurAmount // 무조건 유로(EUR) 기준으로 변환하여 저장
+                desc: currency === 'GBP' ? `${desc} (£${amount.toFixed(2)})` : desc,
+                amount: currency === 'GBP' ? amount / currentEurToGbp : amount // 무조건 유로(EUR) 기준으로 저장
             };
 
-            try {
-                let postError = null;
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify(newExpense)
-                    });
-                    if (!response.ok) postError = new Error(`HTTP ${response.status}`);
-                } catch (error) {
-                    postError = error;
-                }
+            const saved = await runWithButton(submitBtn, "전송 중... 🚀",
+                () => sendToSheet({ action: 'add', ...newExpense },
+                    latest => latest.some(exp => String(exp.id) === String(newExpense.id))),
+                "저장하지 못했습니다. 입력한 내용은 그대로 남겨 두었으니 잠시 후 다시 시도해 주세요.");
 
-                // 응답만으로는 실제 저장 여부를 알 수 없음 (스크립트 오류도 200으로 올 수 있음)
-                // → 시트를 다시 읽어서 방금 보낸 id가 있는지 확인
-                const latest = await loadExpenses();
-                if (!latest.some(exp => String(exp.id) === String(newExpense.id))) {
-                    throw postError || new Error('시트에서 방금 저장한 항목을 찾지 못함');
-                }
-
-                expenses = latest;
-                renderExpenses();
-                
+            if (saved) {
                 document.getElementById('exp-desc').value = '';
                 document.getElementById('exp-amount').value = '';
-                // 폼 리셋 후 통화는 EUR로 복구
-                document.getElementById('exp-currency').value = 'EUR';
-            } catch (error) {
-                console.error("구글 시트 저장 실패:", error);
-                alert("저장하지 못했습니다. 입력한 내용은 그대로 남겨 두었으니 잠시 후 다시 시도해 주세요.");
-            } finally {
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-70');
+                document.getElementById('exp-currency').value = 'EUR'; // 폼 리셋 후 통화는 EUR로 복구
             }
         });
     }
+
+    // -----------------------------------------------------
+    // [핵심 4] 지출 수정/삭제 창 (지출 내역 카드를 누르면 열림)
+    // -----------------------------------------------------
+    const editModal = document.getElementById('expense-edit-modal');
+    const editForm = document.getElementById('expense-edit-form');
+    const editDate = document.getElementById('edit-date');
+    const editCategory = document.getElementById('edit-category');
+    const editDesc = document.getElementById('edit-desc');
+    const editCurrency = document.getElementById('edit-currency');
+    const editAmount = document.getElementById('edit-amount');
+    const saveBtn = document.getElementById('expense-save-btn');
+    const deleteBtn = document.getElementById('expense-delete-btn');
+    editCategory.innerHTML = document.getElementById('exp-category').innerHTML; // 카테고리 목록은 추가 폼과 똑같이
+
+    let editing = null; // 수정 중인 지출과 수정 전 통화/금액 { expense, currency, amountText }
+
+    // 시트 날짜(한국 시간 자정)를 날짜 입력칸 형식 'YYYY-MM-DD'로
+    const toSeoulDateKey = (date) => new Date(date).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
+
+    function openEditModal(expense) {
+        const gbp = String(expense.desc).match(GBP_SUFFIX);
+        const currency = gbp ? 'GBP' : 'EUR';
+        const amountText = gbp ? parseFloat(gbp[1]).toFixed(2) : parseFloat(expense.amount).toFixed(2);
+        editing = { expense, currency, amountText };
+
+        editDate.value = toSeoulDateKey(expense.date);
+        editCategory.value = expense.category;
+        editDesc.value = gbp ? String(expense.desc).replace(GBP_SUFFIX, '') : expense.desc;
+        editCurrency.value = currency;
+        editAmount.value = amountText;
+        resetDeleteButton();
+        editModal.hidden = false;
+    }
+
+    function closeEditModal() {
+        editModal.hidden = true;
+        editing = null;
+    }
+
+    expenseList.addEventListener('click', (e) => {
+        const card = e.target.closest('[data-expense-id]');
+        if (!card) return;
+        const expense = expenses.find(exp => String(exp.id) === card.dataset.expenseId);
+        if (expense) openEditModal(expense);
+    });
+    editModal.querySelectorAll('[data-close-edit]').forEach(el => el.addEventListener('click', closeEditModal));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !editModal.hidden) closeEditModal(); });
+
+    // 수정 저장
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!editing || !canWrite() || !(await ensureScriptSupportsEdit())) return;
+
+        const { expense } = editing;
+        const currency = editCurrency.value;
+        const amountText = parseFloat(editAmount.value).toFixed(2);
+        const amount = parseFloat(amountText);
+
+        // 통화와 금액을 그대로 두었으면 원래 유로 금액 유지 (환율 변동이나 반올림으로 금액이 바뀌지 않게)
+        let eurAmount;
+        if (currency === editing.currency && amountText === editing.amountText) {
+            eurAmount = parseFloat(expense.amount);
+        } else if (currency === 'GBP') {
+            if (!hasGbpRate()) { alert(GBP_RATE_MISSING); return; }
+            eurAmount = amount / currentEurToGbp;
+        } else {
+            eurAmount = amount;
+        }
+
+        const desc = editDesc.value.trim();
+        const updated = {
+            id: expense.id,
+            date: editDate.value,
+            category: editCategory.value,
+            desc: currency === 'GBP' ? `${desc} (£${amountText})` : desc,
+            amount: eurAmount
+        };
+        // 같은 id가 딱 한 줄이고, 그 줄이 보낸 값과 같으면 반영된 것으로 판단
+        const isApplied = (latest) => {
+            const rows = latest.filter(exp => String(exp.id) === String(updated.id));
+            return rows.length === 1
+                && toSeoulDateKey(rows[0].date) === updated.date
+                && rows[0].category === updated.category
+                && String(rows[0].desc) === updated.desc
+                && Math.abs(parseFloat(rows[0].amount) - updated.amount) < 0.005;
+        };
+
+        const saved = await runWithButton(saveBtn, "저장 중...",
+            () => sendToSheet({ action: 'update', ...updated }, isApplied),
+            "수정하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        if (saved) closeEditModal();
+    });
+
+    // 삭제 (실수 방지를 위해 두 번 눌러야 실행)
+    let deleteArmed = false;
+    const DELETE_IDLE = ['text-red-600', 'dark:text-red-400'];
+    const DELETE_ARMED = ['bg-red-600', 'border-red-600', 'text-white'];
+
+    function resetDeleteButton() {
+        deleteArmed = false;
+        deleteBtn.innerText = "삭제";
+        deleteBtn.classList.remove(...DELETE_ARMED);
+        deleteBtn.classList.add(...DELETE_IDLE);
+    }
+
+    deleteBtn.addEventListener('click', async () => {
+        if (!editing) return;
+        if (!deleteArmed) {
+            deleteArmed = true;
+            deleteBtn.innerText = "한 번 더 누르면 삭제";
+            deleteBtn.classList.remove(...DELETE_IDLE);
+            deleteBtn.classList.add(...DELETE_ARMED);
+            return;
+        }
+        if (!canWrite() || !(await ensureScriptSupportsEdit())) { resetDeleteButton(); return; }
+
+        const id = editing.expense.id;
+        const deleted = await runWithButton(deleteBtn, "삭제 중...",
+            () => sendToSheet({ action: 'delete', id },
+                latest => !latest.some(exp => String(exp.id) === String(id))),
+            "삭제하지 못했어요. 잠시 후 다시 시도해 주세요.");
+        if (deleted) closeEditModal();
+        else resetDeleteButton();
+    });
 
     // 페이지 시작 시 구글 시트 데이터 1회 불러오기 (연결이 돌아오면 다시 불러올 수 있게 공개)
     window.refreshExpenses = fetchExpenses;
