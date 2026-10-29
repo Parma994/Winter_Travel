@@ -55,7 +55,10 @@
         <div>
             <h1 class="text-2xl font-bold">✈️ 2027 북유럽 여정</h1>
             <!-- 오프라인일 때만 표시 (app.js의 온라인 상태 로직) -->
-            <span id="offline-badge" hidden class="inline-block mt-1 text-[11px] font-bold text-white bg-gray-500 px-2 py-0.5 rounded-full">📴 오프라인 · 저장된 정보 표시 중</span>
+            <!-- hidden 속성은 display 클래스(inline-block 등)에 덮이므로, display 클래스가 없는 감싸는 div에 hidden을 건다 -->
+            <div id="offline-badge" hidden class="mt-1">
+                <span class="inline-block text-[11px] font-bold text-white bg-gray-500 px-2 py-0.5 rounded-full">📴 오프라인 · 저장된 정보 표시 중</span>
+            </div>
         </div>
         
         <!-- On/Off 토글 스위치 (이모지 적용) -->
