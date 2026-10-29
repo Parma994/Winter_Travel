@@ -1,6 +1,17 @@
 // render.js - data/*.js의 데이터를 HTML로 그려주는 템플릿 함수 모음
 // app.js(지도 초기화 등)보다 먼저 로드되어야 합니다.
 
+// 0. 공통 날짜 도우미 (데이터의 날짜는 모두 'YYYY-MM-DD')
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const pad2 = (n) => String(n).padStart(2, '0');
+const parseDate = (key) => new Date(`${key}T00:00:00`);
+const toDateKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const formatMonthDay = (d) => `${d.getMonth() + 1}/${d.getDate()}`;                           // 1/3
+const formatShortDate = (d) => `${formatMonthDay(d)} (${WEEKDAYS[d.getDay()]})`;               // 1/3 (일)
+const formatDotDate = (d) => `${pad2(d.getMonth() + 1)}.${pad2(d.getDate())} (${WEEKDAYS[d.getDay()]})`; // 01.03 (일)
+const formatFullDotDate = (d) => `${d.getFullYear()}.${formatDotDate(d)}`;                    // 2027.01.03 (일)
+const formatKoreanDate = (d) => `${d.getMonth() + 1}월 ${d.getDate()}일`;                      // 1월 3일
+
 // 1. 타임라인 점/시간 색상 (Tailwind가 클래스를 인식하도록 전체 문자열로 작성)
 const TIMELINE_TONES = {
     blue:  { dot: 'bg-blue-500',                time: 'text-blue-600 dark:text-blue-400' },
@@ -194,7 +205,7 @@ function renderAirport(stop, label, nextDay) {
                 <span class="text-sm font-medium text-gray-600 dark:text-gray-300">${stop.city}</span>
                 ${dayBadge}
             </div>
-            <span class="text-xs text-gray-500">${stop.date} ${label}</span>
+            <span class="text-xs text-gray-500">${formatDotDate(parseDate(stop.date))} ${label}</span>
         </div>`;
 }
 
@@ -237,6 +248,8 @@ function renderLayover(prevLeg, nextLeg, tone) {
 
 function renderFlight(flight) {
     const tone = FLIGHT_TONES[flight.tone] || FLIGHT_TONES.blue;
+    const first = flight.legs[0];
+    const last = flight.legs[flight.legs.length - 1];
     const body = flight.legs.map((leg, i) => {
         const isLast = i === flight.legs.length - 1;
         return renderFlightLeg(leg, isLast) + (isLast ? '' : renderLayover(leg, flight.legs[i + 1], tone));
@@ -245,10 +258,23 @@ function renderFlight(flight) {
     return renderAccordion({
         badge: flight.badge,
         badgeClass: tone.badge,
-        title: flight.title,
+        title: `${formatFullDotDate(parseDate(first.from.date))} ➔ ${last.to.city}(${last.to.code})`,
         bodyClass: 'p-4 pt-1',
         body
     });
+}
+
+// 귀국 전 탭 요약 (귀국편 2구간: 헬싱키 → 경유지 → 인천)
+function renderReturnSummary(flight) {
+    const [first, second] = flight.legs;
+    return `
+        <h3 class="font-bold text-lg mb-2">${formatKoreanDate(parseDate(first.from.date))} 귀국편 (SAS)</h3>
+        <ul class="text-sm space-y-2 text-gray-600 dark:text-gray-300">
+            <li>• ${first.from.time} ${first.from.city} 출발 ➔ ${first.to.city}행 (${first.flightNo})</li>
+            <li>• ${first.to.time} ${first.to.city} 도착</li>
+            <li>• <span class="font-bold text-red-500">${formatLayover(first.to.time, second.from.time)} ${first.to.city} 레이오버</span></li>
+            <li>• ${second.from.time} ${second.from.city} 출발 ➔ ${second.to.city}행 (${second.flightNo})</li>
+        </ul>`;
 }
 
 // 9. 준비 로드맵 카드 (체크 상태 저장은 app.js의 .pack-chk 로직이 담당)
@@ -307,11 +333,6 @@ const WEEK_TAB_BASE = 'week-tab flex-1 min-w-[4.5rem] py-3 border-b-2 text-sm fo
 const WEEK_TAB_ACTIVE = 'border-emerald-500 text-emerald-600 dark:text-emerald-400';
 const WEEK_TAB_INACTIVE = 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300';
 
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const parseDate = (key) => new Date(`${key}T00:00:00`);
-const toDateKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const formatMonthDay = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
-const formatShortDate = (d) => `${formatMonthDay(d)} (${WEEKDAYS[d.getDay()]})`;
 
 function getDatesInRange(start, end) {
     const dates = [];
@@ -364,7 +385,7 @@ function renderFinlandWeeks(weeks) {
         <button type="button" data-week="${i}" class="${WEEK_TAB_BASE} ${i === activeIndex ? WEEK_TAB_ACTIVE : WEEK_TAB_INACTIVE}">
             ${week.label}
             <span class="block text-[10px] font-medium opacity-80">${formatMonthDay(parseDate(week.start))} ~ ${formatMonthDay(parseDate(week.end))}</span>
-            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">${week.trip}</span>` : ''}
+            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">${TRIP_PLACES[week.trip].icon} ${TRIP_PLACES[week.trip].name}</span>` : ''}
         </button>`).join('');
 
     const panels = weeks.map((week, i) => `
@@ -381,6 +402,9 @@ function renderFinlandWeeks(weeks) {
         </div>`;
 }
 
+// 여행지 키('england' 등)로 그 여행이 있는 주차 찾기 (없으면 undefined)
+const findTripWeek = (tripKey) => FINLAND_WEEKS.find(week => week.trip === tripKey);
+
 // 12. 실제 렌더링 실행
 function renderInto(containerId, html) {
     const el = document.getElementById(containerId);
@@ -394,3 +418,10 @@ renderInto('flight-list', FLIGHTS.map(renderFlight).join(''));
 renderInto('prep-roadmap', PREP_ROADMAP.map(renderRoadmapCard).join('') + SCROLL_END_SPACER);
 renderInto('airport-steps', AIRPORT_STEPS.map((step, i) => renderAirportStep(step, i === AIRPORT_STEPS.length - 1)).join('') + SCROLL_END_SPACER);
 renderInto('finland-weeks', renderFinlandWeeks(FINLAND_WEEKS));
+renderInto('return-summary', renderReturnSummary(FLIGHTS[1]));
+
+// 본문 중간의 날짜/주차 표시 (데이터에서 가져와 채움)
+const departure = parseDate(OUTBOUND_FIRST.from.date);
+renderInto('departure-day', `${pad2(departure.getMonth() + 1)}.${pad2(departure.getDate())}`);
+const englandWeek = findTripWeek('england');
+renderInto('england-week', englandWeek ? `${englandWeek.label} 주말` : '주차 미정');

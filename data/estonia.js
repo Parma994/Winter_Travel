@@ -1,13 +1,14 @@
 // data/estonia.js - 에스토니아 탭 (1주차 탈린 & 헬싱키) 일정 데이터
 // tone: 'blue'(주요 이동) | 'gray'(일반 일정) | 'green'(탐페레 관련)
 // stay.mapId는 app.js의 Leaflet 지도 초기화와 연결되므로 바꾸지 마세요.
+// (data/flights.js 다음에 로드되어야 합니다)
 
 const ESTONIA_DAYS = [
     {
         day: 1,
         title: '1월 1일 (금) : 헬싱키 ➔ 탈린',
         items: [
-            { time: '10:35', tone: 'blue', title: '헬싱키 공항 도착 🛬', desc: '입국 심사는 코펜하겐에서 완료했으므로 수하물만 수령' },
+            { time: OUTBOUND_LAST.to.time, tone: 'blue', title: '헬싱키 공항 도착 🛬', desc: '입국 심사는 코펜하겐에서 완료했으므로 수하물만 수령' },
             { time: '12:00', tone: 'gray', title: '중앙역 짐 보관 및 점심 식사 🧳', desc: '공항철도 탑승. 대형 캐리어는 중앙역 지하 락커에 맡기고 백팩만 소지' },
             { time: '15:30', tone: 'blue', title: '페리 탑승 및 출항 🚢', desc: '서부터미널 T2에서 탈링크 실야(Megastar) 탑승' },
             { time: '17:45', tone: 'blue', title: '탈린 도착 🇪🇪', desc: '항구에서 Bolt 택시로 이동 및 체크인 준비' },

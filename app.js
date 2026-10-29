@@ -11,6 +11,15 @@ let currentEurToKrw = 1450;
 let currentGbpToKrw = 1705; // 1파운드 = 약 1,705원 임시 설정
 let currentEurToGbp = 0.85; // 1유로 = 약 0.85파운드 임시 설정
 
+// 오프라인 대비: 마지막으로 성공한 API 응답을 기기에 저장해 두고, 실패하면 그 값을 시각과 함께 표시
+function saveSnapshot(key, data) {
+    try { localStorage.setItem(`snapshot:${key}`, JSON.stringify({ savedAt: Date.now(), data })); } catch (e) {}
+}
+function loadSnapshot(key) {
+    try { return JSON.parse(localStorage.getItem(`snapshot:${key}`)); } catch (e) { return null; }
+}
+const formatSavedAt = (ms) => { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+
 // 2. 하단 탭 전환 로직
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -50,13 +59,12 @@ function initMap() {
         map = L.map('map', { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+            crossOrigin: true, // 서비스 워커 타일 저장용
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
         const tampere = [61.4978, 23.7610];
         const tallinn = [59.4370, 24.7536];
-        const london = [51.5074, -0.1278];
-        const rovaniemi = [66.5039, 25.7294];
 
         const createIcon = (emoji) => L.divIcon({
             html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
@@ -67,12 +75,16 @@ function initMap() {
 
         L.marker(tampere, {icon: createIcon('🇫🇮')}).bindPopup('<b>탐페레</b><br>거점').addTo(map);
         L.marker(tallinn, {icon: createIcon('🇪🇪')}).bindPopup('<b>탈린</b><br>1주차').addTo(map);
-        L.marker(london, {icon: createIcon('🇬🇧')}).bindPopup('<b>런던</b><br>3주차').addTo(map);
-        L.marker(rovaniemi, {icon: createIcon('🎅')}).bindPopup('<b>로바니에미</b><br>산타마을').addTo(map);
+        L.polyline([tallinn, tampere], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
 
-        L.polyline([tallinn, tampere, london], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
-        L.polyline([tampere, rovaniemi], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
-        map.fitBounds([tampere, tallinn, london], { padding: [30, 30] });
+        // 주말 여행지 마커 (data/finland.js의 TRIP_PLACES 중 좌표가 있는 곳, 팝업에 주차 자동 표시)
+        Object.entries(TRIP_PLACES).filter(([, place]) => place.coords).forEach(([key, place]) => {
+            const week = findTripWeek(key);
+            const detail = [week ? week.label : '주차 미정', place.note].filter(Boolean).join(' · ');
+            L.marker(place.coords, {icon: createIcon(place.icon)}).bindPopup(`<b>${place.city}</b><br>${detail}`).addTo(map);
+            L.polyline([tampere, place.coords], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
+        });
+        map.fitBounds([tampere, tallinn, TRIP_PLACES.england.coords], { padding: [30, 30] });
     }
 
     // 핀란드 거점 숙소 지도
@@ -81,6 +93,7 @@ function initMap() {
         mapTampere = L.map('map-tampere', { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+            crossOrigin: true, // 서비스 워커 타일 저장용
             attribution: '&copy; OpenStreetMap'
         }).addTo(mapTampere);
         
@@ -103,6 +116,7 @@ function initMap() {
         mapTallinn = L.map('map-tallinn', { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+            crossOrigin: true, // 서비스 워커 타일 저장용
             attribution: '&copy; OpenStreetMap'
         }).addTo(mapTallinn);
         
@@ -126,6 +140,7 @@ function initMap() {
         mapHelsinki = L.map('map-helsinki', { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
+            crossOrigin: true, // 서비스 워커 타일 저장용
             attribution: '&copy; OpenStreetMap'
         }).addTo(mapHelsinki);
         
@@ -175,7 +190,7 @@ if (themeCheckbox) {
 }
 
 // 5. D-Day 실시간 슬라이드 애니메이션 타이머
-const departureDate = new Date('2026-12-31T23:45:00').getTime();
+const departureDate = new Date(`${OUTBOUND_FIRST.from.date}T${OUTBOUND_FIRST.from.time}:00`).getTime(); // data/flights.js 출국 첫 비행기
 
 function animateValue(id, newValue) {
     const el = document.getElementById(id);
@@ -233,12 +248,24 @@ async function fetchTampereWeather() {
     try {
         const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=61.4978&longitude=23.7610&current=temperature_2m,weather_code&daily=sunrise,sunset&timezone=Europe%2FHelsinki');
         const data = await res.json();
-        
-        const temp = Math.round(data.current.temperature_2m);
-        const code = data.current.weather_code;
-        const sunriseTime = data.daily.sunrise[0].split('T')[1];
-        const sunsetTime = data.daily.sunset[0].split('T')[1];
-        
+
+        const weather = {
+            temp: Math.round(data.current.temperature_2m),
+            code: data.current.weather_code,
+            sunrise: data.daily.sunrise[0].split('T')[1],
+            sunset: data.daily.sunset[0].split('T')[1]
+        };
+        saveSnapshot('weather', weather);
+        renderWeather(weather);
+    } catch (error) {
+        console.error("날씨 정보 조회 실패:", error);
+        const snapshot = loadSnapshot('weather');
+        if (snapshot) renderWeather(snapshot.data, snapshot.savedAt);
+    }
+}
+
+// savedAt이 있으면 오프라인 저장본이라는 표시를 함께 보여줌
+function renderWeather({ temp, code, sunrise, sunset }, savedAt) {
         let icon = '☁️';
         let desc = '흐림';
         if (code === 0) { icon = '☀️'; desc = '맑음'; }
@@ -258,10 +285,9 @@ async function fetchTampereWeather() {
         if (tempEl) tempEl.textContent = `${temp}°C`;
         if (iconEl) iconEl.textContent = icon;
         if (descEl) descEl.textContent = desc;
-        if (sunEl) sunEl.textContent = `일출 ${sunriseTime} · 일몰 ${sunsetTime}`;
-    } catch (error) {
-        console.error("날씨 정보 조회 실패:", error);
-    }
+        if (sunEl) sunEl.textContent = savedAt
+            ? `일출 ${sunrise} · 일몰 ${sunset} · ${formatSavedAt(savedAt)} 기준`
+            : `일출 ${sunrise} · 일몰 ${sunset}`;
 }
 
 updateTampereTime();
@@ -359,9 +385,48 @@ async function fetchExchangeRateAndCalculate() {
             }));
         }
 
+        saveSnapshot('exchange', { eurKrw: currentEurToKrw, eurGbp: currentEurToGbp, updateDate, eurDiff, gbpDiff });
+        renderExchangeRates(eurDiff, gbpDiff, `기준일: ${updateDate}`, `환율 기준: ${updateDate}`);
+
+    } catch (error) {
+        console.error("환율 API 호출 실패:", error);
+        const snapshot = loadSnapshot('exchange');
+        if (snapshot) {
+            // 마지막으로 받아 둔 실제 환율로 계산 (임시 환율보다 정확)
+            const { eurKrw, eurGbp, updateDate, eurDiff, gbpDiff } = snapshot.data;
+            currentEurToKrw = eurKrw;
+            currentEurToGbp = eurGbp;
+            currentGbpToKrw = eurKrw / eurGbp;
+            const savedLabel = `오프라인 · ${updateDate} 환율 (${formatSavedAt(snapshot.savedAt)} 저장)`;
+            renderExchangeRates(eurDiff, gbpDiff, savedLabel, savedLabel);
+            return;
+        }
+        if (rateValEl) rateValEl.innerHTML = "불러오기 실패";
+        if (dateEl) dateEl.textContent = "오프라인 상태입니다";
+        if (budgetRateEl) budgetRateEl.innerHTML = "€1 = 임시 1,450원<br>£1 = 임시 1,705원";
+
+        krwElements.forEach(el => {
+            const eurAmount = parseFloat(el.getAttribute('data-eur'));
+            if (!isNaN(eurAmount)) {
+                const rawKrw = eurAmount * currentEurToKrw;
+                const roundedKrw = Math.round(rawKrw / 100) * 100;
+                el.textContent = `(약 ${roundedKrw.toLocaleString('ko-KR')}원 *임시환율)`;
+            }
+        });
+    }
+}
+
+// 현재 환율 전역 변수로 메인 배너/가계부 배너/예산표 원화 금액을 그림
+function renderExchangeRates(eurDiff, gbpDiff, dateLabel, budgetDateLabel) {
+        const rateValEl = document.getElementById('exchange-rate-val');
+        const dateEl = document.getElementById('exchange-date');
+        const krwElements = document.querySelectorAll('.krw-calc');
+        const budgetRateEl = document.getElementById('budget-exchange-rate');
+        const budgetDateEl = document.getElementById('budget-exchange-date');
+
         const rateEurKrwFmt = currentEurToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const rateGbpKrwFmt = currentGbpToKrw.toLocaleString('ko-KR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        
+
         // 변동폭 UI 생성 함수 (상승=빨간색▲, 하락=파란색▼)
         const getDiffHtml = (diff) => {
             if (Math.abs(diff) < 0.01) return `<span class="text-[11px] ml-1.5 text-gray-400 font-bold">- 0.00원</span>`;
@@ -385,14 +450,14 @@ async function fetchExchangeRateAndCalculate() {
                 </div>
             `;
         }
-        if (dateEl) dateEl.textContent = `기준일: ${updateDate}`;
+        if (dateEl) dateEl.textContent = dateLabel;
 
         // 2. 가계부 탭 미니 배너 업데이트
         if (budgetRateEl) {
             budgetRateEl.innerHTML = `€1 = ${rateEurKrwFmt}원<br>£1 = ${rateGbpKrwFmt}원`;
             budgetRateEl.classList.add('leading-tight', 'text-right');
         }
-        if (budgetDateEl) budgetDateEl.textContent = `환율 기준: ${updateDate}`;
+        if (budgetDateEl) budgetDateEl.textContent = budgetDateLabel;
 
         // 3. 메인 탭 예산표 원화 계산 (100원 단위 반올림)
         krwElements.forEach(el => {
@@ -408,22 +473,6 @@ async function fetchExchangeRateAndCalculate() {
         if (typeof window.triggerRenderExpenses === 'function') {
             window.triggerRenderExpenses();
         }
-
-    } catch (error) {
-        console.error("환율 API 호출 실패:", error);
-        if (rateValEl) rateValEl.innerHTML = "불러오기 실패";
-        if (dateEl) dateEl.textContent = "오프라인 상태입니다";
-        if (budgetRateEl) budgetRateEl.innerHTML = "€1 = 임시 1,450원<br>£1 = 임시 1,705원";
-        
-        krwElements.forEach(el => {
-            const eurAmount = parseFloat(el.getAttribute('data-eur'));
-            if (!isNaN(eurAmount)) {
-                const rawKrw = eurAmount * currentEurToKrw;
-                const roundedKrw = Math.round(rawKrw / 100) * 100;
-                el.textContent = `(약 ${roundedKrw.toLocaleString('ko-KR')}원 *임시환율)`;
-            }
-        });
-    }
 }
 fetchExchangeRateAndCalculate();
 
@@ -463,16 +512,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let expenses = []; // 불러온 데이터를 저장할 배열
+    let expensesSavedAt = null; // 오프라인 저장본을 보여주는 중이면 저장 시각
+
+    // 시트는 날짜를 한국 시간 자정(예: 2026-10-06T15:00:00.000Z = 10월 7일)으로 돌려줌
+    // 기기 시간대로 표시하면 핀란드에서는 하루 전 날짜가 되므로 한국 시간 기준으로 표시
+    const formatExpenseDate = (date) => new Date(date).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
     let expenseChart = null;
 
-    // 폼 날짜 입력칸 기본값을 오늘 날짜로 세팅
-    const today = new Date().toISOString().split('T')[0];
+    // 폼 날짜 입력칸 기본값을 오늘 날짜로 세팅 (toISOString은 UTC 기준이라 새벽에 어제 날짜가 됨 → 현지 날짜 사용)
+    const today = toDateKey(new Date());
     const dateInput = document.getElementById('exp-date');
     if (dateInput) dateInput.value = today;
 
     // [핵심 1] 화면 렌더링 함수 (renderExpenses)
     function renderExpenses() {
-        expenseList.innerHTML = '';
+        expenseList.innerHTML = expensesSavedAt
+            ? `<p class="text-center text-xs text-gray-400 py-1">📴 오프라인 · ${formatSavedAt(expensesSavedAt)}에 저장된 내역이에요</p>`
+            : '';
         let totalSpent = 0;
 
         // 지출 내역을 최신 날짜순으로 정렬
@@ -480,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. 가계부 탭의 전체 리스트 그리기
         if (sortedExpenses.length === 0) {
-            expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">아직 기록된 지출이 없거나 데이터를 불러오는 중입니다.</p>`;
+            expenseList.innerHTML += `<p class="text-center text-sm text-gray-400 py-4">아직 기록된 지출이 없거나 데이터를 불러오는 중입니다.</p>`;
         } else {
             sortedExpenses.forEach(exp => {
                 totalSpent += parseFloat(exp.amount) || 0;
@@ -492,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="text-2xl">${categoryIcons[exp.category] || '💸'}</span>
                         <div>
                             <p class="font-bold text-sm text-gray-800 dark:text-gray-200">${exp.desc}</p>
-                            <p class="text-[10px] text-gray-500">${new Date(exp.date).toLocaleDateString('ko-KR')} · ${exp.category}</p>
+                            <p class="text-[10px] text-gray-500">${formatExpenseDate(exp.date)} · ${exp.category}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
@@ -698,16 +754,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // -----------------------------------------------------
     // [핵심 2] 구글 시트에서 데이터 불러오기 (GET)
     // -----------------------------------------------------
+    async function loadExpenses() {
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const list = await response.json();
+        saveSnapshot('expenses', list);
+        expensesSavedAt = null;
+        return list;
+    }
+
     async function fetchExpenses() {
         if (!SCRIPT_URL.includes("script.google.com")) return; // URL 세팅 안 했을 때 멈춤
         expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">구글 시트에서 데이터를 불러오는 중... ⏳</p>`;
         
         try {
-            const response = await fetch(SCRIPT_URL);
-            expenses = await response.json();
+            expenses = await loadExpenses();
             renderExpenses();
         } catch (error) {
             console.error("데이터 로드 실패:", error);
+            const snapshot = loadSnapshot('expenses');
+            if (snapshot) {
+                expenses = snapshot.data;
+                expensesSavedAt = snapshot.savedAt;
+                renderExpenses();
+                return;
+            }
             expenseList.innerHTML = `<p class="text-center text-sm text-red-400 py-4">오프라인 상태이거나 데이터를 불러오지 못했습니다.</p>`;
         }
     }
@@ -720,6 +791,10 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             if (!SCRIPT_URL.includes("script.google.com")) {
                 alert("구글 웹 앱 URL이 설정되지 않았습니다. 앱스 스크립트 주소를 붙여넣어 주세요.");
+                return;
+            }
+            if (!navigator.onLine) {
+                alert("오프라인 상태라 저장할 수 없어요. 인터넷이 연결되면 다시 입력해 주세요.");
                 return;
             }
 
@@ -760,13 +835,26 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(newExpense)
-                });
-                
-                expenses.push(newExpense);
+                let postError = null;
+                try {
+                    const response = await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(newExpense)
+                    });
+                    if (!response.ok) postError = new Error(`HTTP ${response.status}`);
+                } catch (error) {
+                    postError = error;
+                }
+
+                // 응답만으로는 실제 저장 여부를 알 수 없음 (스크립트 오류도 200으로 올 수 있음)
+                // → 시트를 다시 읽어서 방금 보낸 id가 있는지 확인
+                const latest = await loadExpenses();
+                if (!latest.some(exp => String(exp.id) === String(newExpense.id))) {
+                    throw postError || new Error('시트에서 방금 저장한 항목을 찾지 못함');
+                }
+
+                expenses = latest;
                 renderExpenses();
                 
                 document.getElementById('exp-desc').value = '';
@@ -775,7 +863,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('exp-currency').value = 'EUR';
             } catch (error) {
                 console.error("구글 시트 저장 실패:", error);
-                alert("네트워크 오류로 저장하지 못했습니다.");
+                alert("저장하지 못했습니다. 입력한 내용은 그대로 남겨 두었으니 잠시 후 다시 시도해 주세요.");
             } finally {
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
@@ -784,7 +872,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 페이지 시작 시 구글 시트 데이터 1회 불러오기
+    // 페이지 시작 시 구글 시트 데이터 1회 불러오기 (연결이 돌아오면 다시 불러올 수 있게 공개)
+    window.refreshExpenses = fetchExpenses;
     fetchExpenses();
 });
 
@@ -840,3 +929,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// 14. 온라인/오프라인 상태 표시 (연결이 돌아오면 실시간 정보를 다시 불러옴)
+function updateOnlineStatus() {
+    const badge = document.getElementById('offline-badge');
+    if (badge) badge.hidden = navigator.onLine;
+}
+window.addEventListener('offline', updateOnlineStatus);
+window.addEventListener('online', () => {
+    updateOnlineStatus();
+    fetchTampereWeather();
+    fetchExchangeRateAndCalculate();
+    if (window.refreshExpenses) window.refreshExpenses();
+});
+updateOnlineStatus();
+
+// 15. 서비스 워커 등록 (오프라인에서도 화면이 열리도록, sw.js 참고 / file://로 열면 동작하지 않음)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    navigator.serviceWorker.register('./sw.js').catch(error => console.warn('서비스 워커 등록 실패:', error));
+}

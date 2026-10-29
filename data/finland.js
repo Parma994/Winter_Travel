@@ -1,19 +1,25 @@
 // data/finland.js - 핀란드 탭 주차별 일정 데이터
 // (data/flights.js 다음에 로드되어야 합니다)
 
-// 1. 주차 구간 (start ~ end 사이의 날짜 카드가 자동 생성됨)
+// 1. 주말 여행지 (주차의 trip에 아래 키를 적으면 주차 탭 배지, 메인 지도, 잉글랜드 탭에 자동 반영)
+// coords: 있으면 메인 지도에 마커와 탐페레 출발 점선 표시 / note: 지도 팝업 보조 설명 (선택)
+const TRIP_PLACES = {
+    england:   { name: '잉글랜드', icon: '🇬🇧', city: '런던', coords: [51.5074, -0.1278] },
+    rovaniemi: { name: '로바니에미', icon: '🎅', city: '로바니에미', coords: [66.5039, 25.7294], note: '산타마을' },
+    denmark:   { name: '덴마크', icon: '🇩🇰', city: '코펜하겐' }
+};
+
+// 2. 주차 구간 (start ~ end 사이의 날짜 카드가 자동 생성됨)
 const FINLAND_WEEKS = [
-    { label: '1주차', start: '2027-01-03', end: '2027-01-10'},
-    { label: '2주차', start: '2027-01-11', end: '2027-01-17', trip : '🇬🇧 잉글랜드' },
-    { label: '3주차', start: '2027-01-18', end: '2027-01-24', trip : '🎅 로바니에미' },
-    { label: '4주차', start: '2027-01-25', end: '2027-02-01', trip : '🇩🇰 덴마크'  }
+    { label: '1주차', start: '2027-01-03', end: '2027-01-10' },
+    { label: '2주차', start: '2027-01-11', end: '2027-01-17', trip: 'england' },
+    { label: '3주차', start: '2027-01-18', end: '2027-01-24', trip: 'rovaniemi' },
+    { label: '4주차', start: '2027-01-25', end: '2027-02-01', trip: 'denmark' }
 ];
 
-// 2. 날짜별 일정 ('YYYY-MM-DD': { title, items })
+// 3. 날짜별 일정 ('YYYY-MM-DD': { title, items })
 // title: Day 카드 제목 (선택, 없으면 "일정 N개"로 표시)
 // items: 에스토니아 탭과 같은 형식 { time, tone: 'blue' | 'gray' | 'green', title, desc }
-const returnFlight = FLIGHTS[1].legs[0]; // 귀국편 첫 비행기 정보를 그대로 사용
-
 const FINLAND_SCHEDULE = {
     '2027-01-03': {
         title: '탐페레 도착 & 정착',
@@ -34,7 +40,7 @@ const FINLAND_SCHEDULE = {
         title: '체크아웃 & 귀국',
         items: [
             { time: '12:00', tone: 'blue', title: '에어비앤비 체크아웃 🧳', desc: '체크아웃 후 헬싱키 공항으로 이동' },
-            { time: returnFlight.from.time, tone: 'blue', title: `헬싱키 출발 ✈️`, desc: `${returnFlight.flightNo}편으로 ${returnFlight.to.city} 경유 귀국` }
+            { time: RETURN_FIRST.from.time, tone: 'blue', title: '헬싱키 출발 ✈️', desc: `${RETURN_FIRST.flightNo}편으로 ${RETURN_FIRST.to.city} 경유 귀국` }
         ]
     }
 };

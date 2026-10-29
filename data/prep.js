@@ -35,13 +35,11 @@ const PREP_ROADMAP = [
     }
 ];
 
-// 2. 12.31 당일 공항 여정 (카드 사이 점선은 자동 연결, highlight: 강조 카드)
-const firstFlight = FLIGHTS[0].legs[0]; // 마지막 단계는 출국편 첫 비행기 정보를 그대로 사용
-
+// 2. 출국 당일 공항 여정 (카드 사이 점선은 자동 연결, highlight: 강조 카드, 마지막 단계는 출국 첫 비행기 정보 사용)
 const AIRPORT_STEPS = [
     { icon: '🚄', title: '목포역 출발', desc: '16:32 KTX' },
     { icon: '🔄', title: '광명역 환승', desc: '19:30 공항버스' },
     { icon: '🧳', title: '인천공항 T2', desc: '20:40 도착' },
     { icon: '🛂', title: '수속 & 식사', desc: '20:45 ~ 22:30' },
-    { icon: '🛫', title: '탑승 & 이륙', desc: `${firstFlight.from.time} ${firstFlight.flightNo}`, highlight: true }
+    { icon: '🛫', title: '탑승 & 이륙', desc: `${OUTBOUND_FIRST.from.time} ${OUTBOUND_FIRST.flightNo}`, highlight: true }
 ];
