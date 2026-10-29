@@ -405,13 +405,50 @@ function renderFinlandWeeks(weeks) {
 // 여행지 키('england' 등)로 그 여행이 있는 주차 찾기 (없으면 undefined)
 const findTripWeek = (tripKey) => FINLAND_WEEKS.find(week => week.trip === tripKey);
 
+// 메인 지도 아래 주차별 경로 칩 (헬싱키 → 탐페레 거점 → 주차별 여행지 → 주차 미정)
+// 장소 버튼의 data-place 키로 app.js가 지도를 이동시킴 (좌표가 없는 곳은 버튼 대신 글자로만 표시)
+const ROUTE_CHIP_ACTIVE = ['bg-blue-600', 'text-white'];
+
+function getRouteGroups() {
+    const place = (key, icon, name, hasCoords = true) => ({ key, icon, name, hasCoords });
+    const tripPlace = (key) => place(key, TRIP_PLACES[key].icon, TRIP_PLACES[key].name, !!TRIP_PLACES[key].coords);
+    const children = (key) => Object.keys(TRIP_PLACES).filter(k => TRIP_PLACES[k].from === key);
+
+    const groups = [
+        { label: HELSINKI_WEEK_LABEL, places: [place('helsinki', '🏙️', '헬싱키')] },
+        { label: '거점', places: [place('tampere', '🇫🇮', '탐페레')] },
+        ...FINLAND_WEEKS.filter(week => week.trip).map(week => ({
+            label: week.label,
+            places: [week.trip, ...children(week.trip)].map(tripPlace)
+        }))
+    ];
+    // 어느 주차에도 없고 다른 여행지에서 이어지지도 않는 곳
+    const assigned = new Set(groups.flatMap(group => group.places.map(p => p.key)));
+    const unassigned = Object.keys(TRIP_PLACES).filter(key => !assigned.has(key) && !TRIP_PLACES[key].from);
+    if (unassigned.length) groups.push({ label: '미정', places: unassigned.map(tripPlace) });
+    return groups;
+}
+
+function renderRouteChips() {
+    const allButton = `<button type="button" data-place="all" class="route-place flex-shrink-0 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-nordic-900 shadow-sm text-xs font-bold text-gray-700 dark:text-gray-200 transition-colors">🗺️ 전체</button>`;
+    const groups = getRouteGroups().map(group => `
+        <div class="flex-shrink-0 flex items-center gap-0.5 pl-3 pr-1 py-1 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-nordic-900 shadow-sm">
+            <span class="text-[10px] font-bold text-gray-400 mr-1">${group.label}</span>
+            ${group.places.map(p => p.hasCoords
+                ? `<button type="button" data-place="${p.key}" class="route-place px-2 py-0.5 rounded-full text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-nordic-800 transition-colors">${p.icon} ${p.name}</button>`
+                : `<span class="px-2 py-0.5 text-xs font-bold text-gray-400">${p.icon} ${p.name}</span>`).join('')}
+        </div>`).join('');
+    return allButton + groups;
+}
+
 // 12. 실제 렌더링 실행
 function renderInto(containerId, html) {
     const el = document.getElementById(containerId);
     if (el) el.innerHTML = html;
 }
 
-renderInto('estonia-days', ESTONIA_DAYS.map(renderDayCard).join(''));
+renderInto('helsinki-days', HELSINKI_DAYS.map(renderDayCard).join(''));
+renderInto('helsinki-week', HELSINKI_WEEK_LABEL);
 renderInto('packing-list', PACKING_BAGS.map(renderPackingBag).join(''));
 renderInto('budget-plan', renderBudgetPlan(BUDGET_PLAN));
 renderInto('flight-list', FLIGHTS.map(renderFlight).join(''));
@@ -419,6 +456,7 @@ renderInto('prep-roadmap', PREP_ROADMAP.map(renderRoadmapCard).join('') + SCROLL
 renderInto('airport-steps', AIRPORT_STEPS.map((step, i) => renderAirportStep(step, i === AIRPORT_STEPS.length - 1)).join('') + SCROLL_END_SPACER);
 renderInto('finland-weeks', renderFinlandWeeks(FINLAND_WEEKS));
 renderInto('return-summary', renderReturnSummary(FLIGHTS[1]));
+renderInto('route-chips', renderRouteChips());
 
 // 본문 중간의 날짜/주차 표시 (데이터에서 가져와 채움)
 const departure = parseDate(OUTBOUND_FIRST.from.date);

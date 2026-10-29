@@ -7,7 +7,7 @@ const BUDGET_PLAN = [
         items: [
             { label: '영국 런던 왕복 항공권', eur: 200 },
             { label: '헬싱키 ↔ 탐페레 기차(VR)', eur: 120 },
-            { label: '탈린 왕복 페리', eur: 60 },
+            { label: '헬싱키 시내 교통 (HSL)', eur: 60 },
             { label: '탐페레 대중교통(Nysse) 30일권', eur: 60 }
         ]
     },
@@ -16,14 +16,14 @@ const BUDGET_PLAN = [
         items: [
             { label: '탐페레 한 달 마트 식재료', eur: 650 },
             { label: '영국 런던 2박 3일 식비', eur: 100 },
-            { label: '에스토니아 탈린 2박 3일 식비', eur: 100 }
+            { label: '헬싱키 2박 3일 식비', eur: 100 }
         ]
     },
     {
         icon: '🏠', title: '추가 숙박비 (탐페레 제외)',
         items: [
             { label: '영국 런던 2박 3일 숙소', eur: 300 },
-            { label: '에스토니아 탈린 2박 3일 숙소', eur: 120 }
+            { label: '헬싱키 2박 숙소 (놀리 헤르토니에미)', eur: 120 }
         ]
     },
     {

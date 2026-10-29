@@ -27,7 +27,7 @@ const PACKING_BAGS = [
                 ]
             },
             {
-                icon: '🧥', title: '단기 파우치 (탈린/헬싱키용)',
+                icon: '🧥', title: '단기 파우치 (헬싱키 2박용)',
                 items: [
                     { id: 'chk-underwear', label: '속옷 및 양말', note: '2일분' },
                     { id: 'chk-heattex', label: '방한 내의 1벌' },

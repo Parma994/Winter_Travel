@@ -134,12 +134,9 @@
                 <div class="relative w-full h-64 md:h-80 bg-gray-200 dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm border dark:border-gray-800">
                     <!-- Leaflet 커스텀 지도 렌더링 영역 -->
                     <div id="map" class="absolute inset-0 z-0 filter dark:brightness-90"></div>
-                    
-                    <!-- 일정 오버레이 배지 -->
-                    <div class="absolute top-3 left-3 bg-white/95 dark:bg-nordic-950/95 backdrop-blur-sm text-xs md:text-sm font-bold px-4 py-2 rounded-full shadow-sm text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-800 z-10 flex items-center gap-1.5">
-                        <span>📍</span> 탈린 ➔ 탐페레 ➔ 런던 ➔ 로바니에미
-                    </div>
                 </div>
+                <!-- 주차별 경로 칩 (누르면 지도가 그 여행지로 이동): data/finland.js 데이터로 render.js가 그려줍니다 -->
+                <div id="route-chips" class="flex overflow-x-auto hide-scrollbar gap-2 mt-3 pb-1"></div>
 
                 <!-- 실시간 환율 정보 배너 -->
                 <div class="mt-4 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800 flex justify-between items-stretch shadow-sm">
@@ -230,16 +227,16 @@
             </div>
         </section>
 
-        <!-- 3. 에스토니아 탭 -->
-        <section id="tab-estonia" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
-            <h2 class="text-2xl font-bold mb-4">🇪🇪 탈린 & 헬싱키 투어 (1주차)</h2>
+        <!-- 3. 헬싱키 탭 -->
+        <section id="tab-helsinki" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
+            <h2 class="text-2xl font-bold mb-4">🏙️ 헬싱키 2박 3일 (<span id="helsinki-week"></span>)</h2>
             <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl mb-6 border border-blue-100 dark:border-blue-800">
-                <p class="font-semibold text-blue-800 dark:text-blue-300 mb-2">📍 일정: 1월 1일 ~ 1월 3일 (탈린 1박 + 헬싱키 1박)</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">헬싱키 도착 직후 페리를 타고 에스토니아 탈린으로 이동하여 하루를 보낸 뒤 헬싱키 시내 투어를 마치고 탐페레로 입성하는 일정입니다.</p>
+                <p class="font-semibold text-blue-800 dark:text-blue-300 mb-2">📍 일정: 1월 1일 ~ 1월 3일 (헬싱키 2박)</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">헬싱키 공항에 도착해 2박 3일 동안 헬싱키 시내를 둘러본 뒤, 1월 3일 기차로 탐페레에 입성하는 일정입니다.</p>
             </div>
             
-            <div id="estonia-days" class="space-y-4 mb-10">
-                <!-- Day 1~3 일정은 data/estonia.js 데이터로 render.js가 그려줍니다 -->
+            <div id="helsinki-days" class="space-y-4 mb-10">
+                <!-- Day 1~3 일정은 data/helsinki.js 데이터로 render.js가 그려줍니다 -->
             </div>
         </section>
 
@@ -486,8 +483,8 @@
             <button onclick="switchTab('tab-prep', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🧳</span>출발 전
             </button>
-            <button onclick="switchTab('tab-estonia', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
-                <span class="text-lg">🇪🇪</span>에스토니아
+            <button onclick="switchTab('tab-helsinki', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🏙️</span>헬싱키
             </button>
             <button onclick="switchTab('tab-finland', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🇫🇮</span>핀란드
@@ -505,7 +502,7 @@
     
     <!-- flights.js를 먼저: 다른 데이터 파일이 항공편 시각을 참조 -->
     <script src="data/flights.js"></script>
-    <script src="data/estonia.js"></script>
+    <script src="data/helsinki.js"></script>
     <script src="data/packing.js"></script>
     <script src="data/budget.js"></script>
     <script src="data/prep.js"></script>

@@ -3,8 +3,9 @@
 // 1. 지도 변수 선언
 let map;
 let mapTampere;
-let mapTallinn; // 탈린 숙소 지도용
-let mapHelsinki; // 헬싱키 숙소 지도용
+const stayMaps = {}; // 헬싱키 탭 숙소 지도 (mapId → Leaflet 지도, data/helsinki.js의 stay)
+const mainMapMarkers = {}; // 메인 지도 마커 (장소 키 → 마커, 경로 칩에서 이동할 때 사용)
+let mainMapBounds; // 메인 지도 전체 범위
 
 // 전역 환율 변수 (기본값: 임시 환율 1,450원)
 let currentEurToKrw = 1450;
@@ -46,9 +47,8 @@ function switchTab(tabId, btnElement) {
     if(tabId === 'tab-finland' && mapTampere) {
         setTimeout(() => mapTampere.invalidateSize(), 100);
     }
-    if(tabId === 'tab-estonia') {
-        if(mapTallinn) setTimeout(() => mapTallinn.invalidateSize(), 100);
-        if(mapHelsinki) setTimeout(() => mapHelsinki.invalidateSize(), 100);
+    if(tabId === 'tab-helsinki') {
+        Object.values(stayMaps).forEach(stayMap => setTimeout(() => stayMap.invalidateSize(), 100));
     }
 }
 
@@ -64,7 +64,7 @@ function initMap() {
         }).addTo(map);
 
         const tampere = [61.4978, 23.7610];
-        const tallinn = [59.4370, 24.7536];
+        const helsinki = [60.1699, 24.9384];
 
         const createIcon = (emoji) => L.divIcon({
             html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">${emoji}</div>`,
@@ -73,18 +73,26 @@ function initMap() {
             iconAnchor: [15, 30]
         });
 
-        L.marker(tampere, {icon: createIcon('🇫🇮')}).bindPopup('<b>탐페레</b><br>거점').addTo(map);
-        L.marker(tallinn, {icon: createIcon('🇪🇪')}).bindPopup('<b>탈린</b><br>1주차').addTo(map);
-        L.polyline([tallinn, tampere], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
+        mainMapMarkers.tampere = L.marker(tampere, {icon: createIcon('🇫🇮')}).bindPopup('<b>탐페레</b><br>거점').addTo(map);
+        mainMapMarkers.helsinki = L.marker(helsinki, {icon: createIcon('🏙️')}).bindPopup(`<b>헬싱키</b><br>${HELSINKI_WEEK_LABEL} · 2박 3일`).addTo(map);
+        L.polyline([helsinki, tampere], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
 
         // 주말 여행지 마커 (data/finland.js의 TRIP_PLACES 중 좌표가 있는 곳, 팝업에 주차 자동 표시)
-        Object.entries(TRIP_PLACES).filter(([, place]) => place.coords).forEach(([key, place]) => {
-            const week = findTripWeek(key);
+        // from이 있으면 그 여행지에서 점선을 잇고 주차도 그 여행을 따름 (예: 로바니에미 → 트롬쇠)
+        const tripPlaces = Object.entries(TRIP_PLACES).filter(([, place]) => place.coords);
+        tripPlaces.forEach(([key, place]) => {
+            const week = findTripWeek(key) || (place.from && findTripWeek(place.from));
             const detail = [week ? week.label : '주차 미정', place.note].filter(Boolean).join(' · ');
-            L.marker(place.coords, {icon: createIcon(place.icon)}).bindPopup(`<b>${place.city}</b><br>${detail}`).addTo(map);
-            L.polyline([tampere, place.coords], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
+            // 출발지: 다른 여행지 키 또는 'helsinki'/'tampere' (위에서 먼저 만든 마커 위치)
+            const origin = !place.from ? tampere
+                : TRIP_PLACES[place.from] ? TRIP_PLACES[place.from].coords
+                : mainMapMarkers[place.from].getLatLng();
+            mainMapMarkers[key] = L.marker(place.coords, {icon: createIcon(place.icon)}).bindPopup(`<b>${place.city}</b><br>${detail}`).addTo(map);
+            L.polyline([origin, place.coords], {color: '#3b82f6', weight: 2, dashArray: '5, 5'}).addTo(map);
         });
-        map.fitBounds([tampere, tallinn, TRIP_PLACES.england.coords], { padding: [30, 30] });
+        // 모든 여행지가 한 화면에 보이도록 범위 맞춤 (경로 칩의 '전체'도 이 범위로 돌아옴)
+        mainMapBounds = L.latLngBounds([tampere, helsinki, ...tripPlaces.map(([, place]) => place.coords)]);
+        map.fitBounds(mainMapBounds, { padding: [30, 30] });
     }
 
     // 핀란드 거점 숙소 지도
@@ -110,55 +118,53 @@ function initMap() {
         }).bindPopup('<b>탐페레 베이스캠프</b><br>Hatanpään Valtatie 4 B').addTo(mapTampere);
     }
 
-    // (추가) 탈린 1박 숙소 지도 (시티박스)
-    const mapTallinnEl = document.getElementById('map-tallinn');
-    if (mapTallinnEl && !mapTallinn) {
-        mapTallinn = L.map('map-tallinn', { zoomControl: false });
+    // 헬싱키 숙소 지도 (data/helsinki.js의 stay.coords 위치에 마커)
+    HELSINKI_DAYS.filter(day => day.stay).forEach(({ stay }) => {
+        if (stayMaps[stay.mapId] || !document.getElementById(stay.mapId)) return;
+        const stayMap = L.map(stay.mapId, { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             crossOrigin: true, // 서비스 워커 타일 저장용
             attribution: '&copy; OpenStreetMap'
-        }).addTo(mapTallinn);
-        
-        // 시티박스 탈린 대략적 좌표 (로테르만 지구)
-        const cityboxLocation = [59.4412, 24.7565];
-        mapTallinn.setView(cityboxLocation, 14);
-        
-        L.marker(cityboxLocation, {
-            icon: L.divIcon({
-                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">🏨</div>`,
-                className: 'bg-transparent border-0',
-                iconSize: [26, 26],
-                iconAnchor: [13, 26]
-            })
-        }).bindPopup('<b>시티박스 탈린</b><br>무인 체크인').addTo(mapTallinn);
-    }
+        }).addTo(stayMap);
+        stayMap.setView(stay.coords, 14);
 
-    // (추가) 헬싱키 1박 숙소 지도 (호텔 아서)
-    const mapHelsinkiEl = document.getElementById('map-helsinki');
-    if (mapHelsinkiEl && !mapHelsinki) {
-        mapHelsinki = L.map('map-helsinki', { zoomControl: false });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            crossOrigin: true, // 서비스 워커 타일 저장용
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(mapHelsinki);
-        
-        // 호텔 아서 좌표 (카이사니에미 인근)
-        const arthurLocation = [60.1729, 24.9477];
-        mapHelsinki.setView(arthurLocation, 14);
-        
-        L.marker(arthurLocation, {
+        L.marker(stay.coords, {
             icon: L.divIcon({
                 html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">🏨</div>`,
                 className: 'bg-transparent border-0',
                 iconSize: [26, 26],
                 iconAnchor: [13, 26]
             })
-        }).bindPopup('<b>호텔 아서</b><br>중앙역 도보 5분').addTo(mapHelsinki);
-    }
+        }).bindPopup(`<b>${stay.shortName || stay.name}</b>`).addTo(stayMap);
+        stayMaps[stay.mapId] = stayMap;
+    });
 }
 setTimeout(initMap, 100);
+
+// 경로 칩을 누르면 메인 지도가 그 여행지로 이동하고 팝업을 엶 ('전체'는 처음 범위로)
+let pendingPopup = null; // 이동이 끝나면 열 팝업 (이동 중 다른 칩을 누르면 취소)
+document.getElementById('route-chips').addEventListener('click', (e) => {
+    const button = e.target.closest('[data-place]');
+    if (!button || !map) return;
+    document.querySelectorAll('#route-chips .route-place').forEach(b => b.classList.remove(...ROUTE_CHIP_ACTIVE));
+    button.classList.add(...ROUTE_CHIP_ACTIVE);
+
+    if (pendingPopup) map.off('moveend', pendingPopup);
+    pendingPopup = null;
+    map.closePopup();
+
+    if (button.dataset.place === 'all') {
+        map.flyToBounds(mainMapBounds, { padding: [30, 30], duration: 0.8 });
+        return;
+    }
+    const marker = mainMapMarkers[button.dataset.place];
+    if (!marker) return;
+    // flyTo가 진행 중이던 이전 이동을 멈추면서 moveend를 보내므로, 예약은 flyTo 다음에 걸어야 이번 이동이 끝날 때 열림
+    map.flyTo(marker.getLatLng(), 7, { duration: 0.8 });
+    pendingPopup = () => { pendingPopup = null; marker.openPopup(); };
+    map.once('moveend', pendingPopup);
+});
 
 // 4. 다크모드 On/Off 토글
 const themeCheckbox = document.getElementById('theme-toggle-checkbox');
@@ -481,13 +487,10 @@ document.addEventListener('DOMContentLoaded', () => {
     detailsEls.forEach(detail => {
         detail.addEventListener('toggle', (e) => {
             if (detail.open) {
-                // 어떤 지도가 포함되어 있는지 확인 후 새로고침
-                if (detail.querySelector('#map-tallinn') && mapTallinn) {
-                    setTimeout(() => mapTallinn.invalidateSize(), 50);
-                }
-                if (detail.querySelector('#map-helsinki') && mapHelsinki) {
-                    setTimeout(() => mapHelsinki.invalidateSize(), 50);
-                }
+                // 펼친 카드 안에 숙소 지도가 있으면 새로고침 (접힌 상태에서 만든 지도는 크기가 0이라 깨짐)
+                Object.entries(stayMaps).forEach(([mapId, stayMap]) => {
+                    if (detail.querySelector(`#${mapId}`)) setTimeout(() => stayMap.invalidateSize(), 50);
+                });
             }
         });
     });
@@ -511,7 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let expenses = []; // 불러온 데이터를 저장할 배열
-    let expensesSavedAt = null; // 오프라인 저장본을 보여주는 중이면 저장 시각
+    let expensesSavedAt = null; // 저장본을 보여주는 중이면 저장 시각
+    let expensesRefreshing = false; // 저장본을 먼저 보여주고 최신 목록을 받아오는 중인지
 
     // 시트는 날짜를 한국 시간 자정(예: 2026-10-06T15:00:00.000Z = 10월 7일)으로 돌려줌
     // 기기 시간대로 표시하면 핀란드에서는 하루 전 날짜가 되므로 한국 시간 기준으로 표시
@@ -528,9 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // [핵심 1] 화면 렌더링 함수 (renderExpenses)
     function renderExpenses() {
-        expenseList.innerHTML = expensesSavedAt
-            ? `<p class="text-center text-xs text-gray-400 py-1">📴 오프라인 · ${formatSavedAt(expensesSavedAt)}에 저장된 내역이에요</p>`
-            : '';
+        expenseList.innerHTML = !expensesSavedAt ? ''
+            : expensesRefreshing
+                ? `<p class="text-center text-xs text-gray-400 py-1">🔄 최신 내역 불러오는 중 · ${formatSavedAt(expensesSavedAt)} 저장본 표시 중</p>`
+                : `<p class="text-center text-xs text-gray-400 py-1">📴 오프라인 · ${formatSavedAt(expensesSavedAt)}에 저장된 내역이에요</p>`;
         let totalSpent = 0;
 
         // 지출 내역을 최신 날짜순으로 정렬
@@ -792,9 +797,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && data.message === 'unauthorized') throw new AuthError('비밀번호 불일치');
             throw new Error('시트 응답 형식이 올바르지 않음');
         }
-        saveSnapshot('expenses', data);
-        expensesSavedAt = null;
+        useLatestExpenses(data);
         return data;
+    }
+
+    // 시트에서 받은 최신 목록을 기기에 저장 (오프라인/즉시 표시용)
+    function useLatestExpenses(list) {
+        saveSnapshot('expenses', list);
+        expensesSavedAt = null;
+        expensesRefreshing = false;
     }
 
     async function fetchExpenses() {
@@ -805,13 +816,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         keyCard.hidden = true;
-        expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">구글 시트에서 데이터를 불러오는 중... ⏳</p>`;
+
+        // 저장본이 있으면 먼저 바로 보여주고, 최신 목록은 뒤에서 받아와 교체 (시트 응답은 1~3초 걸림)
+        const cached = loadSnapshot('expenses');
+        if (cached) {
+            expenses = cached.data;
+            expensesSavedAt = cached.savedAt;
+            expensesRefreshing = true;
+            renderExpenses();
+        } else {
+            expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">구글 시트에서 데이터를 불러오는 중... ⏳</p>`;
+        }
 
         try {
             expenses = await loadExpenses();
             renderExpenses();
         } catch (error) {
             console.error("데이터 로드 실패:", error);
+            expensesRefreshing = false;
             if (error instanceof AuthError) {
                 handleAuthError();
                 expenseList.innerHTML = `<p class="text-center text-sm text-gray-400 py-4">가계부 비밀번호를 입력하면 지출 내역을 불러와요. 🔒</p>`;
@@ -857,12 +879,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 옛 Apps Script는 수정/삭제 요청도 "새 줄 추가"로 처리해 버리므로, 수정/삭제 전에 버전을 확인
-    let scriptSupportsEdit = false;
+    // 한 번 확인되면 기기에 기억해서 다음부터는 요청 없이 바로 진행
+    const VERSION_STORAGE = 'expenseScriptVersion';
+    let scriptSupportsEdit = (() => { try { return Number(localStorage.getItem(VERSION_STORAGE)) >= 2; } catch (e) { return false; } })();
     async function ensureScriptSupportsEdit() {
         if (scriptSupportsEdit) return true;
         try {
             const data = await (await fetch(`${SCRIPT_URL}?action=version`)).json();
             scriptSupportsEdit = !Array.isArray(data) && data.version >= 2;
+            if (scriptSupportsEdit) { try { localStorage.setItem(VERSION_STORAGE, String(data.version)); } catch (e) {} }
         } catch (error) {
             console.error("Apps Script 버전 확인 실패:", error);
             alert("구글 시트 연결을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
@@ -873,21 +898,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 응답만으로는 실제 반영 여부를 알 수 없음 (스크립트 오류도 200으로 올 수 있음)
-    // → 보낸 뒤 시트를 다시 읽어서 isApplied(최신 목록)로 반영됐는지 확인
+    // → 반영 후의 최신 목록으로 isApplied(최신 목록)를 확인
+    //   시트가 저장 응답에 목록(expenses)을 담아 주면 그걸 바로 쓰고, 아니면 한 번 더 읽어옴
     async function sendToSheet(payload, isApplied) {
         let postError = null;
+        let latest = null;
         try {
             const response = await fetch(SCRIPT_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ ...payload, key: getKey() })
             });
-            if (!response.ok) postError = new Error(`HTTP ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json().catch(() => null);
+            if (result && result.message === 'unauthorized') throw new AuthError('비밀번호 불일치');
+            if (result && Array.isArray(result.expenses)) {
+                latest = result.expenses;
+                useLatestExpenses(latest);
+            }
         } catch (error) {
+            if (error instanceof AuthError) throw error;
             postError = error;
         }
 
-        const latest = await loadExpenses();
+        if (!latest) latest = await loadExpenses();
         if (!isApplied(latest)) throw postError || new Error('시트에 반영되지 않음');
         expenses = latest;
         renderExpenses();

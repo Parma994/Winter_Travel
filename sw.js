@@ -6,7 +6,7 @@
 //
 // ⚠️ 파일을 새로 추가하거나 라이브러리 주소를 바꾸면 아래 목록에 반영하고 CACHE_VERSION을 올려 주세요.
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const APP_CACHE = `app-${CACHE_VERSION}`;
 const LIB_CACHE = `lib-${CACHE_VERSION}`;
 const TILE_CACHE = 'tiles-v1';
@@ -19,7 +19,7 @@ const APP_FILES = [
     './app.js',
     './render.js',
     './data/flights.js',
-    './data/estonia.js',
+    './data/helsinki.js',
     './data/packing.js',
     './data/budget.js',
     './data/prep.js',
@@ -89,7 +89,9 @@ self.addEventListener('fetch', (event) => {
 
 async function networkFirst(request) {
     const cache = await caches.open(APP_CACHE);
-    const network = fetch(request).then(response => {
+    // cache: 'no-cache' → GitHub Pages의 10분 캐시를 건너뛰고 서버에 최신인지 확인 (안 바뀌었으면 304로 가볍게 끝남)
+    // 배포 직후 새 index.html + 옛 app.js처럼 버전이 섞이는 것을 막음 (navigate 요청은 옵션을 못 붙여서 URL로 요청)
+    const network = fetch(request.url, { cache: 'no-cache', credentials: 'same-origin' }).then(response => {
         if (response.ok) cache.put(request, response.clone());
         return response;
     });
