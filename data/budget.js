@@ -29,6 +29,7 @@ const BUDGET_PLAN = [
             { divider: '3주차 · 로바니에미 & 트롬쇠' },
             { label: '탐페레 ~ 로바니에미 기차', amount: 79 },
             { label: '로바니에미 ~ 트롬쇠 항공권', amount: 149 },
+            { label: '로바니에미 & 트롬쇠 로컬 버스 (공항/시내)', amount: 180, currency: 'NOK' },
             { label: '트롬쇠 ~ 헬싱키 항공권', amount: 502, currency: 'NOK' },
 
             { divider: '4주차 · 코펜하겐' },
@@ -38,30 +39,38 @@ const BUDGET_PLAN = [
     {
         icon: '🍔', title: '식비 및 생활비',
         items: [
-            { label: '탐페레 한 달 마트 식재료', amount: 650 },
-            { label: '영국 런던 2박 3일 식비', amount: 85, currency: 'GBP' },
-            { label: '헬싱키 2박 3일 식비', amount: 100 }
+            { label: '헬싱키 2박 3일 식비', amount: 100 },
+            { label: '탐페레 한 달 마트 식재료', amount: 450 },
+            { label: '스톡홀름 0박 3일 식비', amount: 105 },
+            { label: '영국 런던 2박 4일 식비', amount: 165, currency: 'GBP' },
+            { label: '로바니에미 + 트롬쇠 2박 3일 식비', amount: 100 },
+            { label: '코펜하겐 당일치기', amount: 15 },
         ]
     },
     {
         icon: '🏠', title: '추가 숙박비 (탐페레 제외)',
         items: [
-            { label: '영국 런던 2박 3일 숙소', amount: 255, currency: 'GBP' },
-            { label: '헬싱키 2박 숙소 (놀리 헤르토니에미)', amount: 120 }
+            { label: '헬싱키 2박 숙소 (놀리 헤르토니에미)', amount: 120 },        
+            { label: '영국 런던 3박 4일 숙소', amount: 163 },
+            { label: '로바니에미 1박 숙소', amount: 105 },
+            { label: '트롬쇠 1박 숙소', amount: 120 }
         ]
     },
     {
         icon: '⚽', title: '문화 및 액티비티',
         items: [
             { label: '탐페레 로컬 사우나 (주 2~3회)', amount: 130 },
-            { label: '토트넘 홋스퍼 경기 직관 티켓', amount: 85, currency: 'GBP' },
-            { label: '현지 박물관 및 관광 입장료', amount: 100 }
+            { label: '토트넘 홋스퍼 경기 직관 티켓(멤버십 포함)', amount: 115, currency: 'GBP' },
+            { label: '현지 박물관 및 관광 입장료', amount: 100 },
+            { label: '트롬쇠 피엘하이센 케이블카', amount: 415, currency: 'NOK' }
         ]
     },
     {
-        icon: '🆘', title: '비상 예비비',
+        icon: '🆘', title: '기타 및 비상금',
         items: [
-            { label: '환율 변동 및 돌발 상황 여유 자금', amount: 460 }
+            { label: '영국 전자여행허가 (UK ETA)', amount: 10, currency: 'GBP' },
+            { label: '유럽 통합 데이터 eSIM (30일)', amount: 26 },
+            { label: '기념품 및 돌발 상황 여유 자금', amount: 400 }
         ]
     }
 ];
