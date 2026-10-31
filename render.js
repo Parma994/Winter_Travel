@@ -509,3 +509,5 @@ const departure = parseDate(OUTBOUND_FIRST.from.date);
 renderInto('departure-day', `${pad2(departure.getMonth() + 1)}.${pad2(departure.getDate())}`);
 const englandWeek = findTripWeek('england');
 renderInto('england-week', englandWeek ? `${englandWeek.label} 주말` : '주차 미정');
+const laplandWeek = findTripWeek('rovaniemi');
+renderInto('lapland-week', laplandWeek ? `${laplandWeek.label} 주말` : '주차 미정');
