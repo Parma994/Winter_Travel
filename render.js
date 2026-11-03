@@ -20,6 +20,37 @@ const TIMELINE_TONES = {
 };
 
 // 2. 타임라인 항목 1개
+// places: 일정 아래에 붙는 장소 목록 [{ name, desc, map, coords }] (name 외에는 선택)
+//   map: Google 지도 검색어 → "지도 ↗" 링크 / coords: [위도, 경도] → 일정 아래 작은 지도에 번호 핀
+// 장소 지도는 app.js가 카드를 펼칠 때 PLACE_MAPS(지도 상자 id → 좌표 있는 장소 목록)를 보고 만듦
+const PLACE_MAPS = {};
+const PLACE_NUMBER_CLASS = 'inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[10px] font-bold';
+
+function renderPlace(place, number, mapId) {
+    const mapLink = place.map
+        ? ` <a href="https://maps.google.com/?q=${encodeURIComponent(place.map)}" target="_blank" class="font-bold text-blue-500 hover:underline whitespace-nowrap">지도 ↗</a>`
+        : '';
+    // 지도에 핀이 있는 장소는 번호를 붙이고, 누르면 지도가 그 핀으로 이동
+    const marker = number ? `<span class="${PLACE_NUMBER_CLASS} mr-1 align-[-2px]">${number}</span>` : '📍 ';
+    const target = number ? ` data-place-map="${mapId}" data-place-index="${number - 1}"` : '';
+    return `
+        <li${target} class="bg-gray-50 dark:bg-nordic-800 rounded-lg px-3 py-2${number ? ' cursor-pointer hover:bg-blue-50 dark:hover:bg-nordic-700 transition-colors' : ''}">
+            <p class="font-bold text-gray-700 dark:text-gray-300">${marker}${place.name}${mapLink}</p>
+            ${place.desc ? `<p class="text-gray-500 dark:text-gray-400 mt-0.5">${place.desc}</p>` : ''}
+        </li>`;
+}
+
+function renderPlaces(places) {
+    const pinned = places.filter(place => place.coords);
+    const mapId = pinned.length ? `place-map-${Object.keys(PLACE_MAPS).length + 1}` : '';
+    if (mapId) PLACE_MAPS[mapId] = pinned;
+    const mapBox = mapId
+        ? `<div class="relative h-40 mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"><div id="${mapId}" class="place-map absolute inset-0 z-0"></div></div>`
+        : '';
+    const list = places.map(place => renderPlace(place, pinned.indexOf(place) + 1, mapId)).join('');
+    return `${mapBox}<ul class="mt-2 space-y-1.5 text-xs">${list}</ul>`;
+}
+
 function renderTimelineItem(item) {
     const tone = TIMELINE_TONES[item.tone] || TIMELINE_TONES.gray;
     return `
@@ -27,9 +58,10 @@ function renderTimelineItem(item) {
             <div class="absolute w-3 h-3 ${tone.dot} rounded-full -left-[7px] top-1.5 shadow-sm ring-4 ring-white dark:ring-nordic-900"></div>
             <div class="flex items-start gap-3">
                 <span class="font-bold ${tone.time} w-11 flex-shrink-0 mt-0.5 text-sm">${item.time}</span>
-                <div>
+                <div class="flex-1 min-w-0">
                     <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm">${item.title}</h5>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${item.desc}</p>
+                    ${item.desc ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${item.desc}</p>` : ''}
+                    ${item.places ? renderPlaces(item.places) : ''}
                 </div>
             </div>
         </div>`;

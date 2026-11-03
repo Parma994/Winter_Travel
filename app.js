@@ -57,6 +57,7 @@ function switchTab(tabId, btnElement) {
     if(tabId === 'tab-helsinki') {
         Object.values(stayMaps).forEach(stayMap => setTimeout(() => stayMap.invalidateSize(), 100));
     }
+    setTimeout(() => initPlaceMaps(document.getElementById(tabId)), 100);
 }
 
 // 3. Leaflet 지도 초기화
@@ -148,6 +149,50 @@ function initMap() {
     });
 }
 setTimeout(initMap, 100);
+
+// 일정 장소 지도 (render.js의 PLACE_MAPS, 화면에 보이는 것만 만들고 이미 있으면 크기만 새로고침)
+// 휴대폰에서는 한 손가락으로 끌어도 페이지가 스크롤되도록 지도 끌기를 끄고, 두 손가락 확대/축소와 +/- 버튼만 사용
+const placeMaps = {}; // 지도 상자 id → { map, markers }
+function initPlaceMaps(root) {
+    if (!root || typeof L === 'undefined') return;
+    root.querySelectorAll('.place-map').forEach(el => {
+        if (el.offsetParent === null) return; // 접힌 카드/숨은 탭 → 펼칠 때 다시 호출됨
+        if (placeMaps[el.id]) { placeMaps[el.id].map.invalidateSize(); return; }
+
+        const places = PLACE_MAPS[el.id];
+        const placeMap = L.map(el.id, { dragging: !L.Browser.mobile, scrollWheelZoom: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            crossOrigin: true, // 서비스 워커 타일 저장용
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(placeMap);
+
+        const markers = places.map((place, i) => L.marker(place.coords, {
+            icon: L.divIcon({
+                html: `<span class="${PLACE_NUMBER_CLASS} ring-2 ring-white shadow">${i + 1}</span>`,
+                className: 'bg-transparent border-0',
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            })
+        }).bindPopup(`<b>${place.name}</b>`).addTo(placeMap));
+
+        if (places.length === 1) placeMap.setView(places[0].coords, 15);
+        else placeMap.fitBounds(L.latLngBounds(places.map(place => place.coords)), { padding: [20, 20], maxZoom: 16 });
+        placeMaps[el.id] = { map: placeMap, markers };
+    });
+}
+
+// 장소 목록을 누르면 그 장소 지도의 핀으로 이동 ("지도 ↗" 링크는 그대로 Google 지도 열기)
+document.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-place-index]');
+    if (!item || e.target.closest('a')) return;
+    const entry = placeMaps[item.dataset.placeMap];
+    if (!entry) return;
+    const marker = entry.markers[item.dataset.placeIndex];
+    entry.map.closePopup();
+    entry.map.flyTo(marker.getLatLng(), 16, { duration: 0.6 });
+    entry.map.once('moveend', () => marker.openPopup());
+});
 
 // 경로 칩을 누르면 메인 지도가 그 여행지로 이동하고 팝업을 엶 ('전체'는 처음 범위로)
 let pendingPopup = null; // 이동이 끝나면 열 팝업 (이동 중 다른 칩을 누르면 취소)
@@ -519,6 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 Object.entries(stayMaps).forEach(([mapId, stayMap]) => {
                     if (detail.querySelector(`#${mapId}`)) setTimeout(() => stayMap.invalidateSize(), 50);
                 });
+                setTimeout(() => initPlaceMaps(detail), 50); // 일정 장소 지도는 처음 펼칠 때 만듦
             }
         });
     });
@@ -1157,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 t.className = `${WEEK_TAB_BASE} ${t.dataset.week === week ? WEEK_TAB_ACTIVE : WEEK_TAB_INACTIVE}`;
             });
             weekPanels.forEach(panel => { panel.hidden = panel.dataset.week !== week; });
+            initPlaceMaps(document.getElementById('finland-weeks')); // 새 주차의 펼쳐진 카드 속 장소 지도
         });
     });
 });
