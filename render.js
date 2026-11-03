@@ -19,6 +19,12 @@ const TIMELINE_TONES = {
     green: { dot: 'bg-emerald-500',             time: 'text-emerald-600 dark:text-emerald-400' }
 };
 
+// 1-1. 여행지별 강조색 (Day 배지, 숙소 배지에 사용 / 탭 배너와 안내 상자 색은 index.html에서 같은 색으로)
+const PLACE_THEMES = {
+    blue:  'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+    amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
+};
+
 // 2. 타임라인 항목 1개
 // places: 일정 아래에 붙는 장소 목록 [{ name, desc, map, coords }] (name 외에는 선택)
 //   map: Google 지도 검색어 → "지도 ↗" 링크 / coords: [위도, 경도] → 일정 아래 작은 지도에 번호 핀
@@ -68,12 +74,12 @@ function renderTimelineItem(item) {
 }
 
 // 3. 숙소 카드 (지도 포함)
-function renderStayCard(stay) {
+function renderStayCard(stay, theme = 'blue') {
     return `
         <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 mt-6">
             <div class="flex justify-between items-start mb-2">
                 <div>
-                    <span class="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 text-[10px] font-bold px-2 py-0.5 rounded">${stay.badge}</span>
+                    <span class="${PLACE_THEMES[theme]} text-[10px] font-bold px-2 py-0.5 rounded">${stay.badge}</span>
                     <h4 class="font-bold text-gray-800 dark:text-gray-100 mt-1.5">${stay.name}</h4>
                 </div>
                 <span class="text-lg">${stay.flag}</span>
@@ -111,18 +117,18 @@ function renderAccordion({ badge, badgeClass, title, bodyClass, body }) {
         </details>`;
 }
 
-// 5. Day 카드 (타임라인 + 선택적 숙소 카드)
-function renderDayCard(day) {
+// 5. Day 카드 (타임라인 + 선택적 숙소 카드), theme은 PLACE_THEMES의 키
+function renderDayCard(day, theme = 'blue') {
     return renderAccordion({
         badge: `Day ${day.day}`,
-        badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
+        badgeClass: PLACE_THEMES[theme],
         title: day.title,
         bodyClass: 'p-4 pt-2',
         body: `
             <div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-3 mt-2 mb-2 space-y-6">
                 ${day.items.map(renderTimelineItem).join('')}
             </div>
-            ${day.stay ? renderStayCard(day.stay) : ''}`
+            ${day.stay ? renderStayCard(day.stay, theme) : ''}`
     });
 }
 
@@ -392,11 +398,11 @@ function renderAirportStep(step, isLast) {
         </div>`;
 }
 
-// 11. 핀란드 주차별 일정 (카드 하나 안에 주차 탭 + 날짜 행)
+// 11. 핀란드 주차별 일정 (카드 하나 안에 주차 탭 + 날짜 행, 탐페레 탭 분위기에 맞춰 커피/베이지 톤)
 // 탭 클릭 전환은 app.js의 주차 탭 로직이 담당 (아래 클래스 상수를 함께 사용)
 const WEEK_TAB_BASE = 'week-tab flex-1 min-w-[4.5rem] py-3 border-b-2 text-sm font-bold transition-colors';
-const WEEK_TAB_ACTIVE = 'border-emerald-500 text-emerald-600 dark:text-emerald-400';
-const WEEK_TAB_INACTIVE = 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300';
+const WEEK_TAB_ACTIVE = 'border-amber-500 text-amber-700 dark:text-amber-400';
+const WEEK_TAB_INACTIVE = 'border-transparent text-stone-400 hover:text-stone-600 dark:hover:text-stone-300';
 
 
 function getDatesInRange(start, end) {
@@ -423,15 +429,15 @@ function renderFinlandDay(date, todayKey) {
         : `<p class="text-xs text-gray-400 py-2 text-center">아직 등록된 일정이 없어요.</p>`;
     const badgeClass = isWeekend
         ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300'
-        : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300';
+        : 'bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-200';
 
     // 카드 안의 한 행 (행 사이는 구분선, 마지막 행은 구분선 없음)
     return `
-        <details${isToday ? ' open' : ''} class="group border-b border-gray-200 dark:border-gray-700 last:border-0">
-            <summary class="flex justify-between items-center px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
+        <details${isToday ? ' open' : ''} class="group border-b border-stone-200 dark:border-stone-700 last:border-0">
+            <summary class="flex justify-between items-center px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-amber-50/60 dark:hover:bg-stone-700/50 transition-colors">
                 <div class="flex items-center gap-3">
                     <span class="${badgeClass} w-16 text-center text-xs font-bold py-1 rounded-md">${formatShortDate(date)}</span>
-                    <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">${title}${todayBadge}</h4>
+                    <h4 class="text-sm font-bold text-stone-800 dark:text-stone-200">${title}${todayBadge}</h4>
                 </div>
                 <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
             </summary>
@@ -450,7 +456,7 @@ function renderFinlandWeeks(weeks) {
         <button type="button" data-week="${i}" class="${WEEK_TAB_BASE} ${i === activeIndex ? WEEK_TAB_ACTIVE : WEEK_TAB_INACTIVE}">
             ${week.label}
             <span class="block text-[10px] font-medium opacity-80">${formatMonthDay(parseDate(week.start))} ~ ${formatMonthDay(parseDate(week.end))}</span>
-            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">${TRIP_PLACES[week.trip].icon} ${TRIP_PLACES[week.trip].name}</span>` : ''}
+            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-300">${TRIP_PLACES[week.trip].icon} ${TRIP_PLACES[week.trip].name}</span>` : ''}
         </button>`).join('');
 
     const panels = weeks.map((week, i) => `
@@ -459,8 +465,8 @@ function renderFinlandWeeks(weeks) {
         </div>`).join('');
 
     return `
-        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
-            <div class="flex overflow-x-auto hide-scrollbar border-b border-gray-200 dark:border-gray-700">
+        <div class="bg-[#fffdf9] dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden">
+            <div class="flex overflow-x-auto hide-scrollbar border-b border-stone-200 dark:border-stone-700">
                 ${tabs}
             </div>
             ${panels}
@@ -523,8 +529,11 @@ function renderInto(containerId, html) {
     if (el) el.innerHTML = html;
 }
 
-renderInto('helsinki-days', HELSINKI_DAYS.map(renderDayCard).join(''));
+renderInto('helsinki-days', HELSINKI_DAYS.map(day => renderDayCard(day, 'blue')).join(''));
 renderInto('helsinki-week', HELSINKI_WEEK_LABEL);
+renderInto('stockholm-days', STOCKHOLM_DAYS.map(day => renderDayCard(day, 'amber')).join(''));
+const stockholmWeek = findTripWeek('stockholm');
+renderInto('stockholm-week', stockholmWeek ? stockholmWeek.label : '주차 미정');
 renderInto('packing-list', PACKING_BAGS.map(renderPackingBag).join(''));
 renderInto('budget-plan', renderBudgetPlan(BUDGET_PLAN));
 renderInto('exp-currency', renderCurrencyOptions());
@@ -541,5 +550,14 @@ const departure = parseDate(OUTBOUND_FIRST.from.date);
 renderInto('departure-day', `${pad2(departure.getMonth() + 1)}.${pad2(departure.getDate())}`);
 const englandWeek = findTripWeek('england');
 renderInto('england-week', englandWeek ? `${englandWeek.label} 주말` : '주차 미정');
+// 탐페레 생활 진행 막대 (입주 전 D-N → 생활 중 N일째 → 끝)
+const lifeStart = parseDate(FINLAND_WEEKS[0].start);
+const lifeTotal = Math.round((parseDate(FINLAND_WEEKS[FINLAND_WEEKS.length - 1].end) - lifeStart) / 86400000) + 1;
+const lifeDay = Math.round((parseDate(toDateKey(new Date())) - lifeStart) / 86400000) + 1;
+const lifeProgress = Math.min(Math.max(lifeDay, 0), lifeTotal);
+renderInto('tampere-life-label', lifeDay < 1 ? '입주까지' : lifeDay > lifeTotal ? '탐페레 생활 끝 👋' : `${lifeDay}일째 생활 중`);
+renderInto('tampere-life-count', lifeDay < 1 ? `D-${1 - lifeDay}` : `${lifeProgress} / ${lifeTotal}일`);
+const lifeBar = document.getElementById('tampere-life-bar');
+if (lifeBar) lifeBar.style.width = `${lifeProgress / lifeTotal * 100}%`;
 const laplandWeek = findTripWeek('rovaniemi');
 renderInto('lapland-week', laplandWeek ? `${laplandWeek.label} 주말` : '주차 미정');

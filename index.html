@@ -46,6 +46,27 @@
         .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* 탭별 배경: 화면 위쪽을 배너와 어울리는 색으로 물들이고 아래로 갈수록 기본 배경색(nordic-50/950)으로 (app.js switchTab이 body에 data-tab을 달아줌) */
+        /* 내용이 화면보다 짧으면(PC 등) 그라데이션이 중간에 잘리거나 반복되며 경계선이 생기므로
+           페이지를 최소 화면 높이로 늘리고 반복을 끔 */
+        body[data-tab] { min-height: 100vh; background-repeat: no-repeat; }
+        body[data-tab="tab-helsinki"] { background-image: linear-gradient(to bottom, #dbeafe, #eef4fb 45vh, #F5F7FA 90vh); }
+        .dark body[data-tab="tab-helsinki"] { background-image: linear-gradient(to bottom, #12263f, #171f2c 45vh, #15181E 90vh); }
+        body[data-tab="tab-stockholm"] { background-image: linear-gradient(to bottom, #fdf3d4, #f5f3ec 45vh, #F5F7FA 90vh); }
+        .dark body[data-tab="tab-stockholm"] { background-image: linear-gradient(to bottom, #2b2614, #1d1f1e 45vh, #15181E 90vh); }
+        /* 탐페레는 일상 탭이라 여행 탭과 달리 화면 전체를 따뜻한 베이지/커피색으로 */
+        body[data-tab="tab-finland"] { background-color: #f7f2ea; background-image: none; }
+        .dark body[data-tab="tab-finland"] { background-color: #1c1a17; }
+        body[data-tab="tab-finland"] > header { background-color: rgba(247, 242, 234, 0.9); border-color: #e7e5e4; }
+        body[data-tab="tab-finland"] > nav { background-color: #fffdf9; border-color: #e7e5e4; }
+        .dark body[data-tab="tab-finland"] > header { background-color: rgba(28, 26, 23, 0.9); border-color: #44403c; }
+        .dark body[data-tab="tab-finland"] > nav { background-color: #1c1a17; border-color: #44403c; }
+        body[data-tab="tab-england"] { background-image: linear-gradient(to bottom, #e2e4f0, #eef0f6 45vh, #F5F7FA 90vh); }
+        .dark body[data-tab="tab-england"] { background-image: linear-gradient(to bottom, #1c1f38, #181b28 45vh, #15181E 90vh); }
+        body[data-tab="tab-lapland"] { background-image: linear-gradient(to bottom, #d6f3e8, #e9f1f3 45vh, #F5F7FA 90vh); }
+        .dark body[data-tab="tab-lapland"] { background-image: linear-gradient(to bottom, #0e2c25, #1a1a2e 45vh, #15181E 90vh); }
+        body[data-tab="tab-return"] { background-image: linear-gradient(to bottom, #fbe3e3, #f6eeef 45vh, #F5F7FA 90vh); }
+        .dark body[data-tab="tab-return"] { background-image: linear-gradient(to bottom, #2e1619, #1f1a1e 45vh, #15181E 90vh); }
     </style>
 </head>
 <body class="bg-nordic-50 text-gray-800 dark:bg-nordic-950 dark:text-nordic-100 transition-colors duration-300 font-sans pb-20">
@@ -236,7 +257,15 @@
 
         <!-- 3. 헬싱키 탭 -->
         <section id="tab-helsinki" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
-            <h2 class="text-2xl font-bold mb-4">🏙️ 헬싱키 2박 3일 (<span id="helsinki-week"></span>)</h2>
+            <!-- 탭 배너: 폴더에 Helsinki.jpg를 넣으면 사진, 없으면 그라데이션 배경 -->
+            <div class="relative h-40 -mx-4 -mt-6 md:mx-0 md:mt-0 md:rounded-xl overflow-hidden mb-6 bg-gradient-to-br from-sky-400 via-blue-700 to-indigo-950">
+                <img src="Helsinki.jpg" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-5 text-white">
+                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md"><span id="helsinki-week"></span> · 1.1 ~ 1.3</p>
+                    <h2 class="text-2xl font-bold drop-shadow-lg">🏙️ 헬싱키 2박 3일</h2>
+                </div>
+            </div>
             <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl mb-6 border border-blue-100 dark:border-blue-800">
                 <p class="font-semibold text-blue-800 dark:text-blue-300 mb-2">📍 일정: 1월 1일 ~ 1월 3일 (헬싱키 2박)</p>
                 <p class="text-sm text-gray-600 dark:text-gray-400">헬싱키 공항에 도착해 2박 3일 동안 헬싱키 시내를 둘러본 뒤, 1월 3일 기차로 탐페레에 입성하는 일정입니다.</p>
@@ -249,64 +278,113 @@
 
         <!-- 4. 핀란드 탭 (메인 거점) -->
         <section id="tab-finland" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
-            <h2 class="text-2xl font-bold mb-4">🇫🇮 탐페레 한 달 살기 & 학습</h2>
+            <!-- 탐페레는 여행이 아닌 일상: 사진 배너 대신 따뜻한 색의 생활 카드 -->
+            <!-- 진행 막대와 문구는 render.js가 FINLAND_WEEKS 기간(첫 주 시작 ~ 마지막 주 끝)으로 계산 -->
+            <div class="rounded-2xl p-5 mb-6 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100 dark:from-stone-800 dark:via-stone-800 dark:to-stone-900 border border-stone-200 dark:border-stone-700 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium tracking-wider text-stone-500 dark:text-stone-400">HOME BASE · 1.3 ~ 2.1</p>
+                        <h2 class="text-2xl font-bold text-stone-800 dark:text-stone-100 mt-1">탐페레의 일상</h2>
+                        <p class="text-sm text-stone-600 dark:text-stone-300 mt-0.5">한 달 살기 & 학습</p>
+                    </div>
+                    <span class="text-4xl">☕</span>
+                </div>
+                <div class="mt-5">
+                    <div class="flex justify-between text-xs font-medium text-stone-500 dark:text-stone-400 mb-1.5">
+                        <span id="tampere-life-label"></span>
+                        <span id="tampere-life-count" class="tabular-nums"></span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden">
+                        <div id="tampere-life-bar" class="h-2 rounded-full bg-amber-500 transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- 탐페레 베이스캠프 에어비앤비 정보 카드 & 지도 -->
-            <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-5 mb-6">
+            <div class="bg-[#fffdf9] dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 p-5 mb-6">
                 <div class="flex justify-between items-start mb-3">
                     <div>
-                        <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mt-1">🏠 탐페레 베이스캠프 (68m² 투룸)</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Hatanpään Valtatie 4 B (5층, 엘리베이터 있음)</p>
+                        <h3 class="font-bold text-lg text-stone-800 dark:text-stone-100 mt-1">🏠 탐페레 베이스캠프 (68m² 투룸)</h3>
+                        <p class="text-xs text-stone-500 dark:text-stone-400">Hatanpään Valtatie 4 B (5층, 엘리베이터 있음)</p>
                     </div>
                     <span class="text-xl">🔑</span>
                 </div>
 
                 <!-- 숙소 지도 영역 -->
-                <div class="relative w-full h-52 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 my-3">
+                <div class="relative w-full h-52 bg-stone-200 dark:bg-stone-900 rounded-lg overflow-hidden border border-stone-200 dark:border-stone-700 my-3">
                     <div id="map-tampere" class="w-full h-full z-0"></div>
-                    <div class="absolute top-2 left-2 z-[400] bg-white/90 dark:bg-nordic-900/90 backdrop-blur-sm px-2.5 py-1 rounded text-[11px] font-bold text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                    <div class="absolute top-2 left-2 z-[400] bg-[#fffdf9]/90 dark:bg-stone-800/90 backdrop-blur-sm px-2.5 py-1 rounded text-[11px] font-bold text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
                         📍 Koskipuisto & 탐페레역 도보 5분
                     </div>
                 </div>
 
                 <!-- 체크인 및 열쇠 수령 안내 -->
-                <div class="space-y-2 mt-4 text-xs text-gray-600 dark:text-gray-300">
-                    <div class="p-3 bg-gray-50 dark:bg-nordic-950 rounded-lg border border-gray-100 dark:border-gray-800">
-                        <p class="font-bold text-gray-800 dark:text-gray-200 mb-1">🗝️ 체크인 & 열쇠 수령 동선</p>
-                        <ul class="list-disc list-inside space-y-1 text-gray-500 dark:text-gray-400">
+                <div class="space-y-2 mt-4 text-xs text-stone-600 dark:text-stone-300">
+                    <div class="p-3 bg-amber-50/60 dark:bg-stone-900 rounded-lg border border-amber-100 dark:border-stone-700">
+                        <p class="font-bold text-stone-800 dark:text-stone-200 mb-1">🗝️ 체크인 & 열쇠 수령 동선</p>
+                        <ul class="list-disc list-inside space-y-1 text-stone-500 dark:text-stone-400">
                             <li>Verkatehtaankatu 뒷마당의 마스터락(키박스)에서 물리키 수령</li>
                             <li>B동 출입구 전자키 태그 후 5층 엘리베이터 이동</li>
                             <li>체크인: 1월 3일 15:00부터 / 체크아웃: 2월 1일 12:00</li>
                         </ul>
                     </div>
-                    <div class="flex justify-between items-center pt-1 text-gray-400">
+                    <div class="flex justify-between items-center pt-1 text-stone-400">
                         <span>난방 쾌적 · 식기세척기 · 창가 원목 테이블</span>
-                        <a href="https://maps.google.com/?q=Hatanpään+Valtatie+4+Tampere" target="_blank" class="text-blue-500 font-bold hover:underline">Google 지도 열기 ↗</a>
+                        <a href="https://maps.google.com/?q=Hatanpään+Valtatie+4+Tampere" target="_blank" class="text-amber-700 dark:text-amber-400 font-bold hover:underline">Google 지도 열기 ↗</a>
                     </div>
                 </div>
             </div>
 
             <!-- 주차별 일정 (주차 탭 + 날짜별 카드): data/finland.js 데이터로 render.js가 그려줍니다 -->
-            <h3 class="font-bold mb-3 text-emerald-600 dark:text-emerald-400">🗓️ 주차별 일정</h3>
+            <h3 class="font-bold mb-3 text-stone-700 dark:text-stone-200">🗓️ 주차별 일정</h3>
             <div id="finland-weeks" class="mb-8"></div>
 
-            <h3 class="font-bold mb-3">🧖‍♂️ 사우나 도장깨기</h3>
-            <div class="space-y-2 text-sm bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border dark:border-gray-800">
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>라야포르티 (가장 오래된 대중 사우나)</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>라우하니에미 (호수 아반토 냉수욕)</span></label>
-                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>사우나 레스토랑 쿠마</span></label>
+            <h3 class="font-bold mb-3 text-stone-700 dark:text-stone-200">🧖‍♂️ 사우나 도장깨기</h3>
+            <div class="space-y-2 text-sm text-stone-700 dark:text-stone-200 bg-[#fffdf9] dark:bg-stone-800 p-5 rounded-xl shadow-sm mb-6 border border-stone-200 dark:border-stone-700">
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 accent-amber-600"><span>라야포르티 (가장 오래된 대중 사우나)</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 accent-amber-600"><span>라우하니에미 (호수 아반토 냉수욕)</span></label>
+                <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4 accent-amber-600"><span>사우나 레스토랑 쿠마</span></label>
             </div>
             
-            <h3 class="font-bold mb-3">📚 핀란드어 독학</h3>
-            <div class="bg-white dark:bg-nordic-900 p-4 rounded-xl shadow-sm text-sm border dark:border-gray-800">
+            <h3 class="font-bold mb-3 text-stone-700 dark:text-stone-200">📚 핀란드어 독학</h3>
+            <div class="bg-[#fffdf9] dark:bg-stone-800 p-4 rounded-xl shadow-sm text-sm text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-700">
                 <p>• Yle Selkouutiset (쉬운 뉴스) 매일 듣기</p>
                 <p>• 마트 실전 표현: Moi, Kiitos, Kuitti kiitos</p>
             </div>
         </section>
 
+        <!-- 4-1. 스톡홀름 탭 (헬싱키 탭과 같은 형식, data/stockholm.js) -->
+        <section id="tab-stockholm" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
+            <!-- 탭 배너: 폴더에 Stockholm.jpg를 넣으면 사진, 없으면 스웨덴 국기색 그라데이션 -->
+            <div class="relative h-40 -mx-4 -mt-6 md:mx-0 md:mt-0 md:rounded-xl overflow-hidden mb-6 bg-gradient-to-tr from-blue-800 via-blue-600 to-amber-400">
+                <img src="Stockholm.jpg" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-5 text-white">
+                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md"><span id="stockholm-week"></span> · 1.8 ~ 1.10</p>
+                    <h2 class="text-2xl font-bold drop-shadow-lg">🇸🇪 스톡홀름 2박 3일</h2>
+                </div>
+            </div>
+            <div class="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-xl mb-6 border border-amber-100 dark:border-amber-800">
+                <p class="font-semibold text-amber-800 dark:text-amber-300 mb-2">📍 일정: 1월 8일 ~ 1월 10일 (스톡홀름 2박, 임시)</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">탐페레에서 스톡홀름으로 넘어가 구시가지와 박물관을 둘러보고 일요일에 돌아오는 주말 일정입니다.</p>
+            </div>
+
+            <div id="stockholm-days" class="space-y-4 mb-10">
+                <!-- Day 1~3 일정은 data/stockholm.js 데이터로 render.js가 그려줍니다 -->
+            </div>
+        </section>
+
         <!-- 5. 잉글랜드 탭 -->
         <section id="tab-england" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
-            <h2 class="text-2xl font-bold mb-4">🇬🇧 런던 토트넘 원정</h2>
+            <!-- 탭 배너: 폴더에 London.jpg를 넣으면 사진, 없으면 남색·빨강 그라데이션 -->
+            <div class="relative h-40 -mx-4 -mt-6 md:mx-0 md:mt-0 md:rounded-xl overflow-hidden mb-6 bg-gradient-to-br from-indigo-900 via-slate-800 to-red-700">
+                <img src="London.jpg" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-5 text-white">
+                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md">프리미어리그 직관 · 런던</p>
+                    <h2 class="text-2xl font-bold drop-shadow-lg">🇬🇧 런던 토트넘 원정</h2>
+                </div>
+            </div>
             <!-- 잉글랜드 강조색 복구 (검정/회색) -->
             <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-t-4 border-gray-900 dark:border-gray-100">
                 <div class="flex justify-between items-center mb-4">
@@ -325,9 +403,14 @@
 
         <!-- 5-1. 북극권 탭 (로바니에미 + 트롬쇠, 체크 상태는 app.js 13번 로직이 기기에 저장) -->
         <section id="tab-lapland" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">🌌 북극권 여행</h2>
-                <span id="lapland-week" class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs px-2 py-1 rounded"></span>
+            <!-- 탭 배너: 폴더에 Lapland.jpg를 넣으면 사진, 없으면 오로라색 그라데이션 -->
+            <div class="relative h-40 -mx-4 -mt-6 md:mx-0 md:mt-0 md:rounded-xl overflow-hidden mb-6 bg-gradient-to-br from-emerald-400 via-teal-800 to-violet-950">
+                <img src="Lapland.jpg" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-5 text-white">
+                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md"><span id="lapland-week"></span> · 로바니에미 & 트롬쇠</p>
+                    <h2 class="text-2xl font-bold drop-shadow-lg">🌌 북극권 여행</h2>
+                </div>
             </div>
 
             <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-t-4 border-red-500">
@@ -364,7 +447,15 @@
 
         <!-- 6. 귀국 전 탭 -->
         <section id="tab-return" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
-            <h2 class="text-2xl font-bold mb-4">🛬 귀국 전 덴마크 레이오버</h2>
+            <!-- 탭 배너: 폴더에 Copenhagen.jpg를 넣으면 사진, 없으면 덴마크 빨강 그라데이션 -->
+            <div class="relative h-40 -mx-4 -mt-6 md:mx-0 md:mt-0 md:rounded-xl overflow-hidden mb-6 bg-gradient-to-br from-red-500 via-rose-800 to-gray-950">
+                <img src="Copenhagen.jpg" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 p-5 text-white">
+                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md">귀국편 경유 · 코펜하겐</p>
+                    <h2 class="text-2xl font-bold drop-shadow-lg">🛬 귀국 전 덴마크 레이오버</h2>
+                </div>
+            </div>
             <!-- 귀국 탭 강조색 복구 (빨강) -->
             <div id="return-summary" class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-l-4 border-red-500">
                 <!-- 귀국편 요약은 data/flights.js 데이터로 render.js가 그려줍니다 -->
@@ -533,6 +624,9 @@
             <button onclick="switchTab('tab-finland', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🇫🇮</span>핀란드
             </button>
+            <button onclick="switchTab('tab-stockholm', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🇸🇪</span>스웨덴
+            </button>
             <button onclick="switchTab('tab-england', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">⚽</span>잉글랜드
             </button>
@@ -551,6 +645,7 @@
     <script src="data/flights.js"></script>
     <script src="data/currency.js"></script>
     <script src="data/helsinki.js"></script>
+    <script src="data/stockholm.js"></script>
     <script src="data/packing.js"></script>
     <script src="data/budget.js"></script>
     <script src="data/prep.js"></script>

@@ -3,7 +3,7 @@
 // 1. 지도 변수 선언
 let map;
 let mapTampere;
-const stayMaps = {}; // 헬싱키 탭 숙소 지도 (mapId → Leaflet 지도, data/helsinki.js의 stay)
+const stayMaps = {}; // 헬싱키/스톡홀름 탭 숙소 지도 (mapId → Leaflet 지도, data/helsinki.js·stockholm.js의 stay)
 const mainMapMarkers = {}; // 메인 지도 마커 (장소 키 → 마커, 경로 칩에서 이동할 때 사용)
 let mainMapBounds; // 메인 지도 전체 범위
 
@@ -32,6 +32,7 @@ const formatSavedAt = (ms) => { const d = new Date(ms); return `${d.getMonth() +
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
+    document.body.dataset.tab = tabId; // 탭별 배경색 (index.html의 body[data-tab] 스타일)
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('text-blue-600', 'dark:text-blue-500', 'font-bold');
@@ -54,7 +55,7 @@ function switchTab(tabId, btnElement) {
     if(tabId === 'tab-finland' && mapTampere) {
         setTimeout(() => mapTampere.invalidateSize(), 100);
     }
-    if(tabId === 'tab-helsinki') {
+    if(tabId === 'tab-helsinki' || tabId === 'tab-stockholm') {
         Object.values(stayMaps).forEach(stayMap => setTimeout(() => stayMap.invalidateSize(), 100));
     }
     setTimeout(() => initPlaceMaps(document.getElementById(tabId)), 100);
@@ -126,8 +127,8 @@ function initMap() {
         }).bindPopup('<b>탐페레 베이스캠프</b><br>Hatanpään Valtatie 4 B').addTo(mapTampere);
     }
 
-    // 헬싱키 숙소 지도 (data/helsinki.js의 stay.coords 위치에 마커)
-    HELSINKI_DAYS.filter(day => day.stay).forEach(({ stay }) => {
+    // 헬싱키/스톡홀름 숙소 지도 (data/helsinki.js·stockholm.js의 stay.coords 위치에 마커)
+    [...HELSINKI_DAYS, ...STOCKHOLM_DAYS].filter(day => day.stay).forEach(({ stay }) => {
         if (stayMaps[stay.mapId] || !document.getElementById(stay.mapId)) return;
         const stayMap = L.map(stay.mapId, { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
