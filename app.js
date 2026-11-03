@@ -1246,6 +1246,152 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 13-1. 요리 탭: 오늘 뭐 먹지? (종류 선택 → 🎲 추천 받기로 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
+// 화면 조각은 render.js 11-1, 메뉴는 data/meals.js
+// 기록은 이 기기에만 저장: 'meal:log' = [{ date, name, category }], 'meal:current' = 확정한 메뉴 { name, checked: [재료 번호] }
+// 먹은 기록은 탭 아래 달력으로 정리 (render.js의 renderMealCalendar)
+document.addEventListener('DOMContentLoaded', () => {
+    const tab = document.getElementById('tab-cook');
+    if (!tab) return;
+    const LOG_KEY = 'meal:log';
+    const CURRENT_KEY = 'meal:current';
+    const load = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } };
+    const save = (key, value) => { try { value ? localStorage.setItem(key, JSON.stringify(value)) : localStorage.removeItem(key); } catch (e) {} };
+    const findMeal = (name) => MEALS.find(meal => meal.name === name);
+
+    let category = null; // 고른 종류 ('all' = 아무거나, null = 아직 안 고름)
+    let bag = [];        // 아직 안 보여준 후보 (섞어 두고 하나씩 꺼냄 → 넘겨도 한 바퀴 돌기 전엔 같은 메뉴가 안 나옴)
+    let shown = null;    // 지금 보여주는 후보
+    let spinning = false; // 이름이 돌아가는 중 (이때는 버튼을 막음)
+    let eaten = null;    // 방금 먹은 메뉴 { meal, notice } (기록 완료 문구 + 보관법 표시용)
+    const todayKey = () => toDateKey(new Date());
+    let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // 달력에 보이는 달 (1일)
+    let selectedDay = todayKey(); // 달력에서 고른 날짜
+    let current = load(CURRENT_KEY, null);
+    if (current && !findMeal(current.name)) current = null; // 메뉴가 data에서 지워졌으면 확정 취소
+
+    function nextMeal() {
+        if (!bag.length) {
+            bag = MEALS.filter(meal => category === 'all' || meal.category === category);
+            for (let i = bag.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [bag[i], bag[j]] = [bag[j], bag[i]];
+            }
+            // 새로 섞은 첫 메뉴가 방금 본 메뉴면 순서를 바꿈
+            if (bag.length > 1 && bag[bag.length - 1] === shown) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+        }
+        shown = bag.pop() || null;
+    }
+
+    function render() {
+        const meal = current && findMeal(current.name);
+        // 메뉴를 확정한 동안에는 종류 버튼을 숨김
+        renderInto('meal-categories', meal ? '' : renderMealCategoryChips(category));
+        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked) : shown ? renderMealPick(shown, spinning) : renderMealIdle(category, eaten));
+        renderInto('meal-log', renderMealCalendar(load(LOG_KEY, []), calMonth, selectedDay, todayKey()));
+    }
+
+    // 추천: 후보 이름을 빠르게 바꿔 보여주다가(약 0.8초) 실제로 뽑힌 메뉴에서 멈춤
+    function spin() {
+        nextMeal();
+        const pool = MEALS.filter(meal => category === 'all' || meal.category === category);
+        if (!shown || pool.length < 2) return render();
+        spinning = true;
+        render();
+        const nameEl = document.getElementById('meal-pick-name');
+        let ticks = 0;
+        const timer = setInterval(() => {
+            if (++ticks >= 12) {
+                clearInterval(timer);
+                spinning = false;
+                render();
+                return;
+            }
+            if (nameEl) nameEl.textContent = pool[Math.floor(Math.random() * pool.length)].name;
+        }, 65);
+    }
+
+    tab.addEventListener('click', (e) => {
+        if (spinning) return;
+        const categoryButton = e.target.closest('[data-meal-category]');
+        const actionButton = e.target.closest('[data-meal-action]');
+        const deleteButton = e.target.closest('[data-meal-delete]');
+        const monthButton = e.target.closest('[data-meal-month]');
+        const dayButton = e.target.closest('[data-meal-day]');
+
+        if (monthButton) {
+            calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + Number(monthButton.dataset.mealMonth), 1);
+            selectedDay = null;
+        } else if (dayButton) {
+            selectedDay = dayButton.dataset.mealDay;
+        } else if (categoryButton) {
+            // 종류는 고르기만 하고, 추천은 🎲 추천 받기 버튼에서
+            category = categoryButton.dataset.mealCategory;
+            bag = [];
+            shown = null;
+            eaten = null;
+        } else if (actionButton) {
+            const action = actionButton.dataset.mealAction;
+            eaten = null;
+            if ((action === 'pick' || action === 'next') && category) return spin();
+            if (action === 'confirm' && shown) {
+                current = { name: shown.name, checked: [] };
+                save(CURRENT_KEY, current);
+                shown = null;
+            }
+            if (action === 'reset') {
+                // 다시 고르기: 확정을 풀고 종류 선택(대기 카드)으로
+                current = null;
+                save(CURRENT_KEY, null);
+                shown = null;
+            }
+            if (action === 'eaten' && current) {
+                const meal = findMeal(current.name);
+                const today = todayKey();
+                save(LOG_KEY, [...load(LOG_KEY, []), { date: today, name: meal.name, category: meal.category }]);
+                // 달력을 오늘로 이동
+                calMonth = new Date(parseDate(today).getFullYear(), parseDate(today).getMonth(), 1);
+                selectedDay = today;
+                eaten = { meal, notice: `${formatShortDate(parseDate(today))} 기록 완료! 잘 먹었어요 😋` };
+                current = null;
+                shown = null;
+                save(CURRENT_KEY, null);
+            }
+        } else if (deleteButton) {
+            const log = load(LOG_KEY, []);
+            const entry = log[Number(deleteButton.dataset.mealDelete)];
+            if (!entry || !confirm(`${formatShortDate(parseDate(entry.date))} ${entry.name} 기록을 지울까요?`)) return;
+            log.splice(Number(deleteButton.dataset.mealDelete), 1);
+            save(LOG_KEY, log);
+        } else {
+            return;
+        }
+        render();
+    });
+
+    // 달력에서 고른 날짜에 외식/즉석식품 등을 직접 추가
+    tab.addEventListener('submit', (e) => {
+        const form = e.target.closest('[data-meal-add]');
+        if (!form || !selectedDay) return;
+        e.preventDefault();
+        const name = form.elements.name.value.trim();
+        if (!name) return;
+        save(LOG_KEY, [...load(LOG_KEY, []), { date: selectedDay, name, category: form.elements.type.value }]);
+        render();
+    });
+
+    // 재료 체크 저장 (취소선은 render.js의 peer 클래스가 처리하므로 다시 그리지 않음)
+    tab.addEventListener('change', (e) => {
+        const box = e.target.closest('[data-meal-ingredient]');
+        if (!box || !current) return;
+        const index = Number(box.dataset.mealIngredient);
+        current.checked = box.checked ? [...current.checked, index] : current.checked.filter(i => i !== index);
+        save(CURRENT_KEY, current);
+    });
+
+    render();
+});
+
 // 14. 온라인/오프라인 상태 표시 (연결이 돌아오면 실시간 정보를 다시 불러옴)
 function updateOnlineStatus() {
     const badge = document.getElementById('offline-badge');

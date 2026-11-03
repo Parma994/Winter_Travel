@@ -57,6 +57,8 @@
         /* 탐페레는 일상 탭: 다른 탭과 같은 방식(위쪽만 물들임)에 따뜻한 베이지색 */
         body[data-tab="tab-finland"] { background-image: linear-gradient(to bottom, #f5ead9, #f4f1ec 45vh, #F5F7FA 90vh); }
         .dark body[data-tab="tab-finland"] { background-image: linear-gradient(to bottom, #2a2219, #1d1c1d 45vh, #15181E 90vh); }
+        body[data-tab="tab-cook"] { background-image: linear-gradient(to bottom, #f5ead9, #f4f1ec 45vh, #F5F7FA 90vh); }
+        .dark body[data-tab="tab-cook"] { background-image: linear-gradient(to bottom, #2a2219, #1d1c1d 45vh, #15181E 90vh); }
         body[data-tab="tab-england"] { background-image: linear-gradient(to bottom, #e2e4f0, #eef0f6 45vh, #F5F7FA 90vh); }
         .dark body[data-tab="tab-england"] { background-image: linear-gradient(to bottom, #1c1f38, #181b28 45vh, #15181E 90vh); }
         body[data-tab="tab-lapland"] { background-image: linear-gradient(to bottom, #d6f3e8, #e9f1f3 45vh, #F5F7FA 90vh); }
@@ -349,6 +351,16 @@
             </div>
         </section>
 
+        <!-- 4-0. 요리 탭 (오늘 뭐 먹지? / 메뉴는 data/meals.js, 화면은 render.js 11-1, 동작은 app.js 13-1) -->
+        <section id="tab-cook" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
+            <h2 class="text-2xl font-bold mb-1">🍳 오늘 뭐 먹지?</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">탐페레 부엌에서 해 먹을 메뉴 고르기</p>
+            <div id="meal-categories" class="flex flex-wrap gap-2 mb-4"></div>
+            <div id="meal-stage" class="mb-8"></div>
+            <h3 class="font-bold mb-3">🍽️ 먹은 기록</h3>
+            <div id="meal-log" class="mb-10"></div>
+        </section>
+
         <!-- 4-1. 스톡홀름 탭 (헬싱키 탭과 같은 형식, data/stockholm.js) -->
         <section id="tab-stockholm" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
             <!-- 탭 배너: 폴더에 Stockholm.jpg를 넣으면 사진, 없으면 스웨덴 국기색 그라데이션 -->
@@ -620,6 +632,9 @@
             <button onclick="switchTab('tab-finland', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🇫🇮</span>핀란드
             </button>
+            <button onclick="switchTab('tab-cook', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
+                <span class="text-lg">🍳</span>요리
+            </button>
             <button onclick="switchTab('tab-stockholm', this)" class="tab-btn flex-shrink-0 flex-1 min-w-[70px] py-3 text-xs flex flex-col items-center gap-1 text-gray-500 hover:text-blue-600 transition">
                 <span class="text-lg">🇸🇪</span>스웨덴
             </button>
@@ -646,6 +661,7 @@
     <script src="data/budget.js"></script>
     <script src="data/prep.js"></script>
     <script src="data/finland.js"></script>
+    <script src="data/meals.js"></script>
     <script src="render.js"></script>
     <script src="app.js"></script>
 </body>
