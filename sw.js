@@ -6,7 +6,7 @@
 //
 // ⚠️ 파일을 새로 추가하거나 라이브러리 주소를 바꾸면 아래 목록에 반영하고 CACHE_VERSION을 올려 주세요.
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const APP_CACHE = `app-${CACHE_VERSION}`;
 const LIB_CACHE = `lib-${CACHE_VERSION}`;
 const TILE_CACHE = 'tiles-v1';
@@ -27,6 +27,7 @@ const APP_FILES = [
     './data/prep.js',
     './data/finland.js',
     './Tampere.jpg',
+    './TampereHome.jpg',
     './Helsinki.jpg',
     './Stockholm.jpg',
     './London.jpg',

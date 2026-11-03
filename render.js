@@ -398,11 +398,11 @@ function renderAirportStep(step, isLast) {
         </div>`;
 }
 
-// 11. 핀란드 주차별 일정 (카드 하나 안에 주차 탭 + 날짜 행, 탐페레 탭 분위기에 맞춰 커피/베이지 톤)
+// 11. 핀란드 주차별 일정 (카드 하나 안에 주차 탭 + 날짜 행, 포인트 색은 탐페레 탭에 맞춘 호박색)
 // 탭 클릭 전환은 app.js의 주차 탭 로직이 담당 (아래 클래스 상수를 함께 사용)
 const WEEK_TAB_BASE = 'week-tab flex-1 min-w-[4.5rem] py-3 border-b-2 text-sm font-bold transition-colors';
 const WEEK_TAB_ACTIVE = 'border-amber-500 text-amber-700 dark:text-amber-400';
-const WEEK_TAB_INACTIVE = 'border-transparent text-stone-400 hover:text-stone-600 dark:hover:text-stone-300';
+const WEEK_TAB_INACTIVE = 'border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300';
 
 
 function getDatesInRange(start, end) {
@@ -429,15 +429,15 @@ function renderFinlandDay(date, todayKey) {
         : `<p class="text-xs text-gray-400 py-2 text-center">아직 등록된 일정이 없어요.</p>`;
     const badgeClass = isWeekend
         ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300'
-        : 'bg-stone-100 text-stone-700 dark:bg-stone-700 dark:text-stone-200';
+        : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 
     // 카드 안의 한 행 (행 사이는 구분선, 마지막 행은 구분선 없음)
     return `
-        <details${isToday ? ' open' : ''} class="group border-b border-stone-200 dark:border-stone-700 last:border-0">
-            <summary class="flex justify-between items-center px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-amber-50/60 dark:hover:bg-stone-700/50 transition-colors">
+        <details${isToday ? ' open' : ''} class="group border-b border-gray-200 dark:border-gray-700 last:border-0">
+            <summary class="flex justify-between items-center px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
                 <div class="flex items-center gap-3">
                     <span class="${badgeClass} w-16 text-center text-xs font-bold py-1 rounded-md">${formatShortDate(date)}</span>
-                    <h4 class="text-sm font-bold text-stone-800 dark:text-stone-200">${title}${todayBadge}</h4>
+                    <h4 class="text-sm font-bold text-gray-800 dark:text-gray-200">${title}${todayBadge}</h4>
                 </div>
                 <span class="text-gray-400 text-xs transition-transform duration-300 group-open:rotate-180">▼</span>
             </summary>
@@ -456,7 +456,7 @@ function renderFinlandWeeks(weeks) {
         <button type="button" data-week="${i}" class="${WEEK_TAB_BASE} ${i === activeIndex ? WEEK_TAB_ACTIVE : WEEK_TAB_INACTIVE}">
             ${week.label}
             <span class="block text-[10px] font-medium opacity-80">${formatMonthDay(parseDate(week.start))} ~ ${formatMonthDay(parseDate(week.end))}</span>
-            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-stone-100 text-stone-600 dark:bg-stone-700 dark:text-stone-300">${TRIP_PLACES[week.trip].icon} ${TRIP_PLACES[week.trip].name}</span>` : ''}
+            ${week.trip ? `<span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">${TRIP_PLACES[week.trip].icon} ${TRIP_PLACES[week.trip].name}</span>` : ''}
         </button>`).join('');
 
     const panels = weeks.map((week, i) => `
@@ -465,8 +465,8 @@ function renderFinlandWeeks(weeks) {
         </div>`).join('');
 
     return `
-        <div class="bg-[#fffdf9] dark:bg-stone-800 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700 overflow-hidden">
-            <div class="flex overflow-x-auto hide-scrollbar border-b border-stone-200 dark:border-stone-700">
+        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div class="flex overflow-x-auto hide-scrollbar border-b border-gray-200 dark:border-gray-700">
                 ${tabs}
             </div>
             ${panels}
