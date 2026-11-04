@@ -28,7 +28,7 @@ function loadSnapshot(key) {
 }
 const formatSavedAt = (ms) => { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
 
-// 2. 하단 탭 전환 로직
+// 2. 탭 전환 로직 (btnElement: 하단 바 버튼, ☰ 메뉴에서 연 탭이면 null)
 function switchTab(tabId, btnElement) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
@@ -38,13 +38,12 @@ function switchTab(tabId, btnElement) {
         btn.classList.remove('text-blue-600', 'dark:text-blue-500', 'font-bold');
         btn.classList.add('text-gray-500');
     });
-    btnElement.classList.remove('text-gray-500');
-    btnElement.classList.add('text-blue-600', 'dark:text-blue-500', 'font-bold');
-    
-    // 선택된 탭 메뉴를 화면 가운데로 스크롤
-    const navContainer = btnElement.parentElement;
-    const scrollPosition = btnElement.offsetLeft - (navContainer.offsetWidth / 2) + (btnElement.offsetWidth / 2);
-    navContainer.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+    if (btnElement) {
+        btnElement.classList.remove('text-gray-500');
+        btnElement.classList.add('text-blue-600', 'dark:text-blue-500', 'font-bold');
+    }
+    // ☰ 메뉴 안의 탭을 보고 있으면 ☰ 버튼을 파랗게
+    document.getElementById('menu-open').classList.toggle('!text-blue-600', !btnElement);
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -60,6 +59,47 @@ function switchTab(tabId, btnElement) {
     }
     setTimeout(() => initPlaceMaps(document.getElementById(tabId)), 100);
 }
+
+// 2-1. 오른쪽 위 ☰ 서랍 메뉴 (하단 바에 없는 탭들)
+const MENU_GROUPS = [
+    { title: '여행', tabs: [
+        { id: 'tab-prep', icon: '🧳', name: '출발 전' },
+        { id: 'tab-helsinki', icon: '🏙️', name: '헬싱키' },
+        { id: 'tab-stockholm', icon: '🇸🇪', name: '스톡홀름' },
+        { id: 'tab-england', icon: '🇬🇧', name: '런던' },
+        { id: 'tab-lapland', icon: '🌌', name: '북극권' },
+        { id: 'tab-return', icon: '🛬', name: '귀국 전 코펜하겐' }
+    ] }
+];
+const sideMenu = document.getElementById('side-menu');
+
+function openSideMenu() {
+    const currentTab = document.body.dataset.tab || 'tab-main';
+    document.getElementById('side-menu-list').innerHTML = MENU_GROUPS.map(group => `
+        <p class="px-3 pt-3 pb-1 text-[11px] font-bold text-gray-400 dark:text-gray-500">${group.title}</p>
+        ${group.tabs.map(({ id: tabId, icon, name }) => {
+            const state = tabId === currentTab ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-nordic-800';
+            return `<button type="button" data-menu-tab="${tabId}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${state}"><span class="text-xl w-7 text-center">${icon}</span>${name}</button>`;
+        }).join('')}`).join('');
+    sideMenu.classList.add('open');
+    sideMenu.setAttribute('aria-hidden', 'false');
+}
+function closeSideMenu() {
+    sideMenu.classList.remove('open');
+    sideMenu.setAttribute('aria-hidden', 'true');
+}
+
+document.getElementById('menu-open').addEventListener('click', openSideMenu);
+sideMenu.addEventListener('click', (e) => {
+    const tabButton = e.target.closest('[data-menu-tab]');
+    if (tabButton) {
+        switchTab(tabButton.dataset.menuTab, null);
+        closeSideMenu();
+    } else if (e.target.closest('[data-menu-close]')) {
+        closeSideMenu();
+    }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sideMenu.classList.contains('open')) closeSideMenu(); });
 
 // 3. Leaflet 지도 초기화
 function initMap() {
@@ -505,7 +545,7 @@ function renderExchangeRates(diffs, dateLabel, budgetDateLabel) {
 
         // 유로 + 이번 주차 여행지 통화(여행 전에는 파운드)는 크게, 나머지는 펼치면 보이는 목록으로
         const featured = ['EUR', ...getFeaturedCurrencies()];
-        const others = Object.keys(CURRENCIES).filter(code => !featured.includes(code));
+        const others = Object.keys(CURRENCIES).filter(code => !featured.includes(code) && !CURRENCIES[code].home);
 
         // 1. 메인 환율 배너 업데이트
         if (rateValEl) {
@@ -1025,8 +1065,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 유로가 아닌 통화는 유로로 환산해서 저장하고, 실제 결제한 현지 금액은 내용 뒤에 "(£12.00)", "(SEK 120.00)"처럼 남김
-    const ORIGINAL_SUFFIX = /\s*\((£|[A-Z]{3} )([\d.]+)\)$/;
+    // 유로가 아닌 통화는 유로로 환산해서 저장하고, 실제 결제한 현지 금액은 내용 뒤에 "(£12.00)", "(SEK 120.00)", "(₩15000.00)"처럼 남김
+    const ORIGINAL_SUFFIX = /\s*\((£|₩|[A-Z]{3} )([\d.]+)\)$/;
     const withOriginal = (desc, currency, amountText) =>
         currency === 'EUR' ? desc : `${desc} (${CURRENCIES[currency].prefix}${amountText})`;
     // 내용 뒤의 현지 금액 기록을 읽음 → { desc, currency, amountText } (기록이 없거나 모르는 통화면 null)
@@ -1291,7 +1331,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderInto('meal-log', renderMealCalendar(load(LOG_KEY, []), calMonth, selectedDay, todayKey()));
     }
 
-    // 추천: 후보 이름을 빠르게 바꿔 보여주다가(약 0.8초) 실제로 뽑힌 메뉴에서 멈춤
+    // 추천: 후보 이름을 빠르게 바꿔 보여주다가 점점 느려지며(약 2.5초) 실제로 뽑힌 메뉴에서 멈춤
     function spin() {
         nextMeal();
         const pool = MEALS.filter(meal => category === 'all' || meal.category === category);
@@ -1299,16 +1339,25 @@ document.addEventListener('DOMContentLoaded', () => {
         spinning = true;
         render();
         const nameEl = document.getElementById('meal-pick-name');
+        const fiEl = document.getElementById('meal-pick-fi');
+        const TICKS = 20;
         let ticks = 0;
-        const timer = setInterval(() => {
-            if (++ticks >= 12) {
-                clearInterval(timer);
+        let last = null;
+        const tick = () => {
+            if (++ticks >= TICKS) {
                 spinning = false;
                 render();
                 return;
             }
-            if (nameEl) nameEl.textContent = pool[Math.floor(Math.random() * pool.length)].name;
-        }, 65);
+            // 같은 이름이 연달아 나오지 않게
+            let meal;
+            do { meal = pool[Math.floor(Math.random() * pool.length)]; } while (meal === last);
+            last = meal;
+            if (nameEl) nameEl.textContent = meal.name;
+            if (fiEl) fiEl.textContent = meal.fi || '';
+            setTimeout(tick, 50 + 0.6 * ticks * ticks); // 50ms에서 시작해 마지막엔 약 0.27초
+        };
+        setTimeout(tick, 50);
     }
 
     tab.addEventListener('click', (e) => {

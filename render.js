@@ -605,6 +605,7 @@ function renderMealPick(meal, spinning) {
             <div class="p-6">
             <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 mb-3">${spinning ? '🎲 고르는 중' : `${category.icon} ${category.name}`}</span>
             <h3 id="meal-pick-name" class="text-2xl font-black text-gray-800 dark:text-gray-100 mb-1${spinning ? ' opacity-60' : ' animate-[fadeIn_0.3s_ease-out]'}">${meal.name}</h3>
+            <p id="meal-pick-fi" class="text-sm italic text-amber-700/80 dark:text-amber-400/80 mb-2 min-h-[1.25rem]${spinning ? ' opacity-60' : ''}">${meal.fi || ''}</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">${spinning ? '두구두구…' : meal.desc}</p>
             <div class="${spinning ? 'invisible' : ''}">
                 ${renderMealStats(meal)}
@@ -639,6 +640,7 @@ function renderMealRecipe(meal, checked) {
             <div class="p-5 text-center border-b border-gray-100 dark:border-gray-800 bg-amber-50/60 dark:bg-amber-900/10">
                 <p class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">오늘의 요리</p>
                 <h3 class="text-xl font-black text-gray-800 dark:text-gray-100 mb-2">${findMealCategory(meal.category).icon} ${meal.name}</h3>
+                ${meal.fi ? `<p class="text-sm italic text-amber-700/80 dark:text-amber-400/80 -mt-1 mb-2">🇫🇮 ${meal.fi}</p>` : ''}
                 ${renderMealStats(meal)}
             </div>
             <div class="p-5">
