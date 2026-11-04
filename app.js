@@ -1286,9 +1286,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 13-1. 요리 탭: 오늘 뭐 먹지? (종류 선택 → 🎲 추천 받기로 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
+// 13-1. 요리 탭: 오늘 뭐 먹지? (끼니 → 종류 선택 → 🎲 추천 받기로 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
 // 화면 조각은 render.js 11-1, 메뉴는 data/meals.js
-// 기록은 이 기기에만 저장: 'meal:log' = [{ date, name, category }], 'meal:current' = 확정한 메뉴 { name, checked: [재료 번호] }
+// 기록은 이 기기에만 저장: 'meal:log' = [{ date, time, name, category }], 'meal:current' = 확정한 메뉴 { name, time, checked: [재료 번호] }
 // 먹은 기록은 탭 아래 달력으로 정리 (render.js의 renderMealCalendar)
 document.addEventListener('DOMContentLoaded', () => {
     const tab = document.getElementById('tab-cook');
@@ -1299,6 +1299,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const save = (key, value) => { try { value ? localStorage.setItem(key, JSON.stringify(value)) : localStorage.removeItem(key); } catch (e) {} };
     const findMeal = (name) => MEALS.find(meal => meal.name === name);
 
+    // 고른 끼니 (처음엔 지금 시각에 맞는 끼니)
+    let time = MEAL_TIMES.find(t => new Date().getHours() < t.hour).key;
     let category = null; // 고른 종류 ('all' = 아무거나, null = 아직 안 고름)
     let bag = [];        // 아직 안 보여준 후보 (섞어 두고 하나씩 꺼냄 → 넘겨도 한 바퀴 돌기 전엔 같은 메뉴가 안 나옴)
     let shown = null;    // 지금 보여주는 후보
@@ -1309,10 +1311,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedDay = todayKey(); // 달력에서 고른 날짜
     let current = load(CURRENT_KEY, null);
     if (current && !findMeal(current.name)) current = null; // 메뉴가 data에서 지워졌으면 확정 취소
+    if (current && current.time) time = current.time;
+    // 지금 끼니 + 종류에 맞는 후보
+    const candidates = () => MEALS.filter(meal => (category === 'all' || meal.category === category) && mealFitsTime(meal, time));
 
     function nextMeal() {
         if (!bag.length) {
-            bag = MEALS.filter(meal => category === 'all' || meal.category === category);
+            bag = candidates();
             for (let i = bag.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [bag[i], bag[j]] = [bag[j], bag[i]];
@@ -1325,16 +1330,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function render() {
         const meal = current && findMeal(current.name);
-        // 메뉴를 확정한 동안에는 종류 버튼을 숨김
-        renderInto('meal-categories', meal ? '' : renderMealCategoryChips(category));
-        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked) : shown ? renderMealPick(shown, spinning) : renderMealIdle(category, eaten));
-        renderInto('meal-log', renderMealCalendar(load(LOG_KEY, []), calMonth, selectedDay, todayKey()));
+        // 메뉴를 확정한 동안에는 끼니/종류 버튼을 숨김
+        renderInto('meal-times', meal ? '' : renderMealTimeTabs(time));
+        renderInto('meal-categories', meal ? '' : renderMealCategoryChips(category, time));
+        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked, current.time) : shown ? renderMealPick(shown, spinning) : renderMealIdle(category, eaten, time));
+        renderInto('meal-log', renderMealCalendar(load(LOG_KEY, []), calMonth, selectedDay, todayKey(), time));
     }
 
     // 추천: 후보 이름을 빠르게 바꿔 보여주다가 점점 느려지며(약 2.5초) 실제로 뽑힌 메뉴에서 멈춤
     function spin() {
         nextMeal();
-        const pool = MEALS.filter(meal => category === 'all' || meal.category === category);
+        const pool = candidates();
         if (!shown || pool.length < 2) return render();
         spinning = true;
         render();
@@ -1362,6 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tab.addEventListener('click', (e) => {
         if (spinning) return;
+        const timeButton = e.target.closest('[data-meal-time]');
         const categoryButton = e.target.closest('[data-meal-category]');
         const actionButton = e.target.closest('[data-meal-action]');
         const deleteButton = e.target.closest('[data-meal-delete]');
@@ -1373,6 +1380,13 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedDay = null;
         } else if (dayButton) {
             selectedDay = dayButton.dataset.mealDay;
+        } else if (timeButton) {
+            // 끼니를 바꾸면 그 끼니에 메뉴가 없는 종류는 선택을 풀고 처음부터
+            time = timeButton.dataset.mealTime;
+            if (category !== 'all' && !candidates().length) category = null;
+            bag = [];
+            shown = null;
+            eaten = null;
         } else if (categoryButton) {
             // 종류는 고르기만 하고, 추천은 🎲 추천 받기 버튼에서
             category = categoryButton.dataset.mealCategory;
@@ -1384,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             eaten = null;
             if ((action === 'pick' || action === 'next') && category) return spin();
             if (action === 'confirm' && shown) {
-                current = { name: shown.name, checked: [] };
+                current = { name: shown.name, time, checked: [] };
                 save(CURRENT_KEY, current);
                 shown = null;
             }
@@ -1397,11 +1411,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (action === 'eaten' && current) {
                 const meal = findMeal(current.name);
                 const today = todayKey();
-                save(LOG_KEY, [...load(LOG_KEY, []), { date: today, name: meal.name, category: meal.category }]);
+                save(LOG_KEY, [...load(LOG_KEY, []), { date: today, time: current.time || time, name: meal.name, category: meal.category }]);
                 // 달력을 오늘로 이동
                 calMonth = new Date(parseDate(today).getFullYear(), parseDate(today).getMonth(), 1);
                 selectedDay = today;
-                eaten = { meal, notice: `${formatShortDate(parseDate(today))} 기록 완료! 잘 먹었어요 😋` };
+                const timeName = findMealTime(current.time || time).name;
+                eaten = { meal, notice: `${formatShortDate(parseDate(today))} ${timeName} 기록 완료! 잘 먹었어요 😋` };
                 current = null;
                 shown = null;
                 save(CURRENT_KEY, null);
@@ -1425,7 +1440,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const name = form.elements.name.value.trim();
         if (!name) return;
-        save(LOG_KEY, [...load(LOG_KEY, []), { date: selectedDay, name, category: form.elements.type.value }]);
+        save(LOG_KEY, [...load(LOG_KEY, []), { date: selectedDay, time: form.elements.time.value, name, category: form.elements.type.value }]);
         render();
     });
 

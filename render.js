@@ -524,23 +524,39 @@ function renderRouteChips() {
 }
 
 // 11-1. 요리 탭 (오늘 뭐 먹지?) - 데이터는 data/meals.js, 상태 관리와 버튼 동작은 app.js 16번
-// 버튼은 data-meal-action(pick/next/confirm/reset/eaten), data-meal-category, data-meal-delete, data-meal-month, data-meal-day로 구분
-// 흐름: 종류 선택(대기 카드) → 🎲 추천 받기(이름이 돌아가다 멈춤) → 이걸로! → 재료/레시피/보관법 → 다 먹었어요
+// 버튼은 data-meal-action(pick/next/confirm/reset/eaten), data-meal-time, data-meal-category, data-meal-delete, data-meal-month, data-meal-day로 구분
+// 흐름: 끼니 선택 → 종류 선택(대기 카드) → 🎲 추천 받기(이름이 돌아가다 멈춤) → 이걸로! → 재료/레시피/보관법 → 다 먹었어요
 const MEAL_DIFFICULTY = { 1: '쉬움', 2: '보통', 3: '어려움' };
 const MEAL_BUTTON = 'flex-1 py-3 rounded-xl text-sm font-bold transition-colors';
 const MEAL_BUTTON_MAIN = `${MEAL_BUTTON} bg-amber-500 hover:bg-amber-600 text-white shadow-sm`;
 const MEAL_BUTTON_SUB = `${MEAL_BUTTON} border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-nordic-800`;
 const MEAL_CARD = 'bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800';
 const findMealCategory = (key) => [...MEAL_CATEGORIES, ...MEAL_EXTRA_TYPES].find(c => c.key === key) || { name: '기타', icon: '🍽️' };
+const findMealTime = (key) => MEAL_TIMES.find(t => t.key === key);
+// 그 끼니에 어울리는 메뉴인지 (times가 없으면 모든 끼니)
+const mealFitsTime = (meal, time) => !meal.times || meal.times.includes(time);
 // 직접 적은 메뉴 이름을 화면에 넣을 때 HTML로 해석되지 않게
 const escapeMealText = (text) => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-function renderMealCategoryChips(active) {
+// 끼니 선택 (아침/점심/저녁 세 칸)
+function renderMealTimeTabs(active) {
+    return `
+        <div class="grid grid-cols-3 gap-1 p-1 rounded-xl bg-gray-100 dark:bg-nordic-900 border border-gray-200 dark:border-gray-800">
+            ${MEAL_TIMES.map(t => `
+                <button type="button" data-meal-time="${t.key}" class="py-2 rounded-lg text-sm font-bold transition-colors ${t.key === active
+                    ? 'bg-white dark:bg-nordic-800 text-amber-700 dark:text-amber-400 shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}">${t.icon} ${t.name}</button>`).join('')}
+        </div>`;
+}
+
+// 종류 버튼 (고른 끼니에 메뉴가 하나도 없는 종류는 숨김)
+function renderMealCategoryChips(active, time) {
+    const categories = MEAL_CATEGORIES.filter(c => MEALS.some(meal => meal.category === c.key && mealFitsTime(meal, time)));
     const chip = (key, label) => `
         <button type="button" data-meal-category="${key}" class="px-3.5 py-2 rounded-full text-sm font-bold border transition-colors ${key === active
             ? 'bg-amber-500 border-amber-500 text-white'
             : 'bg-white dark:bg-nordic-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-amber-400'}">${label}</button>`;
-    return chip('all', '🎲 아무거나') + MEAL_CATEGORIES.map(c => chip(c.key, `${c.icon} ${c.name}`)).join('');
+    return chip('all', '🎲 아무거나') + categories.map(c => chip(c.key, `${c.icon} ${c.name}`)).join('');
 }
 
 // 난이도 · 시간 · 칼로리 (★ 개수 = 난이도)
@@ -579,8 +595,9 @@ function renderMealStorage(meal) {
 }
 
 // 대기 카드: 종류를 고르기 전에는 추천 버튼을 막아 둠 / eaten: 방금 먹은 메뉴 (기록 완료 문구 + 보관법)
-function renderMealIdle(category, eaten) {
+function renderMealIdle(category, eaten, time) {
     const picked = category === 'all' ? '🎲 아무거나' : category ? `${findMealCategory(category).icon} ${findMealCategory(category).name}` : '';
+    const timeName = findMealTime(time).name;
     const done = eaten ? `
         <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3">${eaten.notice}</p>
         ${eaten.meal.storage ? `<div class="mb-5">${renderMealStorage(eaten.meal)}</div>` : ''}` : '';
@@ -589,8 +606,8 @@ function renderMealIdle(category, eaten) {
             ${done}
             <p class="text-5xl mb-3">🍽️</p>
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">${picked
-                ? `<span class="font-bold text-gray-700 dark:text-gray-200">${picked}</span> 중에서 하나 골라 드릴게요.`
-                : '먼저 위에서 먹고 싶은 종류를 골라 주세요.'}</p>
+                ? `${timeName}으로 먹을 <span class="font-bold text-gray-700 dark:text-gray-200">${picked}</span> 중에서 하나 골라 드릴게요.`
+                : `${timeName}으로 뭐가 당기세요? 위에서 종류를 골라 주세요.`}</p>
             <button type="button" data-meal-action="pick"${picked ? '' : ' disabled'} class="${MEAL_BUTTON_MAIN} w-full disabled:opacity-40 disabled:cursor-not-allowed">🎲 추천 받기</button>
         </div>`;
 }
@@ -620,7 +637,7 @@ function renderMealPick(meal, spinning) {
 }
 
 // 확정한 메뉴: 재료 체크리스트 + 레시피 (재료 체크는 app.js가 기기에 저장, 취소선은 CSS peer로 처리)
-function renderMealRecipe(meal, checked) {
+function renderMealRecipe(meal, checked, time) {
     const ingredients = meal.ingredients.map((item, i) => `
         <label class="flex items-start gap-3 cursor-pointer py-1">
             <input type="checkbox" data-meal-ingredient="${i}"${checked.includes(i) ? ' checked' : ''} class="peer w-4 h-4 mt-0.5 accent-amber-600">
@@ -638,7 +655,7 @@ function renderMealRecipe(meal, checked) {
         <div class="${MEAL_CARD} overflow-hidden animate-[fadeIn_0.3s_ease-out]">
             ${meal.image ? renderMealPhoto(meal, findMealCategory(meal.category).icon, 'h-48') : ''}
             <div class="p-5 text-center border-b border-gray-100 dark:border-gray-800 bg-amber-50/60 dark:bg-amber-900/10">
-                <p class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">오늘의 요리</p>
+                <p class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-1">${time ? `${findMealTime(time).icon} 오늘의 ${findMealTime(time).name}` : '오늘의 요리'}</p>
                 <h3 class="text-xl font-black text-gray-800 dark:text-gray-100 mb-2">${findMealCategory(meal.category).icon} ${meal.name}</h3>
                 ${meal.fi ? `<p class="text-sm italic text-amber-700/80 dark:text-amber-400/80 -mt-1 mb-2">🇫🇮 ${meal.fi}</p>` : ''}
                 ${renderMealStats(meal)}
@@ -660,7 +677,8 @@ function renderMealRecipe(meal, checked) {
 
 // 먹은 기록 달력 (한 달씩, 날짜를 누르면 아래에 그날 먹은 메뉴 / 삭제는 log의 원래 순서 번호로)
 // month: 그 달 1일 Date, selectedKey: 고른 날짜 ('YYYY-MM-DD' 또는 null)
-function renderMealCalendar(log, month, selectedKey, todayKey) {
+// time: 직접 추가 칸에 미리 골라 둘 끼니
+function renderMealCalendar(log, month, selectedKey, todayKey, time) {
     const year = month.getFullYear();
     const monthPrefix = `${year}-${pad2(month.getMonth() + 1)}`;
     const byDate = {};
@@ -684,9 +702,12 @@ function renderMealCalendar(log, month, selectedKey, todayKey) {
             </button>`;
     }).join('');
 
-    const dayEntries = selectedKey ? (byDate[selectedKey] || []) : [];
+    // 끼니 순서대로 (끼니가 없는 예전 기록은 맨 뒤)
+    const timeOrder = (entry) => { const i = MEAL_TIMES.findIndex(t => t.key === entry.time); return i < 0 ? MEAL_TIMES.length : i; };
+    const dayEntries = selectedKey ? [...(byDate[selectedKey] || [])].sort((a, b) => timeOrder(a.entry) - timeOrder(b.entry)) : [];
     const dayRows = dayEntries.map(({ entry, i }) => `
         <div class="flex items-center gap-3 py-2">
+            <span class="shrink-0 w-12 text-[11px] font-bold text-amber-700 dark:text-amber-400">${findMealTime(entry.time) ? `${findMealTime(entry.time).icon} ${findMealTime(entry.time).name}` : ''}</span>
             <span class="flex-1 text-sm font-bold text-gray-800 dark:text-gray-200">${findMealCategory(entry.category).icon} ${escapeMealText(entry.name)}</span>
             <button type="button" data-meal-delete="${i}" class="text-gray-300 hover:text-red-500 dark:text-gray-600 text-lg leading-none px-1" aria-label="기록 삭제">×</button>
         </div>`).join('');
@@ -696,7 +717,10 @@ function renderMealCalendar(log, month, selectedKey, todayKey) {
         <form data-meal-add class="mt-2 space-y-2">
             <p class="text-[11px] text-gray-400">사 먹었거나 즉석식품을 먹었다면 직접 추가</p>
             <div class="flex gap-2">
-                <select name="type" class="${field} shrink-0">${MEAL_EXTRA_TYPES.map(t => `<option value="${t.key}">${t.icon} ${t.name.replace(/ \(.*\)/, '')}</option>`).join('')}</select>
+                <select name="time" class="${field} shrink-0">${MEAL_TIMES.map(t => `<option value="${t.key}"${t.key === time ? ' selected' : ''}>${t.icon} ${t.name}</option>`).join('')}</select>
+                <select name="type" class="${field} flex-1">${MEAL_EXTRA_TYPES.map(t => `<option value="${t.key}">${t.icon} ${t.name.replace(/ \(.*\)/, '')}</option>`).join('')}</select>
+            </div>
+            <div class="flex gap-2">
                 <input name="name" required maxlength="40" placeholder="예: 버거, 편의점 도시락" class="${field} flex-1">
                 <button type="submit" class="shrink-0 px-3 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold">추가</button>
             </div>
