@@ -556,7 +556,7 @@ function renderMealCategoryChips(active, time) {
         <button type="button" data-meal-category="${key}" class="px-3.5 py-2 rounded-full text-sm font-bold border transition-colors ${key === active
             ? 'bg-amber-500 border-amber-500 text-white'
             : 'bg-white dark:bg-nordic-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-amber-400'}">${label}</button>`;
-    return chip('all', '🎲 아무거나') + categories.map(c => chip(c.key, `${c.icon} ${c.name}`)).join('');
+    return chip('all', '📋 전체') + categories.map(c => chip(c.key, `${c.icon} ${c.name}`)).join('');
 }
 
 // 난이도 · 시간 · 칼로리 (★ 개수 = 난이도)
@@ -572,11 +572,13 @@ function renderMealStats(meal) {
 }
 
 // 예시 사진 띠 (사진이 없거나 못 불러오면 뒤에 깔린 아이콘이 보임)
+// image는 images/meals 폴더 안 파일 이름 ('/'가 들어 있으면 그 경로 그대로)
+const mealImageSrc = (image) => image.includes('/') ? image : `images/meals/${image}`;
 function renderMealPhoto(meal, icon, heightClass) {
     return `
         <div class="relative ${heightClass} bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center text-6xl overflow-hidden">
             <span>${icon}</span>
-            ${meal.image ? `<img src="${meal.image}" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover animate-[fadeIn_0.3s_ease-out]">` : ''}
+            ${meal.image ? `<img src="${mealImageSrc(meal.image)}" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover animate-[fadeIn_0.3s_ease-out]">` : ''}
         </div>`;
 }
 
@@ -594,43 +596,44 @@ function renderMealStorage(meal) {
         </div>` : '';
 }
 
-// 대기 카드: 종류를 고르기 전에는 추천 버튼을 막아 둠 / eaten: 방금 먹은 메뉴 (기록 완료 문구 + 보관법)
-function renderMealIdle(category, eaten, time) {
-    const picked = category === 'all' ? '🎲 아무거나' : category ? `${findMealCategory(category).icon} ${findMealCategory(category).name}` : '';
-    const timeName = findMealTime(time).name;
+// 메뉴 목록: 버튼을 눌러 직접 고르거나, 맨 아래 🎲 버튼으로 랜덤 (불이 버튼을 따라 돌다 멈추는 건 app.js)
+// meals: 지금 끼니 + 종류에 맞는 메뉴 (data-meal-choose = 이 배열의 번호), selected: 고른 메뉴 / eaten: 방금 먹은 메뉴 (기록 완료 문구 + 보관법)
+function renderMealList(meals, selected, eaten, time) {
     const done = eaten ? `
-        <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3">${eaten.notice}</p>
-        ${eaten.meal.storage ? `<div class="mb-5">${renderMealStorage(eaten.meal)}</div>` : ''}` : '';
+        <div class="text-center mb-4">
+            <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3">${eaten.notice}</p>
+            ${eaten.meal.storage ? renderMealStorage(eaten.meal) : ''}
+        </div>` : '';
+    const items = meals.map((meal, i) => `
+        <button type="button" data-meal-choose="${i}" class="meal-choice${meal === selected ? ' meal-picked' : ''} text-left px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-nordic-900 hover:border-amber-400">
+            <span class="block text-sm font-bold text-gray-800 dark:text-gray-100 leading-snug">${findMealCategory(meal.category).icon} ${meal.name}</span>
+            <span class="block text-[11px] italic text-gray-400 dark:text-gray-500 truncate">${meal.fi || ''}</span>
+        </button>`).join('');
     return `
-        <div class="${MEAL_CARD} p-6 text-center">
+        <div class="${MEAL_CARD} p-4">
             ${done}
-            <p class="text-5xl mb-3">🍽️</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">${picked
-                ? `${timeName}으로 먹을 <span class="font-bold text-gray-700 dark:text-gray-200">${picked}</span> 중에서 하나 골라 드릴게요.`
-                : `${timeName}으로 뭐가 당기세요? 위에서 종류를 골라 주세요.`}</p>
-            <button type="button" data-meal-action="pick"${picked ? '' : ' disabled'} class="${MEAL_BUTTON_MAIN} w-full disabled:opacity-40 disabled:cursor-not-allowed">🎲 추천 받기</button>
+            <p class="text-xs text-gray-400 mb-3">${findMealTime(time).icon} ${findMealTime(time).name} 메뉴 ${meals.length}개 · 눌러서 보거나 🎲로 골라 달라고 하세요</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${items}</div>
+            <button type="button" data-meal-action="random"${meals.length < 2 ? ' disabled' : ''} class="${MEAL_BUTTON_MAIN} w-full mt-4 disabled:opacity-40 disabled:cursor-not-allowed">🎲 랜덤으로 골라 줘</button>
         </div>`;
 }
 
-// 추천 카드 (spinning: 이름이 돌아가는 동안에는 설명/정보를 가리고 버튼을 막음, 이름은 app.js가 바꿔 끼움)
-function renderMealPick(meal, spinning) {
+// 고른 메뉴 소개 카드 (목록 아래에 뜸 → ✅ 이걸로! 하면 레시피로)
+function renderMealPick(meal) {
     const category = findMealCategory(meal.category);
-    const disabled = spinning ? ' disabled' : '';
     return `
-        <div class="${MEAL_CARD} overflow-hidden text-center">
-            ${spinning ? renderMealPhoto({}, '🎲', 'h-40') : renderMealPhoto(meal, category.icon, 'h-40')}
+        <div id="meal-pick" class="${MEAL_CARD} overflow-hidden text-center mt-3 animate-[fadeIn_0.3s_ease-out] scroll-mb-24">
+            ${renderMealPhoto(meal, category.icon, 'h-40')}
             <div class="p-6">
-            <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 mb-3">${spinning ? '🎲 고르는 중' : `${category.icon} ${category.name}`}</span>
-            <h3 id="meal-pick-name" class="text-2xl font-black text-gray-800 dark:text-gray-100 mb-1${spinning ? ' opacity-60' : ' animate-[fadeIn_0.3s_ease-out]'}">${meal.name}</h3>
-            <p id="meal-pick-fi" class="text-sm italic text-amber-700/80 dark:text-amber-400/80 mb-2 min-h-[1.25rem]${spinning ? ' opacity-60' : ''}">${meal.fi || ''}</p>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">${spinning ? '두구두구…' : meal.desc}</p>
-            <div class="${spinning ? 'invisible' : ''}">
-                ${renderMealStats(meal)}
-                ${meal.sides ? `<p class="mt-3 text-xs text-gray-400">🥗 곁들이면 좋아요</p><div class="mt-1.5 flex flex-wrap justify-center gap-1">${renderMealSides(meal)}</div>` : ''}
-            </div>
+            <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 mb-3">${category.icon} ${category.name}</span>
+            <h3 class="text-2xl font-black text-gray-800 dark:text-gray-100 mb-1">${meal.name}</h3>
+            ${meal.fi ? `<p class="text-sm italic text-amber-700/80 dark:text-amber-400/80 mb-2">🇫🇮 ${meal.fi}</p>` : ''}
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">${meal.desc}</p>
+            ${renderMealStats(meal)}
+            ${meal.sides ? `<p class="mt-3 text-xs text-gray-400">🥗 곁들이면 좋아요</p><div class="mt-1.5 flex flex-wrap justify-center gap-1">${renderMealSides(meal)}</div>` : ''}
             <div class="flex gap-2 mt-6">
-                <button type="button" data-meal-action="next"${disabled} class="${MEAL_BUTTON_SUB} disabled:opacity-40">🔄 다른 거</button>
-                <button type="button" data-meal-action="confirm"${disabled} class="${MEAL_BUTTON_MAIN} disabled:opacity-40">✅ 이걸로!</button>
+                <button type="button" data-meal-action="close" class="${MEAL_BUTTON_SUB}">닫기</button>
+                <button type="button" data-meal-action="confirm" class="${MEAL_BUTTON_MAIN}">✅ 이걸로!</button>
             </div>
             </div>
         </div>`;

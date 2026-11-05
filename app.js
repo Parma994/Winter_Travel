@@ -1286,7 +1286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// 13-1. 요리 탭: 오늘 뭐 먹지? (끼니 → 종류 선택 → 🎲 추천 받기로 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
+// 13-1. 요리 탭: 오늘 뭐 먹지? (끼니 → 종류 → 메뉴 목록에서 직접 고르거나 🎲 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
 // 화면 조각은 render.js 11-1, 메뉴는 data/meals.js
 // 기록은 이 기기에만 저장: 'meal:log' = [{ date, time, name, category }], 'meal:current' = 확정한 메뉴 { name, time, checked: [재료 번호] }
 // 먹은 기록은 탭 아래 달력으로 정리 (render.js의 renderMealCalendar)
@@ -1301,10 +1301,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 고른 끼니 (처음엔 지금 시각에 맞는 끼니)
     let time = MEAL_TIMES.find(t => new Date().getHours() < t.hour).key;
-    let category = null; // 고른 종류 ('all' = 아무거나, null = 아직 안 고름)
-    let bag = [];        // 아직 안 보여준 후보 (섞어 두고 하나씩 꺼냄 → 넘겨도 한 바퀴 돌기 전엔 같은 메뉴가 안 나옴)
-    let shown = null;    // 지금 보여주는 후보
-    let spinning = false; // 이름이 돌아가는 중 (이때는 버튼을 막음)
+    let category = 'all'; // 고른 종류 ('all' = 전체)
+    let shown = null;    // 목록에서 고른 메뉴 (아래에 소개 카드)
+    let spinning = false; // 🎲 불이 도는 중 (이때는 버튼을 막음)
     let eaten = null;    // 방금 먹은 메뉴 { meal, notice } (기록 완료 문구 + 보관법 표시용)
     const todayKey = () => toDateKey(new Date());
     let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // 달력에 보이는 달 (1일)
@@ -1315,55 +1314,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // 지금 끼니 + 종류에 맞는 후보
     const candidates = () => MEALS.filter(meal => (category === 'all' || meal.category === category) && mealFitsTime(meal, time));
 
-    function nextMeal() {
-        if (!bag.length) {
-            bag = candidates();
-            for (let i = bag.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [bag[i], bag[j]] = [bag[j], bag[i]];
-            }
-            // 새로 섞은 첫 메뉴가 방금 본 메뉴면 순서를 바꿈
-            if (bag.length > 1 && bag[bag.length - 1] === shown) [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
-        }
-        shown = bag.pop() || null;
-    }
-
     function render() {
         const meal = current && findMeal(current.name);
         // 메뉴를 확정한 동안에는 끼니/종류 버튼을 숨김
         renderInto('meal-times', meal ? '' : renderMealTimeTabs(time));
         renderInto('meal-categories', meal ? '' : renderMealCategoryChips(category, time));
-        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked, current.time) : shown ? renderMealPick(shown, spinning) : renderMealIdle(category, eaten, time));
+        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked, current.time)
+            : renderMealList(candidates(), shown, eaten, time) + (shown ? renderMealPick(shown) : ''));
         renderInto('meal-log', renderMealCalendar(load(LOG_KEY, []), calMonth, selectedDay, todayKey(), time));
     }
 
-    // 추천: 후보 이름을 빠르게 바꿔 보여주다가 점점 느려지며(약 2.5초) 실제로 뽑힌 메뉴에서 멈춤
+    // 고른 메뉴 소개 카드가 화면에 들어오게
+    const showPick = () => {
+        const card = document.getElementById('meal-pick');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    // 🎲 랜덤: 불이 메뉴 버튼을 순서대로 돌다가 점점 느려지며(약 3초) 미리 뽑아 둔 메뉴에서 멈춤
     function spin() {
-        nextMeal();
         const pool = candidates();
-        if (!shown || pool.length < 2) return render();
+        if (pool.length < 2) return;
+        let target;
+        do { target = Math.floor(Math.random() * pool.length); } while (pool[target] === shown); // 방금 그 메뉴는 빼고
         spinning = true;
+        shown = null;
+        eaten = null;
         render();
-        const nameEl = document.getElementById('meal-pick-name');
-        const fiEl = document.getElementById('meal-pick-fi');
-        const TICKS = 20;
-        let ticks = 0;
-        let last = null;
+        const buttons = [...document.querySelectorAll('[data-meal-choose]')];
+        const randomButton = document.querySelector('[data-meal-action="random"]');
+        if (randomButton) { randomButton.disabled = true; randomButton.textContent = '🎲 두구두구…'; }
+        // 메뉴가 적으면 여러 바퀴 (최소 12칸은 지나가게), 마지막 칸이 target
+        const n = buttons.length;
+        const steps = Math.max(1, Math.ceil(12 / n)) * n + target + 1;
+        // 칸마다 머무는 시간: 뒤로 갈수록 길게, 합계 약 3초
+        const weights = Array.from({ length: steps }, (_, i) => 1 + 9 * Math.pow(i / steps, 3));
+        const unit = 3000 / weights.reduce((a, b) => a + b, 0);
+        let step = 0;
         const tick = () => {
-            if (++ticks >= TICKS) {
+            buttons.forEach(b => b.classList.remove('meal-lit'));
+            buttons[step % n].classList.add('meal-lit');
+            if (++step < steps) return setTimeout(tick, unit * weights[step]);
+            // 멈춘 버튼에 잠깐 불을 켜 둔 뒤 소개 카드
+            setTimeout(() => {
                 spinning = false;
+                shown = pool[target];
                 render();
-                return;
-            }
-            // 같은 이름이 연달아 나오지 않게
-            let meal;
-            do { meal = pool[Math.floor(Math.random() * pool.length)]; } while (meal === last);
-            last = meal;
-            if (nameEl) nameEl.textContent = meal.name;
-            if (fiEl) fiEl.textContent = meal.fi || '';
-            setTimeout(tick, 50 + 0.6 * ticks * ticks); // 50ms에서 시작해 마지막엔 약 0.27초
+                showPick();
+            }, 450);
         };
-        setTimeout(tick, 50);
+        tick();
     }
 
     tab.addEventListener('click', (e) => {
@@ -1371,6 +1370,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeButton = e.target.closest('[data-meal-time]');
         const categoryButton = e.target.closest('[data-meal-category]');
         const actionButton = e.target.closest('[data-meal-action]');
+        const chooseButton = e.target.closest('[data-meal-choose]');
         const deleteButton = e.target.closest('[data-meal-delete]');
         const monthButton = e.target.closest('[data-meal-month]');
         const dayButton = e.target.closest('[data-meal-day]');
@@ -1381,22 +1381,26 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (dayButton) {
             selectedDay = dayButton.dataset.mealDay;
         } else if (timeButton) {
-            // 끼니를 바꾸면 그 끼니에 메뉴가 없는 종류는 선택을 풀고 처음부터
+            // 끼니를 바꾸면 그 끼니에 메뉴가 없는 종류는 전체로
             time = timeButton.dataset.mealTime;
-            if (category !== 'all' && !candidates().length) category = null;
-            bag = [];
+            if (!candidates().length) category = 'all';
             shown = null;
             eaten = null;
         } else if (categoryButton) {
-            // 종류는 고르기만 하고, 추천은 🎲 추천 받기 버튼에서
             category = categoryButton.dataset.mealCategory;
-            bag = [];
             shown = null;
             eaten = null;
+        } else if (chooseButton) {
+            // 목록에서 직접 고르기
+            shown = candidates()[Number(chooseButton.dataset.mealChoose)] || null;
+            eaten = null;
+            render();
+            return showPick();
         } else if (actionButton) {
             const action = actionButton.dataset.mealAction;
             eaten = null;
-            if ((action === 'pick' || action === 'next') && category) return spin();
+            if (action === 'random') return spin();
+            if (action === 'close') shown = null;
             if (action === 'confirm' && shown) {
                 current = { name: shown.name, time, checked: [] };
                 save(CURRENT_KEY, current);

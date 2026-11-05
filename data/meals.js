@@ -6,8 +6,8 @@
 //    difficulty: 1(쉬움) | 2(보통) | 3(어려움) / minutes: 예상 소요 시간(분) / kcal: 1인분 기준 대략적인 값
 //    sides: 곁들이면 좋은 것 (추천 카드와 레시피 화면에 표시, 생략 가능)
 //    storage: 다 먹고 남았을 때 보관법 (확정 화면과 "다 먹었어요" 뒤에 표시, 생략 가능)
-//    image: 예시 사진 경로 (예: 'meals/aglio-olio.jpg', 생략하면 종류 아이콘으로 표시)
-//           사진은 meals 폴더에 넣으면 되고, 한 번 본 사진은 sw.js가 자동으로 저장해서 오프라인에서도 보임
+//    image: 예시 사진 파일 이름 (예: 'aglio-olio.jpg', 생략하면 종류 아이콘으로 표시)
+//           사진은 images/meals 폴더에 넣고 파일 이름만 적으면 됨, 한 번 본 사진은 sw.js가 자동으로 저장해서 오프라인에서도 보임
 //    ingredients: [{ name: '재료', amount: '양', fi: '핀란드어 이름 (마트에서 찾기용, 생략 가능)' }]
 //    steps: 레시피 순서 (문장 하나가 한 단계)
 //    (여러 인분짜리를 넣고 싶으면 servings: 2 처럼 적으면 칼로리 옆에 "2인분"으로 표시)
@@ -43,7 +43,7 @@ const MEALS = [
         name: '알리오 올리오', fi: 'Aglio e olio', times: ['lunch', 'dinner'], category: 'noodle', desc: '마늘과 올리브유만 있으면 되는 기본 파스타',
         difficulty: 1, minutes: 20, kcal: 600,
         sides: ['그린 샐러드', '피클', '마늘빵'],
-        storage: '면이 금방 불어서 먹을 만큼만 삶는 게 좋아요. 남으면 밀폐 용기에 담아 냉장 1일, 팬에 물 1~2큰술 넣고 데우기.',
+        storage: '면이 금방 불어서 먹을 만큼만 삶는 게 좋아요. 남으면 밀폐 용기에 담아 냉장 1일, 팬에 물 1~2큰술 넣고 데우기. (애초에 남는게 맞는가?)',
         ingredients: [
             { name: '스파게티', amount: '100g', fi: 'spagetti' },
             { name: '마늘', amount: '5쪽', fi: 'valkosipuli' },

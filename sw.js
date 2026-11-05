@@ -6,7 +6,7 @@
 //
 // ⚠️ 파일을 새로 추가하거나 라이브러리 주소를 바꾸면 아래 목록에 반영하고 CACHE_VERSION을 올려 주세요.
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const APP_CACHE = `app-${CACHE_VERSION}`;
 const LIB_CACHE = `lib-${CACHE_VERSION}`;
 const TILE_CACHE = 'tiles-v1';
@@ -27,13 +27,13 @@ const APP_FILES = [
     './data/prep.js',
     './data/finland.js',
     './data/meals.js',
-    './Tampere.jpg',
-    './TampereHome.jpg',
-    './Helsinki.jpg',
-    './Stockholm.jpg',
-    './London.jpg',
-    './Lapland.jpg',
-    './Copenhagen.jpg',
+    './images/backgrounds/Tampere.jpg',
+    './images/backgrounds/TampereHome.jpg',
+    './images/backgrounds/Helsinki.jpg',
+    './images/backgrounds/Stockholm.jpg',
+    './images/backgrounds/London.jpg',
+    './images/backgrounds/Lapland.jpg',
+    './images/backgrounds/Copenhagen.jpg',
     './manifest.webmanifest',
     './icons/apple-touch-icon.png',
     './icons/icon-192.png',
