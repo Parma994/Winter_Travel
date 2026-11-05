@@ -73,6 +73,21 @@ const MENU_GROUPS = [
 ];
 const sideMenu = document.getElementById('side-menu');
 
+// 여행 탭(☰ 메뉴의 '여행' 그룹) 맨 아래에 "맨 위로" 버튼
+MENU_GROUPS.find(group => group.title === '여행').tabs.forEach(({ id }) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    section.insertAdjacentHTML('beforeend', `
+        <div class="flex justify-center mt-4 mb-6">
+            <button type="button" data-scroll-top class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-nordic-800 transition-colors">
+                <span aria-hidden="true">↑</span> 맨 위로
+            </button>
+        </div>`);
+});
+document.addEventListener('click', (e) => {
+    if (e.target.closest('[data-scroll-top]')) window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 function openSideMenu() {
     const currentTab = document.body.dataset.tab || 'tab-main';
     document.getElementById('side-menu-list').innerHTML = MENU_GROUPS.map(group => `
@@ -634,7 +649,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 시트는 날짜를 한국 시간 자정(예: 2026-10-06T15:00:00.000Z = 10월 7일)으로 돌려줌
     // 기기 시간대로 표시하면 핀란드에서는 하루 전 날짜가 되므로 한국 시간 기준으로 표시
     const formatExpenseDate = (date) => new Date(date).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' });
-    let expenseChart = null;
 
     // 지출 내용은 사용자가 입력한 글자라 HTML로 해석되지 않게 이스케이프해서 출력
     const escapeHtml = (text) => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -758,116 +772,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
-        const ctx = document.getElementById('expense-chart');
-        if (ctx) {
-            // 카테고리별 누적 금액 계산 (유로 기준)
-            const categoryTotals = {
-                '교통': 0, '숙박': 0, '식비': 0, '액티비티': 0, '기타': 0
-            };
-            
-            let hasAnyExpense = false;
-
-            expenses.forEach(exp => {
-                const amt = parseFloat(exp.amount) || 0;
-                if (amt > 0) {
-                    // 카테고리가 맵핑에 없으면 기타로 처리
-                    const cat = categoryTotals[exp.category] !== undefined ? exp.category : '기타';
-                    categoryTotals[cat] += amt;
-                    hasAnyExpense = true;
-                }
-            });
-
-            // 기존 차트가 있으면 파괴하고 새로 그림 (중복 렌더링 방지)
-            if (expenseChart) {
-                expenseChart.destroy();
-            }
-
-            // 지출이 하나도 없을 경우 빈 회색 차트 표시
-            if (!hasAnyExpense) {
-                expenseChart = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['지출 없음'],
-                        datasets: [{
-                            data: [1],
-                            backgroundColor: ['#e5e7eb'], // tailwind gray-200
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        cutout: '70%',
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } }
-                    }
-                });
-            } else {
-                // 실제 데이터로 도넛 차트 생성
-                expenseChart = new Chart(ctx, {
-                    type: 'doughnut', // 파이 차트로 완전히 꽉 차게 하려면 'pie'로 변경해도 됩니다.
-                    data: {
-                        labels: ['✈️ 교통', '🏠 숙박', '🍔 식비', '⚽ 액티비티', '🛒 기타'],
-                        datasets: [{
-                            data: [
-                                categoryTotals['교통'],
-                                categoryTotals['숙박'],
-                                categoryTotals['식비'],
-                                categoryTotals['액티비티'],
-                                categoryTotals['기타']
-                            ],
-                            backgroundColor: [
-                                '#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'
-                            ],
-                            borderWidth: 2,
-                            borderColor: document.documentElement.classList.contains('dark') ? '#1f2937' : '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        // 비율 유지를 해제하여 부모 래퍼(<div class="relative w-full...">) 크기에 꽉 차도록 설정
-                        maintainAspectRatio: false, 
-                        
-                        // 도넛 구멍의 크기입니다. 파이 차트처럼 속을 꽉 채우려면 '0%'로 변경하세요.
-                        cutout: '50%', 
-                        
-                        // 차트 바깥쪽 여백을 없애 캔버스에 꽉 차게 렌더링
-                        layout: {
-                            padding: 0
-                        },
-                        
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: 'right', // 범례를 구역 오른쪽에 배치
-                                align: 'center', // 범례 항목을 수직 중앙에 정렬
-                                labels: {
-                                    usePointStyle: true, // 범례 아이콘을 동그라미로 변경
-                                    boxWidth: 8,         // 동그라미 크기 축소
-                                    padding: 12,         // 범례 항목 간의 간격
-                                    font: { 
-                                        size: 12, 
-                                        family: "'Pretendard', sans-serif" 
-                                    },
-                                    color: document.documentElement.classList.contains('dark') ? '#d1d5db' : '#374151'
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        if (context.parsed !== null) {
-                                            label += '€' + context.parsed.toFixed(2);
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
+        // 3. 카테고리별 지출 막대 (유로 기준, render.js의 renderExpenseBars)
+        const totals = { '교통': 0, '숙박': 0, '식비': 0, '액티비티': 0, '기타': 0 };
+        expenses.forEach(exp => {
+            const amt = parseFloat(exp.amount) || 0;
+            if (amt > 0) totals[totals[exp.category] !== undefined ? exp.category : '기타'] += amt; // 모르는 카테고리는 기타로
+        });
+        renderInto('expense-chart', renderExpenseBars(totals));
     }
 
     // -----------------------------------------------------

@@ -761,6 +761,36 @@ function renderMealCalendar(log, month, selectedKey, todayKey, time) {
         </div>`;
 }
 
+// 11-2. 가계부 카테고리별 지출: 한 줄 누적 막대 + 아래 범례 (금액 큰 순서)
+// 조각 길이 = 금액 비율 (flex-grow), 조각 사이 2px 틈은 카드 배경이 비쳐 보이게
+// 색은 카테고리마다 고정 (순서가 바뀌어도 같은 카테고리는 같은 색)
+const EXPENSE_BAR_CATEGORIES = {
+    '교통': { icon: '✈️', color: '#3b82f6' },
+    '숙박': { icon: '🏠', color: '#f59e0b' },
+    '식비': { icon: '🍔', color: '#10b981' },
+    '액티비티': { icon: '⚽', color: '#ef4444' },
+    '기타': { icon: '🛒', color: '#8b5cf6' }
+};
+function renderExpenseBars(totals) {
+    const total = Object.values(totals).reduce((a, b) => a + b, 0);
+    if (!total) return `
+        <div class="h-8 rounded-lg bg-gray-100 dark:bg-nordic-800"></div>
+        <p class="text-center text-sm text-gray-400 pt-4">아직 지출이 없어요.</p>`;
+    const rows = Object.entries(totals).sort((a, b) => b[1] - a[1])
+        .map(([name, eur]) => ({ name, eur, share: eur / total * 100, ...EXPENSE_BAR_CATEGORIES[name] }));
+    const segments = rows.filter(r => r.eur > 0).map(r => `
+        <div title="${r.icon} ${r.name} €${r.eur.toFixed(2)} (${Math.round(r.share)}%)" class="h-full min-w-[4px] flex items-center justify-center overflow-hidden text-xs font-bold text-white" style="flex: ${r.eur} 1 0; background-color: ${r.color}">${r.share >= 12 ? `${Math.round(r.share)}%` : ''}</div>`).join(''); // 넓은 조각에만 % 표시
+    const legend = rows.map(r => `
+        <div class="flex items-center gap-2.5 text-sm min-w-0 ${r.eur ? '' : 'opacity-40'}">
+            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${r.color}"></span>
+            <span class="font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap">${r.icon} ${r.name}</span>
+            <span class="ml-auto text-gray-500 dark:text-gray-400 whitespace-nowrap"><span class="font-bold text-gray-800 dark:text-gray-100">€${r.eur.toFixed(2)}</span> · ${Math.round(r.share)}%</span>
+        </div>`).join('');
+    return `
+        <div class="flex gap-[2px] h-8 rounded-lg overflow-hidden">${segments}</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 mt-5">${legend}</div>`;
+}
+
 // 12. 실제 렌더링 실행
 function renderInto(containerId, html) {
     const el = document.getElementById(containerId);

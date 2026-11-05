@@ -1,12 +1,12 @@
 // sw.js - 오프라인 대응 서비스 워커 (한 번 온라인으로 열어 두면 오프라인에서도 화면이 열림)
 // - 사이트 파일(HTML/JS/데이터/이미지): 인터넷 우선 → 3초 안에 응답이 없거나 실패하면 저장본
-// - 외부 라이브러리(Tailwind/Leaflet/Chart.js): 저장본 우선 (버전 고정 파일이라 바뀌지 않음)
+// - 외부 라이브러리(Tailwind/Leaflet): 저장본 우선 (버전 고정 파일이라 바뀌지 않음)
 // - 지도 타일: 한 번 본 타일만 저장 (최대 MAX_TILES장)
 // - 날씨/환율/가계부 API는 건드리지 않음 (마지막 값 표시는 app.js가 담당)
 //
 // ⚠️ 파일을 새로 추가하거나 라이브러리 주소를 바꾸면 아래 목록에 반영하고 CACHE_VERSION을 올려 주세요.
 
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const APP_CACHE = `app-${CACHE_VERSION}`;
 const LIB_CACHE = `lib-${CACHE_VERSION}`;
 const TILE_CACHE = 'tiles-v1';
@@ -44,8 +44,7 @@ const APP_FILES = [
 const LIB_URLS = [
     'https://cdn.tailwindcss.com/3.4.17',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://cdn.jsdelivr.net/npm/chart.js@4.6.1'
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
 // 1. 설치: 사이트 파일과 라이브러리를 미리 저장

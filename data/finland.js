@@ -29,7 +29,7 @@ const FINLAND_SCHEDULE = {
     '2027-01-03': {
         title: '탐페레 도착 & 정착',
         items: [
-            { time: '17:30', tone: 'green', title: '탐페레 거점 정착 🏠', desc: '에어비앤비(Hatanpään Valtatie 4) 체크인 및 마트 장보기' }
+            { time: '15:00', tone: 'blue', title: '탐페레 거점 정착 🏠', desc: '에어비앤비(Hatanpään Valtatie 4) 체크인 및 마트 장보기' }
         ]
     },
 
