@@ -51,7 +51,7 @@ function renderPlaces(places) {
     const mapId = pinned.length ? `place-map-${Object.keys(PLACE_MAPS).length + 1}` : '';
     if (mapId) PLACE_MAPS[mapId] = pinned;
     const mapBox = mapId
-        ? `<div class="relative h-40 mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"><div id="${mapId}" class="place-map absolute inset-0 z-0"></div></div>`
+        ? `<div class="relative h-48 mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700"><div id="${mapId}" class="place-map absolute inset-0 z-0"></div></div>`
         : '';
     const list = places.map(place => renderPlace(place, pinned.indexOf(place) + 1, mapId)).join('');
     return `${mapBox}<ul class="mt-2 space-y-1.5 text-xs">${list}</ul>`;
@@ -60,23 +60,21 @@ function renderPlaces(places) {
 function renderTimelineItem(item) {
     const tone = TIMELINE_TONES[item.tone] || TIMELINE_TONES.gray;
     return `
-        <div class="relative pl-6">
-            <div class="absolute w-3 h-3 ${tone.dot} rounded-full -left-[7px] top-1.5 shadow-sm ring-4 ring-white dark:ring-nordic-900"></div>
-            <div class="flex items-start gap-3">
-                <span class="font-bold ${tone.time} w-11 flex-shrink-0 mt-0.5 text-sm">${item.time}</span>
-                <div class="flex-1 min-w-0">
-                    <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm">${item.title}</h5>
-                    ${item.desc ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${item.desc}</p>` : ''}
-                    ${item.places ? renderPlaces(item.places) : ''}
-                </div>
+        <div class="relative pl-4">
+            <div class="absolute w-3 h-3 ${tone.dot} rounded-full -left-[7px] top-1 shadow-sm ring-4 ring-white dark:ring-nordic-900"></div>
+            <div class="flex items-baseline gap-2">
+                <span class="font-bold ${tone.time} flex-shrink-0 text-sm tabular-nums">${item.time}</span>
+                <h5 class="font-bold text-gray-800 dark:text-gray-200 text-sm min-w-0">${item.title}</h5>
             </div>
+            ${item.desc ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${item.desc}</p>` : ''}
+            ${item.places ? renderPlaces(item.places) : ''}
         </div>`;
 }
 
 // 3. 숙소 카드 (지도 포함)
 function renderStayCard(stay, theme = 'blue') {
     return `
-        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4 mt-6">
+        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-3 mt-6">
             <div class="flex justify-between items-start mb-2">
                 <div>
                     <span class="${PLACE_THEMES[theme]} text-[10px] font-bold px-2 py-0.5 rounded">${stay.badge}</span>
@@ -117,19 +115,34 @@ function renderAccordion({ badge, badgeClass, title, bodyClass, body }) {
         </details>`;
 }
 
-// 5. Day 카드 (타임라인 + 선택적 숙소 카드), theme은 PLACE_THEMES의 키
-function renderDayCard(day, theme = 'blue') {
-    return renderAccordion({
-        badge: `Day ${day.day}`,
-        badgeClass: PLACE_THEMES[theme],
-        title: day.title,
-        bodyClass: 'p-4 pt-2',
-        body: `
-            <div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-3 mt-2 mb-2 space-y-6">
+// 5. Day 탭 (사진 배너 바로 아래, Day 1 | Day 2 | Day 3 을 좌우로 넘겨 보기), theme은 PLACE_THEMES의 키
+// 탭에는 Day 번호 + day.title의 ' : ' 앞(날짜)만, 제목 전체는 본문 맨 위 / 전환은 app.js 12-1
+const DAY_TAB_ACTIVE = {
+    blue: 'aria-selected:border-blue-500 aria-selected:text-blue-700 dark:aria-selected:text-blue-400',
+    amber: 'aria-selected:border-amber-500 aria-selected:text-amber-700 dark:aria-selected:text-amber-400'
+};
+function renderDayTabs(days, theme = 'blue') {
+    const tabs = days.map((day, i) => {
+        const date = day.title.includes(' : ') ? day.title.split(' : ')[0] : '';
+        return `
+            <button type="button" role="tab" data-day-tab="${i}" aria-selected="${i === 0}" class="min-w-0 px-1 py-2.5 border-b-2 border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${DAY_TAB_ACTIVE[theme]}">
+                <span class="block text-sm font-black">Day ${day.day}</span>
+                ${date ? `<span class="block text-[11px] font-medium opacity-80">${date}</span>` : ''}
+            </button>`;
+    }).join('');
+    const panels = days.map((day, i) => `
+        <div role="tabpanel" data-day-panel="${i}" class="px-3 pb-4 pt-3 sm:px-4"${i === 0 ? '' : ' hidden'}>
+            <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1"><span class="${PLACE_THEMES[theme]} text-xs font-bold px-2 py-0.5 rounded-md mr-1.5 align-middle">Day ${day.day}</span>${day.title}</h4>
+            <div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-1.5 mt-4 mb-2 space-y-6">
                 ${day.items.map(renderTimelineItem).join('')}
             </div>
-            ${day.stay ? renderStayCard(day.stay, theme) : ''}`
-    });
+            ${day.stay ? renderStayCard(day.stay, theme) : ''}
+        </div>`).join('');
+    return `
+        <div data-day-tabs class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <div role="tablist" class="grid border-b border-gray-200 dark:border-gray-700" style="grid-template-columns: repeat(${days.length}, minmax(0, 1fr))">${tabs}</div>
+            ${panels}
+        </div>`;
 }
 
 // 6. 패킹 리스트 (가방 → 그룹 → 체크 항목)
@@ -423,7 +436,7 @@ function renderFinlandDay(date, todayKey) {
     const title = day.title || (items.length ? `일정 ${items.length}개` : '<span class="font-normal text-gray-400">일정 없음</span>');
     const todayBadge = isToday ? ' <span class="ml-1 text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">오늘</span>' : '';
     const body = items.length
-        ? `<div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-3 mt-2 mb-2 space-y-6">
+        ? `<div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-1.5 mt-2 mb-2 space-y-6">
                ${items.map(renderTimelineItem).join('')}
            </div>`
         : `<p class="text-xs text-gray-400 py-2 text-center">아직 등록된 일정이 없어요.</p>`;
@@ -754,9 +767,9 @@ function renderInto(containerId, html) {
     if (el) el.innerHTML = html;
 }
 
-renderInto('helsinki-days', HELSINKI_DAYS.map(day => renderDayCard(day, 'blue')).join(''));
+renderInto('helsinki-days', renderDayTabs(HELSINKI_DAYS, 'blue'));
 renderInto('helsinki-week', HELSINKI_WEEK_LABEL);
-renderInto('stockholm-days', STOCKHOLM_DAYS.map(day => renderDayCard(day, 'amber')).join(''));
+renderInto('stockholm-days', renderDayTabs(STOCKHOLM_DAYS, 'amber'));
 const stockholmWeek = findTripWeek('stockholm');
 renderInto('stockholm-week', stockholmWeek ? stockholmWeek.label : '주차 미정');
 renderInto('packing-list', PACKING_BAGS.map(renderPackingBag).join(''));

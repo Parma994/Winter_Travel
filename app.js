@@ -1249,6 +1249,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 12-1. 헬싱키/스톡홀름 Day 탭 전환 (render.js의 renderDayTabs)
+document.addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-day-tab]');
+    if (!tab) return;
+    const box = tab.closest('[data-day-tabs]');
+    const index = tab.dataset.dayTab;
+    box.querySelectorAll('[data-day-tab]').forEach(t => t.setAttribute('aria-selected', String(t === tab)));
+    box.querySelectorAll('[data-day-panel]').forEach(panel => { panel.hidden = panel.dataset.dayPanel !== index; });
+    // 아래로 내려가 있었으면 탭 줄이 보이게 올려 줌 (헤더 높이만큼 여유)
+    if (box.getBoundingClientRect().top < 80) window.scrollTo({ top: window.scrollY + box.getBoundingClientRect().top - 90, behavior: 'smooth' });
+    // 숨어 있던 지도는 크기가 0이라 보일 때 다시 맞춤 (장소 지도는 처음 보일 때 만듦)
+    Object.entries(stayMaps).forEach(([mapId, stayMap]) => {
+        if (box.querySelector(`#${mapId}`)) setTimeout(() => stayMap.invalidateSize(), 50);
+    });
+    setTimeout(() => initPlaceMaps(box), 50);
+});
+
 // 13. 체크리스트 로컬 스토리지 통합 연동 (준비 로드맵 & 패킹 리스트)
 document.addEventListener('DOMContentLoaded', () => {
     const checkboxes = document.querySelectorAll('.pack-chk');
