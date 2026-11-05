@@ -1295,6 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tab.addEventListener('click', (e) => {
         if (spinning) return;
+        let toTop = false; // 다 그린 뒤 맨 위로 올릴지
         const timeButton = e.target.closest('[data-meal-time]');
         const categoryButton = e.target.closest('[data-meal-category]');
         const actionButton = e.target.closest('[data-meal-action]');
@@ -1328,6 +1329,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const action = actionButton.dataset.mealAction;
             eaten = null;
             if (action === 'random') return spin();
+            // 확정(레시피 열기) / 다시 고르기 / 다 먹었어요: 화면이 통째로 바뀌므로 맨 위부터 보이게
+            if (['confirm', 'reset', 'eaten'].includes(action)) toTop = true;
             if (action === 'close') shown = null;
             if (action === 'confirm' && shown) {
                 current = { name: shown.name, time, checked: [] };
@@ -1363,6 +1366,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         render();
+        if (toTop) window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // 달력에서 고른 날짜에 외식/즉석식품 등을 직접 추가
