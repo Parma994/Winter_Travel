@@ -1217,12 +1217,14 @@ document.addEventListener('DOMContentLoaded', () => {
 // 13-1. 요리 탭: 오늘 뭐 먹지? (끼니 → 종류 → 메뉴 목록에서 직접 고르거나 🎲 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
 // 화면 조각은 render.js 11-1, 메뉴는 data/meals.js
 // 기록은 이 기기에만 저장: 'meal:log' = [{ date, time, name, category }], 'meal:current' = 확정한 메뉴 { name, time, checked: [재료 번호] }
+// 'meal:pantry' = 내 재료 이름 목록 (🧺 카드에서 직접 등록, 바로 만들 수 있는 메뉴를 목록 앞에 강조)
 // 먹은 기록은 탭 아래 달력으로 정리 (render.js의 renderMealCalendar)
 document.addEventListener('DOMContentLoaded', () => {
     const tab = document.getElementById('tab-cook');
     if (!tab) return;
     const LOG_KEY = 'meal:log';
     const CURRENT_KEY = 'meal:current';
+    const PANTRY_KEY = 'meal:pantry';
     const load = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } };
     const save = (key, value) => { try { value ? localStorage.setItem(key, JSON.stringify(value)) : localStorage.removeItem(key); } catch (e) {} };
     const findMeal = (name) => MEALS.find(meal => meal.name === name);
@@ -1236,21 +1238,91 @@ document.addEventListener('DOMContentLoaded', () => {
     const todayKey = () => toDateKey(new Date());
     let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1); // 달력에 보이는 달 (1일)
     let selectedDay = todayKey(); // 달력에서 고른 날짜
+    let pantry = load(PANTRY_KEY, []); // 내 재료
     let current = load(CURRENT_KEY, null);
     if (current && !findMeal(current.name)) current = null; // 메뉴가 data에서 지워졌으면 확정 취소
     if (current && current.time) time = current.time;
     // 지금 끼니 + 종류에 맞는 후보
-    const candidates = () => MEALS.filter(meal => (category === 'all' || meal.category === category) && mealFitsTime(meal, time));
+    // 재료를 등록했으면 바로 만들 수 있는 메뉴가 앞으로 (나머지는 원래 순서)
+    const candidates = () => {
+        const list = MEALS.filter(meal => (category === 'all' || meal.category === category) && mealFitsTime(meal, time));
+        if (!pantry.length) return list;
+        const ready = list.filter(meal => mealPantryStatus(meal, pantry).ready);
+        return [...ready, ...list.filter(meal => !ready.includes(meal))];
+    };
 
     function render() {
         const meal = current && findMeal(current.name);
         // 메뉴를 확정한 동안에는 끼니/종류 버튼을 숨김
+        renderFridge();
         renderInto('meal-times', meal ? '' : renderMealTimeTabs(time));
         renderInto('meal-categories', meal ? '' : renderMealCategoryChips(category, time));
-        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked, current.time)
-            : renderMealList(candidates(), shown, eaten, time) + (shown ? renderMealPick(shown) : ''));
+        renderInto('meal-stage', meal ? renderMealRecipe(meal, current.checked, current.time, pantry)
+            : renderMealList(candidates(), shown, eaten, time, pantry) + (shown ? renderMealPick(shown, pantry) : ''));
         renderInto('meal-log', renderMealCalendar(load(LOG_KEY, []), calMonth, selectedDay, todayKey(), time));
     }
+
+    // 🧊 냉장고 팝업 (내 재료 넣기/빼기, 바로 만들 수 있는 메뉴 바로가기)
+    const fridgeModal = document.getElementById('fridge-modal');
+    const fridgeBadge = document.getElementById('fridge-badge');
+    const readyMeals = () => pantry.length ? MEALS.filter(meal => mealFitsTime(meal, time) && mealPantryStatus(meal, pantry).ready) : [];
+    function renderFridge() {
+        const ready = readyMeals();
+        // 배지: 넣어 둔 재료 수 (바로 만들 수 있는 메뉴가 있으면 초록, 없으면 회색)
+        fridgeBadge.hidden = !pantry.length;
+        fridgeBadge.textContent = pantry.length;
+        fridgeBadge.classList.toggle('bg-emerald-500', ready.length > 0);
+        fridgeBadge.classList.toggle('bg-gray-400', !ready.length);
+        fridgeBadge.title = ready.length ? `재료 ${pantry.length}개 · 바로 만들 수 있는 메뉴 ${ready.length}개` : `재료 ${pantry.length}개`;
+        if (!fridgeModal.hidden) renderInto('fridge-body', renderMealPantry(pantry, ready, time));
+    }
+    const savePantry = () => save(PANTRY_KEY, pantry.length ? pantry : null);
+    const openFridge = () => {
+        fridgeModal.hidden = false;
+        renderFridge();
+        document.body.style.overflow = 'hidden'; // 뒤 화면 스크롤 막기
+    };
+    const closeFridge = () => {
+        fridgeModal.hidden = true;
+        document.body.style.overflow = '';
+    };
+    document.getElementById('fridge-open').addEventListener('click', openFridge);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !fridgeModal.hidden) closeFridge(); });
+    fridgeModal.addEventListener('click', (e) => {
+        const remove = e.target.closest('[data-pantry-remove]');
+        const mealButton = e.target.closest('[data-pantry-meal]');
+        if (e.target.closest('[data-fridge-close]')) return closeFridge();
+        if (mealButton) {
+            // 바로 만들 수 있는 메뉴 → 팝업 닫고 그 메뉴 소개 카드 (확정한 메뉴가 있으면 레시피 화면이라 건너뜀)
+            closeFridge();
+            if (current) return;
+            category = 'all';
+            shown = findMeal(mealButton.dataset.pantryMeal);
+            eaten = null;
+            render();
+            return showPick();
+        }
+        if (remove) pantry.splice(Number(remove.dataset.pantryRemove), 1);
+        else if (e.target.closest('[data-pantry-clear]')) { if (!confirm('냉장고 재료를 전부 지울까요?')) return; pantry = []; }
+        else return;
+        savePantry();
+        render();
+    });
+    // 재료 넣기 (쉼표로 여러 개, 이미 있는 이름은 건너뜀)
+    fridgeModal.addEventListener('submit', (e) => {
+        const form = e.target.closest('[data-pantry-add]');
+        if (!form) return;
+        e.preventDefault();
+        // 주의: form.elements.item은 폼 기본 함수라 입력칸 이름을 ingredient로 둠
+        const names = form.elements.ingredient.value.split(/[,，、]/).map(name => name.trim()).filter(Boolean);
+        names.forEach(name => {
+            if (!pantry.some(item => normalizeIngredient(item) === normalizeIngredient(name))) pantry.push(name);
+        });
+        savePantry();
+        render();
+        const input = fridgeModal.querySelector('[name="ingredient"]');
+        if (input) input.focus(); // 이어서 입력
+    });
 
     // 고른 메뉴 소개 카드가 화면에 들어오게
     const showPick = () => {

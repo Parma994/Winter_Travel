@@ -609,19 +609,90 @@ function renderMealStorage(meal) {
         </div>` : '';
 }
 
+// 내 재료 (요리 탭 오른쪽 위 🧊 냉장고 버튼 → 팝업, 목록은 app.js가 기기에 저장 'meal:pantry')
+// 레시피 재료 이름을 읽는 규칙 (data/meals.js의 ingredients[].name):
+//   '(선택)'이 붙으면 없어도 됨 / 'A (또는 B)', 'A나 B', 'A이나 B'는 둘 중 하나만 있으면 됨
+//   'A, B'는 둘 다 필요 / 그 밖의 괄호 '(병)', '(플레인)' 같은 건 설명이라 무시
+// 내 재료와 비교: 띄어쓰기 무시, 한쪽 이름이 다른 쪽에 들어 있으면 같은 재료로 침 ('연어' ↔ '연어 필레', '호밀빵' ↔ '빵')
+const MEAL_ALWAYS_HAVE = ['물']; // 등록 안 해도 있다고 치는 재료
+const normalizeIngredient = (text) => String(text).replace(/\s+/g, '').toLowerCase();
+function parseIngredient(name) {
+    const optional = name.includes('(선택)');
+    const alternatives = [];
+    const rest = name.replace(/\(선택\)/g, '')
+        .replace(/\(또는 ([^)]+)\)/g, (_, alt) => { alternatives.push(alt.trim()); return ''; })
+        .replace(/\([^)]*\)/g, '');
+    const groups = rest.split(',').map(part => part.trim()).filter(Boolean)
+        .map(part => part.split(/(?:이나|나) /).map(word => word.trim()).filter(Boolean));
+    if (alternatives.length && groups.length) groups[groups.length - 1].push(...alternatives);
+    return { optional, groups }; // groups: 모두 필요, 각 group 안에서는 하나만 있으면 됨
+}
+const pantryHas = (word, pantry) => {
+    const w = normalizeIngredient(word);
+    return MEAL_ALWAYS_HAVE.includes(w) || pantry.some(item => { const p = normalizeIngredient(item); return p && (w.includes(p) || p.includes(w)); });
+};
+const ingredientInPantry = (item, pantry) => parseIngredient(item.name).groups.every(group => group.some(word => pantryHas(word, pantry)));
+// 메뉴 하나의 재료 상태: have/need = 꼭 필요한 재료 중 있는 수/전체 수, ready = 지금 바로 가능
+function mealPantryStatus(meal, pantry) {
+    const required = meal.ingredients.filter(item => !parseIngredient(item.name).optional);
+    const missing = required.filter(item => !ingredientInPantry(item, pantry)).map(item => item.name);
+    return { have: required.length - missing.length, need: required.length, ready: !missing.length, missing };
+}
+// 재료 입력칸 자동완성 후보 (모든 레시피의 재료 이름)
+const MEAL_INGREDIENT_WORDS = [...new Set(MEALS.flatMap(meal => meal.ingredients.flatMap(item => parseIngredient(item.name).groups.flat())))]
+    .filter(word => !MEAL_ALWAYS_HAVE.includes(word)).sort((a, b) => a.localeCompare(b, 'ko'));
+
+// 🧊 냉장고 팝업 내용 (readyMeals: 지금 끼니에서 바로 만들 수 있는 메뉴 → 누르면 그 메뉴 소개 카드로)
+function renderMealPantry(pantry, readyMeals, time) {
+    const chips = pantry.map((item, i) => `
+        <span class="inline-flex items-center gap-1 pl-3 pr-1 py-1 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-sm font-medium">
+            ${escapeMealText(item)}
+            <button type="button" data-pantry-remove="${i}" aria-label="${escapeMealText(item)} 지우기" class="w-6 h-6 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400">✕</button>
+        </span>`).join('');
+    const ready = !pantry.length ? ''
+        : readyMeals.length ? `
+            <div class="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900">
+                <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300 mb-2">✅ ${findMealTime(time).name}으로 바로 만들 수 있어요 · ${readyMeals.length}개</p>
+                <div class="flex flex-wrap gap-1.5">${readyMeals.map(meal => `<button type="button" data-pantry-meal="${escapeMealText(meal.name)}" class="px-2.5 py-1 rounded-full bg-white dark:bg-nordic-900 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-emerald-500">${findMealCategory(meal.category).icon} ${meal.name}</button>`).join('')}</div>
+            </div>`
+        : `<p class="mb-4 text-xs text-gray-500 dark:text-gray-400">지금 재료로 바로 만들 수 있는 ${findMealTime(time).name} 메뉴는 아직 없어요. 목록에서 🧺 숫자가 큰 메뉴부터 보세요.</p>`;
+    return `
+        ${ready}
+        <form data-pantry-add class="flex gap-2 mb-3">
+            <input name="ingredient" list="meal-ingredient-words" autocomplete="off" enterkeyhint="done" placeholder="재료 이름 (쉼표로 여러 개: 양파, 감자)" class="flex-1 min-w-0 text-base sm:text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+            <button type="submit" class="px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">추가</button>
+        </form>
+        <datalist id="meal-ingredient-words">${MEAL_INGREDIENT_WORDS.map(word => `<option value="${word}"></option>`).join('')}</datalist>
+        ${pantry.length ? `
+            <p class="text-xs text-gray-400 mb-2">들어 있는 재료 ${pantry.length}개</p>
+            <div class="flex flex-wrap gap-1.5">${chips}</div>
+            <div class="flex justify-between items-center gap-2 mt-4 text-[11px] text-gray-400">
+                <span>물은 늘 있다고 쳐요</span>
+                <button type="button" data-pantry-clear class="underline hover:text-red-500 whitespace-nowrap">전부 지우기</button>
+            </div>` : '<p class="text-xs text-gray-400">아직 넣은 재료가 없어요. 소금·후추 같은 기본 양념도 같이 넣어 두면 정확해요.</p>'}`;
+}
+
 // 메뉴 목록: 버튼을 눌러 직접 고르거나, 맨 아래 🎲 버튼으로 랜덤 (불이 버튼을 따라 돌다 멈추는 건 app.js)
 // meals: 지금 끼니 + 종류에 맞는 메뉴 (data-meal-choose = 이 배열의 번호), selected: 고른 메뉴 / eaten: 방금 먹은 메뉴 (기록 완료 문구 + 보관법)
-function renderMealList(meals, selected, eaten, time) {
+function renderMealList(meals, selected, eaten, time, pantry) {
     const done = eaten ? `
         <div class="text-center mb-4">
             <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-3">${eaten.notice}</p>
             ${eaten.meal.storage ? renderMealStorage(eaten.meal) : ''}
         </div>` : '';
-    const items = meals.map((meal, i) => `
-        <button type="button" data-meal-choose="${i}" class="meal-choice${meal === selected ? ' meal-picked' : ''} text-left px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-nordic-900 hover:border-amber-400">
+    // 재료를 등록했으면: 바로 만들 수 있는 메뉴는 초록 테두리 + ✅, 나머지는 🧺 있는 수/필요한 수
+    const items = meals.map((meal, i) => {
+        const status = pantry.length ? mealPantryStatus(meal, pantry) : null;
+        const badge = !status ? ''
+            : status.ready ? '<span class="block mt-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">✅ 지금 바로 가능</span>'
+            : `<span class="block mt-1 text-[11px] text-gray-400 dark:text-gray-500">🧺 재료 ${status.have}/${status.need}</span>`;
+        return `
+        <button type="button" data-meal-choose="${i}" class="meal-choice${meal === selected ? ' meal-picked' : ''} text-left px-3 py-2.5 rounded-xl border ${status && status.ready ? 'border-emerald-400 dark:border-emerald-600 bg-emerald-50/60 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-nordic-900'} hover:border-amber-400">
             <span class="block text-sm font-bold text-gray-800 dark:text-gray-100 leading-snug">${findMealCategory(meal.category).icon} ${meal.name}</span>
             <span class="block text-[11px] italic text-gray-400 dark:text-gray-500 truncate">${meal.fi || ''}</span>
-        </button>`).join('');
+            ${badge}
+        </button>`;
+    }).join('');
     return `
         <div class="${MEAL_CARD} p-4">
             ${done}
@@ -632,8 +703,12 @@ function renderMealList(meals, selected, eaten, time) {
 }
 
 // 고른 메뉴 소개 카드 (목록 아래에 뜸 → ✅ 이걸로! 하면 레시피로)
-function renderMealPick(meal) {
+function renderMealPick(meal, pantry) {
     const category = findMealCategory(meal.category);
+    const status = pantry.length ? mealPantryStatus(meal, pantry) : null;
+    const pantryLine = !status ? ''
+        : status.ready ? '<p class="mt-4 text-sm font-bold text-emerald-600 dark:text-emerald-400">✅ 가진 재료로 바로 만들 수 있어요</p>'
+        : `<p class="mt-4 text-xs text-gray-500 dark:text-gray-400">🧺 재료 ${status.have}/${status.need} · <span class="font-bold text-red-500 dark:text-red-400">없는 것:</span> ${status.missing.join(', ')}</p>`;
     return `
         <div id="meal-pick" class="${MEAL_CARD} overflow-hidden text-center mt-3 animate-[fadeIn_0.3s_ease-out] scroll-mb-24">
             ${renderMealPhoto(meal, category.icon, 'h-40')}
@@ -644,6 +719,7 @@ function renderMealPick(meal) {
             <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">${meal.desc}</p>
             ${renderMealStats(meal)}
             ${meal.sides ? `<p class="mt-3 text-xs text-gray-400">🥗 곁들이면 좋아요</p><div class="mt-1.5 flex flex-wrap justify-center gap-1">${renderMealSides(meal)}</div>` : ''}
+            ${pantryLine}
             <div class="flex gap-2 mt-6">
                 <button type="button" data-meal-action="close" class="${MEAL_BUTTON_SUB}">닫기</button>
                 <button type="button" data-meal-action="confirm" class="${MEAL_BUTTON_MAIN}">✅ 이걸로!</button>
@@ -653,12 +729,14 @@ function renderMealPick(meal) {
 }
 
 // 확정한 메뉴: 재료 체크리스트 + 레시피 (재료 체크는 app.js가 기기에 저장, 취소선은 CSS peer로 처리)
-function renderMealRecipe(meal, checked, time) {
+function renderMealRecipe(meal, checked, time, pantry) {
+    // 내 재료에 있는 건 🧺 있음 표시 (체크는 그대로 직접)
+    const owned = (item) => pantry.length && ingredientInPantry(item, pantry) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">🧺 있음</span>' : '';
     const ingredients = meal.ingredients.map((item, i) => `
         <label class="flex items-start gap-3 cursor-pointer py-1">
             <input type="checkbox" data-meal-ingredient="${i}"${checked.includes(i) ? ' checked' : ''} class="peer w-4 h-4 mt-0.5 accent-amber-600">
             <span class="flex-1 text-sm text-gray-700 dark:text-gray-200 peer-checked:line-through peer-checked:opacity-50">
-                ${item.name} <span class="text-gray-400">${item.amount}</span>
+                ${item.name} <span class="text-gray-400">${item.amount}</span>${owned(item)}
                 ${item.fi ? `<span class="block text-[11px] text-gray-400 dark:text-gray-500">🇫🇮 ${item.fi}</span>` : ''}
             </span>
         </label>`).join('');
