@@ -575,7 +575,8 @@ function renderMealCategoryChips(active, time) {
 // 난이도 · 시간 · 칼로리 (★ 개수 = 난이도)
 function renderMealStats(meal) {
     const stars = '★'.repeat(meal.difficulty) + '☆'.repeat(3 - meal.difficulty);
-    const servings = meal.servings > 1 ? ` · ${meal.servings}인분` : '';
+    // servings: 숫자면 'N인분', 글자면 그대로 ('5회분', '5개분')
+    const servings = typeof meal.servings === 'string' ? ` · ${meal.servings}` : meal.servings > 1 ? ` · ${meal.servings}인분` : '';
     return `
         <div class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
             <span><span class="text-amber-500">${stars}</span> ${MEAL_DIFFICULTY[meal.difficulty]}</span>
@@ -615,7 +616,15 @@ function renderMealStorage(meal) {
 //   'A, B'는 둘 다 필요 / 그 밖의 괄호 '(병)', '(플레인)' 같은 건 설명이라 무시
 // 내 재료와 비교: 띄어쓰기 무시, 한쪽 이름이 다른 쪽에 들어 있으면 같은 재료로 침 ('연어' ↔ '연어 필레', '호밀빵' ↔ '빵')
 const MEAL_ALWAYS_HAVE = ['물']; // 등록 안 해도 있다고 치는 재료
-const normalizeIngredient = (text) => String(text).replace(/\s+/g, '').toLowerCase();
+// 같은 재료의 다른 이름 묶음 (첫 번째 이름으로 바꿔서 비교 → '달걀'을 넣어도 '계란' 레시피에 있음으로 나옴)
+// 띄어쓰기는 무시하므로 '다진 고기'도 '다진고기'로 묶임. 묶음을 늘리려면 [대표 이름, 다른 이름들...]을 추가
+const MEAL_INGREDIENT_GROUPS = [
+    ['계란', '달걀'],
+    ['다진고기', '다짐육']
+];
+const normalizeIngredient = (text) => MEAL_INGREDIENT_GROUPS.reduce(
+    (s, [main, ...others]) => others.reduce((t, other) => t.split(other).join(main), s),
+    String(text).replace(/\s+/g, '').toLowerCase());
 function parseIngredient(name) {
     const optional = name.includes('(선택)');
     const alternatives = [];
@@ -638,12 +647,22 @@ function mealPantryStatus(meal, pantry) {
     const missing = required.filter(item => !ingredientInPantry(item, pantry)).map(item => item.name);
     return { have: required.length - missing.length, need: required.length, ready: !missing.length, missing };
 }
-// 재료 입력칸 자동완성 후보 (모든 레시피의 재료 이름)
-const MEAL_INGREDIENT_WORDS = [...new Set(MEALS.flatMap(meal => meal.ingredients.flatMap(item => parseIngredient(item.name).groups.flat())))]
-    .filter(word => !MEAL_ALWAYS_HAVE.includes(word)).sort((a, b) => a.localeCompare(b, 'ko'));
+// 재료 후보 (모든 레시피의 재료 이름, 많은 레시피에 쓰이는 순서 → 같으면 가나다순)
+// 입력칸 자동완성과 🧊 팝업의 '빠르게 넣기' 버튼에 씀
+const MEAL_INGREDIENT_WORDS = (() => {
+    const counts = {};
+    // 묶음 재료(계란/달걀 등)는 대표 이름 하나로만 ('달걀' → '계란')
+    const display = (word) => { const n = normalizeIngredient(word); return MEAL_INGREDIENT_GROUPS.some(([main]) => main === n) ? n : word; };
+    MEALS.forEach(meal => new Set(meal.ingredients.flatMap(item => parseIngredient(item.name).groups.flat()).map(display))
+        .forEach(word => { counts[word] = (counts[word] || 0) + 1; }));
+    return Object.keys(counts).filter(word => !MEAL_ALWAYS_HAVE.includes(word))
+        .sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, 'ko'));
+})();
+const MEAL_SUGGEST_FIRST = 20; // '빠르게 넣기'에 처음 보이는 버튼 수 (나머지는 '전체 보기')
 
 // 🧊 냉장고 팝업 내용 (readyMeals: 지금 끼니에서 바로 만들 수 있는 메뉴 → 누르면 그 메뉴 소개 카드로)
-function renderMealPantry(pantry, readyMeals, time) {
+// showAll: '빠르게 넣기' 후보를 전부 펼쳤는지 / 입력칸에 글자를 치면 app.js가 그 글자가 든 후보만 남김
+function renderMealPantry(pantry, readyMeals, time, showAll) {
     const chips = pantry.map((item, i) => `
         <span class="inline-flex items-center gap-1 pl-3 pr-1 py-1 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-sm font-medium">
             ${escapeMealText(item)}
@@ -656,20 +675,32 @@ function renderMealPantry(pantry, readyMeals, time) {
                 <div class="flex flex-wrap gap-1.5">${readyMeals.map(meal => `<button type="button" data-pantry-meal="${escapeMealText(meal.name)}" class="px-2.5 py-1 rounded-full bg-white dark:bg-nordic-900 border border-emerald-200 dark:border-emerald-800 text-xs font-bold text-gray-700 dark:text-gray-200 hover:border-emerald-500">${findMealCategory(meal.category).icon} ${meal.name}</button>`).join('')}</div>
             </div>`
         : `<p class="mb-4 text-xs text-gray-500 dark:text-gray-400">지금 재료로 바로 만들 수 있는 ${findMealTime(time).name} 메뉴는 아직 없어요. 목록에서 🧺 숫자가 큰 메뉴부터 보세요.</p>`;
+    // 빠르게 넣기: 아직 없는 재료만 (이미 있는 걸로 계산되는 이름도 뺌, 예: '달걀'이 있으면 '계란' 후보 숨김)
+    const suggestions = MEAL_INGREDIENT_WORDS.filter(word => !pantryHas(word, pantry));
+    const suggestButtons = suggestions.map((word, i) => `
+        <button type="button" data-pantry-suggest="${escapeMealText(word)}"${i >= MEAL_SUGGEST_FIRST ? ' data-suggest-extra' : ''}${i >= MEAL_SUGGEST_FIRST && !showAll ? ' hidden' : ''} class="px-2.5 py-1 rounded-full border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">+ ${escapeMealText(word)}</button>`).join('');
+    const moreButton = suggestions.length > MEAL_SUGGEST_FIRST
+        ? `<button type="button" data-suggest-more class="px-2.5 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 underline">${showAll ? '접기' : `전체 보기 (${suggestions.length}개)`}</button>` : '';
     return `
         ${ready}
-        <form data-pantry-add class="flex gap-2 mb-3">
-            <input name="ingredient" list="meal-ingredient-words" autocomplete="off" enterkeyhint="done" placeholder="재료 이름 (쉼표로 여러 개: 양파, 감자)" class="flex-1 min-w-0 text-base sm:text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
-            <button type="submit" class="px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">추가</button>
-        </form>
-        <datalist id="meal-ingredient-words">${MEAL_INGREDIENT_WORDS.map(word => `<option value="${word}"></option>`).join('')}</datalist>
         ${pantry.length ? `
-            <p class="text-xs text-gray-400 mb-2">들어 있는 재료 ${pantry.length}개</p>
+            <p class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">들어 있는 재료 ${pantry.length}개</p>
             <div class="flex flex-wrap gap-1.5">${chips}</div>
-            <div class="flex justify-between items-center gap-2 mt-4 text-[11px] text-gray-400">
+            <div class="flex justify-between items-center gap-2 mt-3 text-[11px] text-gray-400">
                 <span>물은 늘 있다고 쳐요</span>
                 <button type="button" data-pantry-clear class="underline hover:text-red-500 whitespace-nowrap">전부 지우기</button>
-            </div>` : '<p class="text-xs text-gray-400">아직 넣은 재료가 없어요. 소금·후추 같은 기본 양념도 같이 넣어 두면 정확해요.</p>'}`;
+            </div>` : '<p class="text-xs text-gray-400">아직 넣은 재료가 없어요. 아래 버튼을 누르거나 직접 적어서 넣어 주세요.</p>'}
+        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <form data-pantry-add class="flex gap-2 mb-3">
+                <input name="ingredient" list="meal-ingredient-words" autocomplete="off" enterkeyhint="done" placeholder="직접 적기 · 적으면 아래 버튼도 걸러져요" class="flex-1 min-w-0 text-base sm:text-sm p-2 bg-gray-50 dark:bg-nordic-950 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                <button type="submit" class="px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold">추가</button>
+            </form>
+            <datalist id="meal-ingredient-words">${MEAL_INGREDIENT_WORDS.map(word => `<option value="${word}"></option>`).join('')}</datalist>
+            ${suggestions.length ? `
+                <p class="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">빠르게 넣기 <span class="font-normal text-gray-400">· 레시피에 많이 쓰이는 순서</span></p>
+                <div class="flex flex-wrap gap-1.5">${suggestButtons}${moreButton}</div>
+                <p data-suggest-empty hidden class="text-xs text-gray-400">맞는 후보가 없어요. 추가를 누르면 적은 이름 그대로 들어가요.</p>` : ''}
+        </div>`;
 }
 
 // 메뉴 목록: 버튼을 눌러 직접 고르거나, 맨 아래 🎲 버튼으로 랜덤 (불이 버튼을 따라 돌다 멈추는 건 app.js)

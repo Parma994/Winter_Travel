@@ -1243,12 +1243,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (current && !findMeal(current.name)) current = null; // 메뉴가 data에서 지워졌으면 확정 취소
     if (current && current.time) time = current.time;
     // 지금 끼니 + 종류에 맞는 후보
-    // 재료를 등록했으면 바로 만들 수 있는 메뉴가 앞으로 (나머지는 원래 순서)
+    // 재료를 등록했으면 냉장고 재료가 많이 맞는 메뉴부터:
+    // 없는 재료가 적은 순 (0개 = 바로 가능) → 같으면 가진 재료 비율이 높은 순 → 같으면 원래 순서
     const candidates = () => {
         const list = MEALS.filter(meal => (category === 'all' || meal.category === category) && mealFitsTime(meal, time));
         if (!pantry.length) return list;
-        const ready = list.filter(meal => mealPantryStatus(meal, pantry).ready);
-        return [...ready, ...list.filter(meal => !ready.includes(meal))];
+        const status = new Map(list.map(meal => [meal, mealPantryStatus(meal, pantry)]));
+        return list.map((meal, i) => ({ meal, i, s: status.get(meal) }))
+            .sort((a, b) => a.s.missing.length - b.s.missing.length || b.s.have / b.s.need - a.s.have / a.s.need || a.i - b.i)
+            .map(x => x.meal);
     };
 
     function render() {
@@ -1265,6 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 🧊 냉장고 팝업 (내 재료 넣기/빼기, 바로 만들 수 있는 메뉴 바로가기)
     const fridgeModal = document.getElementById('fridge-modal');
     const fridgeBadge = document.getElementById('fridge-badge');
+    let suggestAll = false; // '빠르게 넣기' 후보 전체 보기
     const readyMeals = () => pantry.length ? MEALS.filter(meal => mealFitsTime(meal, time) && mealPantryStatus(meal, pantry).ready) : [];
     function renderFridge() {
         const ready = readyMeals();
@@ -1274,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fridgeBadge.classList.toggle('bg-emerald-500', ready.length > 0);
         fridgeBadge.classList.toggle('bg-gray-400', !ready.length);
         fridgeBadge.title = ready.length ? `재료 ${pantry.length}개 · 바로 만들 수 있는 메뉴 ${ready.length}개` : `재료 ${pantry.length}개`;
-        if (!fridgeModal.hidden) renderInto('fridge-body', renderMealPantry(pantry, ready, time));
+        if (!fridgeModal.hidden) renderInto('fridge-body', renderMealPantry(pantry, ready, time, suggestAll));
     }
     const savePantry = () => save(PANTRY_KEY, pantry.length ? pantry : null);
     const openFridge = () => {
@@ -1291,7 +1295,9 @@ document.addEventListener('DOMContentLoaded', () => {
     fridgeModal.addEventListener('click', (e) => {
         const remove = e.target.closest('[data-pantry-remove]');
         const mealButton = e.target.closest('[data-pantry-meal]');
+        const suggest = e.target.closest('[data-pantry-suggest]');
         if (e.target.closest('[data-fridge-close]')) return closeFridge();
+        if (e.target.closest('[data-suggest-more]')) { suggestAll = !suggestAll; return renderFridge(); }
         if (mealButton) {
             // 바로 만들 수 있는 메뉴 → 팝업 닫고 그 메뉴 소개 카드 (확정한 메뉴가 있으면 레시피 화면이라 건너뜀)
             closeFridge();
@@ -1302,11 +1308,27 @@ document.addEventListener('DOMContentLoaded', () => {
             render();
             return showPick();
         }
-        if (remove) pantry.splice(Number(remove.dataset.pantryRemove), 1);
+        if (suggest) pantry.push(suggest.dataset.pantrySuggest); // 빠르게 넣기 버튼
+        else if (remove) pantry.splice(Number(remove.dataset.pantryRemove), 1);
         else if (e.target.closest('[data-pantry-clear]')) { if (!confirm('냉장고 재료를 전부 지울까요?')) return; pantry = []; }
         else return;
         savePantry();
         render();
+    });
+    // 입력칸에 글자를 치면 '빠르게 넣기' 후보 중 그 글자가 든 것만 보이게 (비우면 처음 상태로)
+    fridgeModal.addEventListener('input', (e) => {
+        if (e.target.name !== 'ingredient') return;
+        const query = normalizeIngredient(e.target.value.split(/[,，、]/).pop());
+        let shown = 0;
+        fridgeModal.querySelectorAll('[data-pantry-suggest]').forEach(button => {
+            const visible = query ? normalizeIngredient(button.dataset.pantrySuggest).includes(query) : (suggestAll || !button.hasAttribute('data-suggest-extra'));
+            button.hidden = !visible;
+            if (visible) shown++;
+        });
+        const more = fridgeModal.querySelector('[data-suggest-more]');
+        if (more) more.hidden = !!query;
+        const empty = fridgeModal.querySelector('[data-suggest-empty]');
+        if (empty) empty.hidden = !query || shown > 0;
     });
     // 재료 넣기 (쉼표로 여러 개, 이미 있는 이름은 건너뜀)
     fridgeModal.addEventListener('submit', (e) => {
