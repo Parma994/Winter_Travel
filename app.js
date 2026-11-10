@@ -667,7 +667,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalSpent = 0;
 
         // 지출 내역을 최신 날짜순으로 정렬
-        const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+        // 날짜 최신 순 → 같은 날짜면 나중에 입력한 것부터 (id = 입력한 순간의 Date.now())
+        // id가 숫자가 아니면 시트에서 아래쪽(나중에 추가된) 행이 먼저
+        const enteredAt = (exp) => Number(exp.id) || 0;
+        const sortedExpenses = expenses.map((exp, row) => ({ exp, row }))
+            .sort((a, b) => new Date(b.exp.date) - new Date(a.exp.date) || enteredAt(b.exp) - enteredAt(a.exp) || b.row - a.row)
+            .map(({ exp }) => exp);
 
         // 1. 가계부 탭의 전체 리스트 그리기
         if (sortedExpenses.length === 0) {
