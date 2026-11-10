@@ -96,6 +96,7 @@ function openSideMenu() {
             const state = tabId === currentTab ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-nordic-800';
             return `<button type="button" data-menu-tab="${tabId}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${state}"><span class="text-xl w-7 text-center">${icon}</span>${name}</button>`;
         }).join('')}`).join('');
+    updateSyncStatus();
     sideMenu.classList.add('open');
     sideMenu.setAttribute('aria-hidden', 'false');
 }
@@ -115,6 +116,132 @@ sideMenu.addEventListener('click', (e) => {
     }
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sideMenu.classList.contains('open')) closeSideMenu(); });
+
+// 2-2. 기기 기록 동기화 (구글 시트 '기기기록' 탭, 서버 코드는 apps-script/Code.gs)
+// 이 기기에만 있던 기록(먹은 기록, 냉장고, 체크리스트 등)을 시트에 올려 두고, 다른 기기/새로 깐 앱에서 받아 옴
+// - 기록을 바꾸는 곳에서 localChanged(key)를 부르면 2초 뒤 시트에 올림 (오프라인이면 'sync:pending'에 모아 뒀다가 연결되면)
+// - 사이트를 열 때 / 다시 볼 때 / 인터넷이 돌아올 때 시트에서 받아 옴
+// - 같은 항목을 두 기기에서 고치면 나중에 고친 쪽이 이김 (항목별 updatedAt 비교)
+// - 비밀번호는 가계부와 같은 'expenseKey' (없으면 동기화 안 함) / 다크 모드 등 기기별 설정과 임시 저장본은 올리지 않음
+const SHEET_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8aKRlruKIgUlRWpEAAOzLqog6Sm3ZulxbnqNLU6byGMBd3k4ec0tz6pZqdFvldA8k/exec";
+const SYNC_SKIP = (key) => ['theme', 'expenseKey', 'expenseScriptVersion', 'rateHistory'].includes(key)
+    || key.startsWith('snapshot:') || key.startsWith('sync:');
+const SYNC_META = 'sync:meta';       // { key: 이 기기 값이 바뀐(또는 시트에서 받은) 시각 }
+const SYNC_PENDING = 'sync:pending'; // 아직 시트에 못 올린 key 목록
+const SYNC_LAST = 'sync:last';       // 마지막으로 시트와 맞춘 시각
+const syncRead = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } };
+const syncWrite = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {} };
+let syncTimer = null;
+let syncBusy = false;
+let syncAgain = false;     // 올리는 중에 또 바뀌면 끝나고 한 번 더
+let syncSupported = null;  // false = Apps Script가 아직 옛 버전 (기기기록 기능 없음)
+
+// 기록을 바꾼 곳에서 호출 (값은 이미 localStorage에 써 둔 뒤)
+function localChanged(key) {
+    if (SYNC_SKIP(key)) return;
+    const meta = syncRead(SYNC_META, {});
+    meta[key] = Date.now();
+    syncWrite(SYNC_META, meta);
+    syncWrite(SYNC_PENDING, [...new Set([...syncRead(SYNC_PENDING, []), key])]);
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncNow, 2000);
+    updateSyncStatus();
+}
+
+// 시트 쪽이 더 최근인 항목을 기기에 반영 → 바뀐 key 목록을 'syncapplied'로 알림 (화면 다시 그리기용)
+function applyServerState(state) {
+    const meta = syncRead(SYNC_META, {});
+    let pending = syncRead(SYNC_PENDING, []);
+    const changed = [];
+    Object.entries(state || {}).forEach(([key, { value, updatedAt }]) => {
+        if (SYNC_SKIP(key) || !(updatedAt > (meta[key] || 0))) return;
+        try {
+            if (value === null) localStorage.removeItem(key);
+            else localStorage.setItem(key, value);
+        } catch (e) { return; }
+        meta[key] = updatedAt;
+        pending = pending.filter(k => k !== key);
+        changed.push(key);
+    });
+    syncWrite(SYNC_META, meta);
+    syncWrite(SYNC_PENDING, pending);
+    if (changed.length) document.dispatchEvent(new CustomEvent('syncapplied', { detail: changed }));
+}
+
+async function syncNow() {
+    clearTimeout(syncTimer);
+    let password = '';
+    try { password = localStorage.getItem('expenseKey') || ''; } catch (e) {}
+    if (!password || !navigator.onLine || syncSupported === false) return updateSyncStatus();
+    if (syncBusy) { syncAgain = true; return; }
+    syncBusy = true;
+    try {
+        // 1. 시트에서 받기 (옛 Apps Script는 action을 모르고 가계부 목록(배열)을 돌려줌 → 동기화 끔)
+        const data = await (await fetch(`${SHEET_SCRIPT_URL}?action=state&key=${encodeURIComponent(password)}`)).json();
+        if (Array.isArray(data)) { syncSupported = false; return; }
+        if (!data || data.status !== 'success') return; // 비밀번호 틀림 등 (가계부 탭이 안내함)
+        syncSupported = true;
+        applyServerState(data.state);
+
+        // 2. 시트보다 최근인 이 기기 항목 올리기
+        //    처음 켠 기기에 이미 있던 기록(시각 모름)은 아주 옛날 것으로 쳐서, 시트에 같은 항목이 있으면 시트 쪽을 따름
+        const meta = syncRead(SYNC_META, {});
+        const localKeys = Object.keys(localStorage).filter(key => !SYNC_SKIP(key));
+        const keys = [...new Set([...syncRead(SYNC_PENDING, []), ...localKeys])];
+        const items = keys.map(key => ({ key, value: localStorage.getItem(key), updatedAt: meta[key] || 1 }))
+            .filter(item => item.updatedAt > ((data.state[item.key] || {}).updatedAt || 0));
+        if (items.length) {
+            const response = await fetch(SHEET_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 미리 확인 요청(CORS preflight) 없이 보내기
+                body: JSON.stringify({ action: 'saveState', key: password, items })
+            });
+            const saved = await response.json();
+            if (!saved || saved.status !== 'success') return;
+            // 보내는 동안 다시 바뀐 항목은 대기 목록에 남김
+            const nowMeta = syncRead(SYNC_META, {});
+            syncWrite(SYNC_PENDING, syncRead(SYNC_PENDING, []).filter(key => {
+                const sent = items.find(item => item.key === key);
+                return !sent || (nowMeta[key] || 0) > sent.updatedAt;
+            }));
+            items.forEach(item => { if (!meta[item.key]) nowMeta[item.key] = item.updatedAt; });
+            syncWrite(SYNC_META, nowMeta);
+            applyServerState(saved.state);
+        }
+        syncWrite(SYNC_LAST, Date.now());
+    } catch (error) {
+        console.warn('기기 기록 동기화 실패 (다음에 다시 시도):', error);
+    } finally {
+        syncBusy = false;
+        updateSyncStatus();
+        if (syncAgain) { syncAgain = false; syncNow(); }
+    }
+}
+window.syncNow = syncNow; // 가계부 비밀번호를 넣은 직후 바로 동기화
+
+// ☰ 메뉴 아래쪽 상태 한 줄
+function updateSyncStatus() {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    let password = '';
+    try { password = localStorage.getItem('expenseKey') || ''; } catch (e) {}
+    const pending = syncRead(SYNC_PENDING, []).length;
+    const last = syncRead(SYNC_LAST, 0);
+    el.textContent = !password ? '🔒 가계부 비밀번호를 넣으면 기록이 시트에 백업돼요'
+        : syncSupported === false ? '⚠️ Apps Script를 새 버전으로 배포해야 백업돼요'
+        : !navigator.onLine ? `📴 오프라인${pending ? ` · 올릴 기록 ${pending}개 대기 중` : ''}`
+        : syncBusy ? '🔄 시트와 맞추는 중…'
+        : pending ? `⏳ 올릴 기록 ${pending}개 대기 중`
+        : last ? `☁️ 시트에 백업됨 · ${formatSavedAt(last)}` : '☁️ 곧 시트에 백업돼요';
+}
+
+window.addEventListener('online', syncNow);
+window.addEventListener('offline', updateSyncStatus);
+// 다른 기기에서 바꾼 걸 받아 오게: 앱으로 다시 돌아올 때 (1분에 한 번까지)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && Date.now() - syncRead(SYNC_LAST, 0) > 60000) syncNow();
+});
+document.addEventListener('DOMContentLoaded', () => { updateSyncStatus(); setTimeout(syncNow, 1500); });
 
 // 3. Leaflet 지도 초기화
 function initMap() {
@@ -627,8 +754,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 // 11. 구글 스프레드시트 실시간 동기화 가계부 로직 (+ 환율 연동 통합)
 document.addEventListener('DOMContentLoaded', () => {
-    // 🔥 아래 따옴표 안에 구글 배포 후 받은 웹 앱 URL(exec로 끝나는 주소)을 넣으세요.
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8aKRlruKIgUlRWpEAAOzLqog6Sm3ZulxbnqNLU6byGMBd3k4ec0tz6pZqdFvldA8k/exec"; 
+    // 구글 배포 후 받은 웹 앱 URL(exec로 끝나는 주소)은 위 2-2의 SHEET_SCRIPT_URL 한 곳에만 적음
+    const SCRIPT_URL = SHEET_SCRIPT_URL;
     
     const form = document.getElementById('expense-form');
     const expenseList = document.getElementById('expense-list');
@@ -884,6 +1011,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setKey(keyInput.value.trim());
         keyInput.value = '';
         fetchExpenses();
+        syncNow(); // 기기 기록도 바로 시트와 맞춤
     });
 
     // -----------------------------------------------------
@@ -1214,14 +1342,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. 클릭하여 상태 변경 시 로컬 스토리지 업데이트 및 취소선 토글
         chk.addEventListener('change', (e) => {
             localStorage.setItem(e.target.id, e.target.checked);
+            localChanged(e.target.id);
             updateLabelStyle(e.target);
+        });
+    });
+    // 다른 기기에서 바꾼 체크를 시트에서 받아 오면 다시 표시
+    document.addEventListener('syncapplied', () => {
+        checkboxes.forEach(chk => {
+            const saved = localStorage.getItem(chk.id);
+            if (saved !== null) chk.checked = saved === 'true';
+            updateLabelStyle(chk);
         });
     });
 });
 
 // 13-1. 요리 탭: 오늘 뭐 먹지? (끼니 → 종류 → 메뉴 목록에서 직접 고르거나 🎲 랜덤 → 확정하면 재료/레시피/보관법 → 다 먹으면 기록)
 // 화면 조각은 render.js 11-1, 메뉴는 data/meals.js
-// 기록은 이 기기에만 저장: 'meal:log' = [{ date, time, name, category }], 'meal:current' = 확정한 메뉴 { name, time, checked: [재료 번호] }
+// 기록은 기기에 저장하고 시트 '기기기록'에도 백업 (2-2): 'meal:log' = [{ date, time, name, category }], 'meal:current' = 확정한 메뉴 { name, time, checked: [재료 번호] }
 // 'meal:pantry' = 내 재료 이름 목록 (🧺 카드에서 직접 등록, 바로 만들 수 있는 메뉴를 목록 앞에 강조)
 // 먹은 기록은 탭 아래 달력으로 정리 (render.js의 renderMealCalendar)
 document.addEventListener('DOMContentLoaded', () => {
@@ -1231,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const CURRENT_KEY = 'meal:current';
     const PANTRY_KEY = 'meal:pantry';
     const load = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; } };
-    const save = (key, value) => { try { value ? localStorage.setItem(key, JSON.stringify(value)) : localStorage.removeItem(key); } catch (e) {} };
+    const save = (key, value) => { try { value ? localStorage.setItem(key, JSON.stringify(value)) : localStorage.removeItem(key); } catch (e) {} localChanged(key); };
     const findMeal = (name) => MEALS.find(meal => meal.name === name);
 
     // 고른 끼니 (처음엔 지금 시각에 맞는 끼니)
@@ -1488,6 +1625,14 @@ document.addEventListener('DOMContentLoaded', () => {
         save(CURRENT_KEY, current);
     });
 
+    // 다른 기기에서 바꾼 기록을 시트에서 받아 오면 다시 읽어서 그림
+    document.addEventListener('syncapplied', (e) => {
+        if (!e.detail.some(key => key.startsWith('meal:'))) return;
+        pantry = load(PANTRY_KEY, []);
+        current = load(CURRENT_KEY, null);
+        if (current && !findMeal(current.name)) current = null;
+        if (!spinning) render();
+    });
     render();
 });
 
