@@ -29,7 +29,9 @@ function loadSnapshot(key) {
 const formatSavedAt = (ms) => { const d = new Date(ms); return `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
 
 // 2. 탭 전환 로직 (btnElement: 하단 바 버튼, ☰ 메뉴에서 연 탭이면 null)
+// btnElement: 하단 바 버튼 (여행 부채꼴에서 고른 탭이면 null → 가운데 ✈️ 여행 버튼을 파랗게)
 function switchTab(tabId, btnElement) {
+    if (!btnElement && TRIP_TABS.some(t => t.id === tabId)) btnElement = document.getElementById('trip-open');
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     document.body.dataset.tab = tabId; // 탭별 배경색 (index.html의 body[data-tab] 스타일)
@@ -42,8 +44,7 @@ function switchTab(tabId, btnElement) {
         btnElement.classList.remove('text-gray-500');
         btnElement.classList.add('text-blue-600', 'dark:text-blue-500', 'font-bold');
     }
-    // ☰ 메뉴 안의 탭을 보고 있으면 ☰ 버튼을 파랗게
-    document.getElementById('menu-open').classList.toggle('!text-blue-600', !btnElement);
+    updateTripButton();
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -60,21 +61,65 @@ function switchTab(tabId, btnElement) {
     setTimeout(() => initPlaceMaps(document.getElementById(tabId)), 100);
 }
 
-// 2-1. 오른쪽 위 ☰ 서랍 메뉴 (하단 바에 없는 탭들)
-const MENU_GROUPS = [
-    { title: '여행', tabs: [
-        { id: 'tab-prep', icon: '🧳', name: '출발 전' },
-        { id: 'tab-helsinki', icon: '🏙️', name: '헬싱키' },
-        { id: 'tab-stockholm', icon: '🇸🇪', name: '스톡홀름' },
-        { id: 'tab-england', icon: '🇬🇧', name: '런던' },
-        { id: 'tab-lapland', icon: '🌌', name: '북극권' },
-        { id: 'tab-return', icon: '🛬', name: '귀국 전 코펜하겐' }
-    ] }
+// 2-1. 하단 바 가운데 ✈️ 여행 버튼 → 부채꼴로 펼쳐지는 여행 탭들 (폴더처럼)
+// short: 부채꼴 버튼 아래 짧은 이름 (없으면 name)
+const TRIP_TABS = [
+    { id: 'tab-prep', icon: '🧳', name: '출발 전' },
+    { id: 'tab-helsinki', icon: '🏙️', name: '헬싱키' },
+    { id: 'tab-stockholm', icon: '🇸🇪', name: '스톡홀름' },
+    { id: 'tab-england', icon: '🇬🇧', name: '런던' },
+    { id: 'tab-lapland', icon: '🌌', name: '북극권' },
+    { id: 'tab-return', icon: '🛬', name: '귀국 전 코펜하겐', short: '코펜하겐' }
 ];
-const sideMenu = document.getElementById('side-menu');
+const tripButton = document.getElementById('trip-open');
+const tripFan = document.getElementById('trip-fan');
 
-// 여행 탭(☰ 메뉴의 '여행' 그룹) 맨 아래에 "맨 위로" 버튼
-MENU_GROUPS.find(group => group.title === '여행').tabs.forEach(({ id }) => {
+// 여행 버튼 아이콘: 여행 탭을 보고 있으면 그 탭 아이콘, 아니면 ✈️ (부채꼴이 열려 있으면 ✕)
+function updateTripButton() {
+    const current = TRIP_TABS.find(t => t.id === document.body.dataset.tab);
+    tripButton.querySelector('[data-trip-icon]').textContent = tripFan.classList.contains('open') ? '✕' : current ? current.icon : '✈️';
+}
+
+// 부채꼴 버튼 위치: 여행 버튼 중심에서 위쪽 반원(165°→15°)에 고르게, 화면이 좁으면 반지름을 줄임
+function openTripFan() {
+    const rect = tripButton.getBoundingClientRect();
+    const radius = Math.min(155, window.innerWidth / 2 - 44);
+    const currentTab = document.body.dataset.tab;
+    tripFan.querySelector('[data-trip-items]').style.cssText = `left: ${rect.left + rect.width / 2}px; top: ${rect.top + 18}px;`;
+    tripFan.querySelector('[data-trip-items]').innerHTML = TRIP_TABS.map((t, i) => {
+        const angle = (165 - (150 / (TRIP_TABS.length - 1)) * i) * Math.PI / 180;
+        const x = Math.round(radius * Math.cos(angle));
+        const y = Math.round(-40 - radius * Math.sin(angle));
+        const active = t.id === currentTab;
+        return `
+            <button type="button" data-trip-tab="${t.id}" class="trip-item${active ? ' trip-active' : ''}" style="--x: ${x}px; --y: ${y}px; transition-delay: ${i * 30}ms">
+                <span class="trip-bubble">${t.icon}</span>
+                <span class="trip-label">${t.short || t.name}</span>
+            </button>`;
+    }).join('');
+    tripFan.hidden = false;
+    void tripFan.offsetWidth; // 숨김을 푼 상태를 먼저 그리게 해서 펼쳐지는 애니메이션이 보이게
+    tripFan.classList.add('open');
+    updateTripButton();
+    tripButton.setAttribute('aria-expanded', 'true');
+}
+function closeTripFan() {
+    if (tripFan.hidden) return;
+    tripFan.classList.remove('open');
+    tripButton.setAttribute('aria-expanded', 'false');
+    updateTripButton();
+    setTimeout(() => { if (!tripFan.classList.contains('open')) tripFan.hidden = true; }, 250); // 접히는 애니메이션 뒤에 숨김
+}
+tripButton.addEventListener('click', () => tripFan.classList.contains('open') ? closeTripFan() : openTripFan());
+tripFan.addEventListener('click', (e) => {
+    const item = e.target.closest('[data-trip-tab]');
+    if (item) switchTab(item.dataset.tripTab, null);
+    closeTripFan(); // 바깥(어두운 부분)을 눌러도 닫힘
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTripFan(); });
+
+// 여행 탭 맨 아래에 "맨 위로" 버튼
+TRIP_TABS.forEach(({ id }) => {
     const section = document.getElementById(id);
     if (!section) return;
     section.insertAdjacentHTML('beforeend', `
@@ -88,34 +133,6 @@ document.addEventListener('click', (e) => {
     if (e.target.closest('[data-scroll-top]')) window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-function openSideMenu() {
-    const currentTab = document.body.dataset.tab || 'tab-main';
-    document.getElementById('side-menu-list').innerHTML = MENU_GROUPS.map(group => `
-        <p class="px-3 pt-3 pb-1 text-[11px] font-bold text-gray-400 dark:text-gray-500">${group.title}</p>
-        ${group.tabs.map(({ id: tabId, icon, name }) => {
-            const state = tabId === currentTab ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-bold' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-nordic-800';
-            return `<button type="button" data-menu-tab="${tabId}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${state}"><span class="text-xl w-7 text-center">${icon}</span>${name}</button>`;
-        }).join('')}`).join('');
-    updateSyncStatus();
-    sideMenu.classList.add('open');
-    sideMenu.setAttribute('aria-hidden', 'false');
-}
-function closeSideMenu() {
-    sideMenu.classList.remove('open');
-    sideMenu.setAttribute('aria-hidden', 'true');
-}
-
-document.getElementById('menu-open').addEventListener('click', openSideMenu);
-sideMenu.addEventListener('click', (e) => {
-    const tabButton = e.target.closest('[data-menu-tab]');
-    if (tabButton) {
-        switchTab(tabButton.dataset.menuTab, null);
-        closeSideMenu();
-    } else if (e.target.closest('[data-menu-close]')) {
-        closeSideMenu();
-    }
-});
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && sideMenu.classList.contains('open')) closeSideMenu(); });
 
 // 2-2. 기기 기록 동기화 (구글 시트 '기기기록' 탭, 서버 코드는 apps-script/Code.gs)
 // 이 기기에만 있던 기록(먹은 기록, 냉장고, 체크리스트 등)을 시트에 올려 두고, 다른 기기/새로 깐 앱에서 받아 옴
@@ -219,7 +236,7 @@ async function syncNow() {
 }
 window.syncNow = syncNow; // 가계부 비밀번호를 넣은 직후 바로 동기화
 
-// ☰ 메뉴 아래쪽 상태 한 줄
+// 동기화 상태 한 줄 (id="sync-status" 칸이 있을 때만 채움, 지금은 화면에 그 칸이 없음)
 function updateSyncStatus() {
     const el = document.getElementById('sync-status');
     if (!el) return;
@@ -322,7 +339,7 @@ function initMap() {
 
         L.marker(stay.coords, {
             icon: L.divIcon({
-                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">🏨</div>`,
+                html: `<div style="font-size: 22px; text-shadow: 0px 2px 4px rgba(0,0,0,0.5);">${stay.pin || '🏨'}</div>`, // 핀 모양: stay.pin (없으면 호텔)
                 className: 'bg-transparent border-0',
                 iconSize: [26, 26],
                 iconAnchor: [13, 26]
@@ -402,19 +419,19 @@ document.getElementById('route-chips').addEventListener('click', (e) => {
 });
 
 // 4. 다크모드 On/Off 토글
-const themeCheckbox = document.getElementById('theme-toggle-checkbox');
+const themeButton = document.getElementById('theme-toggle'); // 오른쪽 위 ☀️/🌙 버튼
 const themeLabel = document.getElementById('theme-label');
 const htmlElement = document.documentElement;
 
 function updateThemeUI(isDark) {
     if (isDark) {
         htmlElement.classList.add('dark');
-        if (themeCheckbox) themeCheckbox.checked = true;
+        if (themeButton) themeButton.setAttribute('aria-pressed', 'true');
         if (themeLabel) themeLabel.textContent = '🌙';
         localStorage.setItem('theme', 'dark');
     } else {
         htmlElement.classList.remove('dark');
-        if (themeCheckbox) themeCheckbox.checked = false;
+        if (themeButton) themeButton.setAttribute('aria-pressed', 'false');
         if (themeLabel) themeLabel.textContent = '☀️';
         localStorage.setItem('theme', 'light');
     }
@@ -426,8 +443,8 @@ if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && w
     updateThemeUI(false);
 }
 
-if (themeCheckbox) {
-    themeCheckbox.addEventListener('change', (e) => updateThemeUI(e.target.checked));
+if (themeButton) {
+    themeButton.addEventListener('click', () => updateThemeUI(!htmlElement.classList.contains('dark')));
 }
 
 // 5. D-Day 실시간 슬라이드 애니메이션 타이머

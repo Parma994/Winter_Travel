@@ -8,9 +8,9 @@ const STOCKHOLM_DAYS = [
         day: 1,
         title: '1월 6일 (수) : 탐페레 ➔ 투르쿠 ➔ 야간 페리',
         items: [
-            { time: '17:00', tone: 'blue', title: '탐페레 ➔ 투르쿠 기차 🚄', desc: '약 1시간 50분. 투르쿠 항구역(Turku satama)까지 가는 열차면 바로 터미널 앞 도착. 1월 6일은 핀란드 공휴일(주현절)이라 열차 시간표 확인' },
-            { time: '19:30', tone: 'gray', title: '투르쿠 항구 체크인', desc: '출항 30분~1시간 전까지 탑승 수속' },
-            { time: '20:15', tone: 'blue', title: '스톡홀름행 야간 페리 출발 ⛴️', desc: '선실에서 1박. 선내 뷔페, 면세점 구경 후 휴식' }
+            { time: '18:10', tone: 'blue', title: '탐페레 ➔ 투르쿠 기차 🚄', desc: '약 1시간 50분. 투르쿠 항구역(Turku satama)까지 가는 열차면 바로 터미널 앞 도착. 1월 6일은 핀란드 공휴일(주현절)이라 열차 시간표 확인' },
+            { time: '20:10', tone: 'gray', title: '투르쿠 항구 체크인', desc: '바로 앞이라지만 35분 마감이니 서두를 것.' },
+            { time: '20:55', tone: 'blue', title: '스톡홀름행 야간 페리 출발 ⛴️', desc: '선실에서 1박. 선내 뷔페, 면세점 구경 후 휴식' }
         ],
         stay: {
             badge: '1.6 (수) ~ 1.8 (금) 선내 2박',
@@ -18,11 +18,10 @@ const STOCKHOLM_DAYS = [
             shortName: '투르쿠 항구 터미널',
             flag: '⛴️',
             mapId: 'map-stockholm',
-            coords: [60.4350, 22.2195], // 투르쿠 항구 (출발/도착 모두 여기)
+            pin: '⛴️', 
+            coords: [60.4339, 22.2212], // 투르쿠 항구 (출발/도착 모두 여기)
             notes: [
-                '갈 때: 1.6 투르쿠 출발 → 1.7 아침 스톡홀름 도착',
-                '올 때: 1.7 저녁 스톡홀름 출발 → 1.8 아침 투르쿠 도착',
-                '선실 예약 후 선사/선실 등급 업데이트'
+                'Viking Grace 호. Inside Piccolo Two 클래스 호실.'
             ],
             mapUrl: 'https://maps.google.com/?q=Turku+Harbour+Ferry+Terminal'
         }
@@ -31,7 +30,8 @@ const STOCKHOLM_DAYS = [
         day: 2,
         title: '1월 7일 (목) : 스톡홀름 당일',
         items: [
-            { time: '06:30', tone: 'blue', title: '스톡홀름 도착 🇸🇪', desc: '하선 후 버스/메트로로 시내 이동. 짐은 중앙역 보관함에 맡기기' },
+            { time: '06:30', tone: 'blue', title: '스톡홀름 도착 🇸🇪', desc: '하선 후 도보로 슬루센 이동.' },
+            { time: '07:00', tone: 'gray', title: '슬루센 카페(Fabrique) 도착 및 잠시 휴식', desc: '슬루센은 스톡홀름 시내 중심부. 구시가지와 유르고르덴 섬으로 이동 가능. 카페에서 조식 해결.' },
             { time: '08:00', tone: 'green', title: '감라스탄(구시가지) 산책', desc: '좁은 골목과 색색의 건물이 모인 구시가지. 아침이라 사람이 적음.',
                 places: [
                     { name: '감라스탄 (Gamla stan)', desc: '스톡보리스 광장 주변의 알록달록한 건물이 대표 풍경.', map: 'Gamla stan Stockholm', coords: [59.3251, 18.0711] },
