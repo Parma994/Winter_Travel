@@ -117,6 +117,9 @@ tripFan.addEventListener('click', (e) => {
     closeTripFan(); // 바깥(어두운 부분)을 눌러도 닫힘
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTripFan(); });
+// 열린 부채꼴 위에서 휠/손가락을 움직여도 뒤 화면이 스크롤되지 않게 (CSS touch-action과 같이)
+tripFan.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+tripFan.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
 // 여행 탭 맨 아래에 "맨 위로" 버튼
 TRIP_TABS.forEach(({ id }) => {

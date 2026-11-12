@@ -70,6 +70,10 @@
         /* 오른쪽 위 ☰ 서랍 메뉴 */
         /* Leaflet 지도의 레이어(z-index 400~1000)가 지도 밖으로 새어 나와 헤더, 하단 바, ☰ 메뉴 위에 뜨지 않게 지도마다 가둠 */
         .leaflet-container { isolation: isolate; }
+        /* 아이폰은 user-scalable=no를 무시해서, 버튼을 빠르게 두 번 누르면 '두 번 탭 확대'로 화면이 밀림 → 두 번 탭 확대만 끔 (스크롤, 두 손가락 확대는 그대로) */
+        html { touch-action: manipulation; }
+        /* 부채꼴이 열린 동안 그 위에서 손가락을 움직여도 뒤 화면이 스크롤되지 않게 */
+        #trip-fan, #trip-fan * { touch-action: none; }
         /* ✈️ 여행 부채꼴: 닫힌 상태는 여행 버튼 자리에 작게 모여 있다가, open이면 --x, --y 위치로 펼쳐짐 */
         #trip-fan .trip-backdrop { opacity: 0; transition: opacity .2s; }
         #trip-fan.open .trip-backdrop { opacity: 1; }
