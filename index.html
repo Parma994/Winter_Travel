@@ -110,8 +110,19 @@
             </div>
         </div>
         
-        <!-- 다크 모드 전환 (app.js 4번, 아이콘은 지금 모드: ☀️ 라이트 / 🌙 다크) -->
-        <button type="button" id="theme-toggle" class="w-10 h-10 -mr-1 flex items-center justify-center rounded-full text-2xl hover:bg-gray-200/70 dark:hover:bg-nordic-800" aria-label="다크 모드 전환"><span id="theme-label">☀️</span></button>
+        <div class="relative flex items-center gap-1 -mr-1">
+            <!-- 기기 기록 백업 상태 (app.js 2-2): 아이콘 = 상태, 누르면 아래 말풍선에 마지막 백업 시각 -->
+            <button type="button" id="sync-button" aria-expanded="false" aria-controls="sync-bubble" class="w-10 h-10 flex items-center justify-center rounded-full text-xl hover:bg-gray-200/70 dark:hover:bg-nordic-800" aria-label="기록 백업 상태"><span id="sync-icon">☁️</span></button>
+            <!-- 다크 모드 전환 (app.js 4번, 아이콘은 지금 모드: ☀️ 라이트 / 🌙 다크) -->
+            <button type="button" id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full text-2xl hover:bg-gray-200/70 dark:hover:bg-nordic-800" aria-label="다크 모드 전환"><span id="theme-label">☀️</span></button>
+            <!-- 백업 말풍선 (hidden이 먹도록 display 클래스 없이) -->
+            <div id="sync-bubble" hidden role="status" class="absolute right-0 top-full mt-2 w-64 p-3.5 rounded-xl bg-white dark:bg-nordic-900 border border-gray-200 dark:border-gray-700 shadow-xl text-left">
+                <span class="absolute -top-1.5 right-[3.75rem] w-3 h-3 rotate-45 bg-white dark:bg-nordic-900 border-l border-t border-gray-200 dark:border-gray-700"></span>
+                <p id="sync-status" class="text-sm font-bold text-gray-800 dark:text-gray-100"></p>
+                <p id="sync-detail" class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-snug"></p>
+                <button type="button" id="sync-now" class="mt-3 w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold transition-colors">지금 백업하기</button>
+            </div>
+        </div>
     </header>
 
     <!-- 메인 컨텐츠 영역 -->

@@ -1,5 +1,6 @@
 // data/stockholm.js - 스웨덴 탭 (1주차 스톡홀름 + 투르쿠, 야간 페리 왕복) 일정 데이터
-// 형식은 data/helsinki.js와 같음 (tone, places, stay 설명은 그 파일 맨 위 참고)
+// 형식은 data/helsinki.js와 같음
+//  (tone, places, stay 설명은 그 파일 맨 위 참고)
 // ⚠️ 페리/기차 시각은 예약한 Viking Line 시간표 기준으로 확인해 주세요
 // stay.mapId는 지도 상자 이름이라 모든 지도마다 달라야 함 (같으면 두 번째 지도가 안 그려짐)
 //   헬싱키 'map-helsinki' / 여기 'map-turku-port', 'map-stockholm-port'

@@ -155,6 +155,7 @@ let syncTimer = null;
 let syncBusy = false;
 let syncAgain = false;     // 올리는 중에 또 바뀌면 끝나고 한 번 더
 let syncSupported = null;  // false = Apps Script가 아직 옛 버전 (기기기록 기능 없음)
+let syncProblem = null;    // 마지막 시도가 실패한 이유: 'auth'(비밀번호 틀림) | 'network'(연결/서버 오류), 성공하면 null
 
 // 기록을 바꾼 곳에서 호출 (값은 이미 localStorage에 써 둔 뒤)
 function localChanged(key) {
@@ -195,11 +196,12 @@ async function syncNow() {
     if (!password || !navigator.onLine || syncSupported === false) return updateSyncStatus();
     if (syncBusy) { syncAgain = true; return; }
     syncBusy = true;
+    updateSyncStatus(); // 🔄 표시
     try {
         // 1. 시트에서 받기 (옛 Apps Script는 action을 모르고 가계부 목록(배열)을 돌려줌 → 동기화 끔)
         const data = await (await fetch(`${SHEET_SCRIPT_URL}?action=state&key=${encodeURIComponent(password)}`)).json();
         if (Array.isArray(data)) { syncSupported = false; return; }
-        if (!data || data.status !== 'success') return; // 비밀번호 틀림 등 (가계부 탭이 안내함)
+        if (!data || data.status !== 'success') { syncProblem = data && data.message === 'unauthorized' ? 'auth' : 'network'; return; }
         syncSupported = true;
         applyServerState(data.state);
 
@@ -217,7 +219,7 @@ async function syncNow() {
                 body: JSON.stringify({ action: 'saveState', key: password, items })
             });
             const saved = await response.json();
-            if (!saved || saved.status !== 'success') return;
+            if (!saved || saved.status !== 'success') { syncProblem = saved && saved.message === 'unauthorized' ? 'auth' : 'network'; return; }
             // 보내는 동안 다시 바뀐 항목은 대기 목록에 남김
             const nowMeta = syncRead(SYNC_META, {});
             syncWrite(SYNC_PENDING, syncRead(SYNC_PENDING, []).filter(key => {
@@ -229,7 +231,9 @@ async function syncNow() {
             applyServerState(saved.state);
         }
         syncWrite(SYNC_LAST, Date.now());
+        syncProblem = null;
     } catch (error) {
+        syncProblem = 'network';
         console.warn('기기 기록 동기화 실패 (다음에 다시 시도):', error);
     } finally {
         syncBusy = false;
@@ -239,21 +243,58 @@ async function syncNow() {
 }
 window.syncNow = syncNow; // 가계부 비밀번호를 넣은 직후 바로 동기화
 
-// 동기화 상태 한 줄 (id="sync-status" 칸이 있을 때만 채움, 지금은 화면에 그 칸이 없음)
+// 오른쪽 위 백업 버튼 아이콘 + 말풍선 내용 (상태가 바뀔 때마다 호출)
+const syncAgo = (ms) => {
+    const min = Math.floor((Date.now() - ms) / 60000);
+    const rel = min < 1 ? '방금 전' : min < 60 ? `${min}분 전` : min < 1440 ? `${Math.floor(min / 60)}시간 전` : `${Math.floor(min / 1440)}일 전`;
+    return `${formatSavedAt(ms)} (${rel})`;
+};
 function updateSyncStatus() {
-    const el = document.getElementById('sync-status');
-    if (!el) return;
     let password = '';
     try { password = localStorage.getItem('expenseKey') || ''; } catch (e) {}
     const pending = syncRead(SYNC_PENDING, []).length;
     const last = syncRead(SYNC_LAST, 0);
-    el.textContent = !password ? '🔒 가계부 비밀번호를 넣으면 기록이 시트에 백업돼요'
-        : syncSupported === false ? '⚠️ Apps Script를 새 버전으로 배포해야 백업돼요'
-        : !navigator.onLine ? `📴 오프라인${pending ? ` · 올릴 기록 ${pending}개 대기 중` : ''}`
-        : syncBusy ? '🔄 시트와 맞추는 중…'
-        : pending ? `⏳ 올릴 기록 ${pending}개 대기 중`
-        : last ? `☁️ 시트에 백업됨 · ${formatSavedAt(last)}` : '☁️ 곧 시트에 백업돼요';
+    const lastLine = last ? `마지막 백업 ${syncAgo(last)}` : '아직 백업한 적 없음';
+    const waiting = pending ? ` · 올릴 기록 ${pending}개` : '';
+    const [icon, title, detail] =
+        !password ? ['🔒', '백업 꺼짐', '가계부 탭에서 비밀번호를 넣으면 먹은 기록, 냉장고, 체크리스트가 구글 시트에 자동으로 백업돼요.']
+        : syncSupported === false ? ['⚠️', 'Apps Script 업데이트 필요', 'Apps Script를 새 버전으로 배포해야 백업돼요.']
+        : syncProblem === 'auth' ? ['⚠️', '비밀번호가 맞지 않아요', `가계부 탭에서 비밀번호를 다시 넣어 주세요. ${lastLine}`]
+        : !navigator.onLine ? ['📴', '오프라인', `${lastLine}${waiting}. 인터넷이 연결되면 자동으로 올려요.`]
+        : syncBusy ? ['🔄', '시트와 맞추는 중…', lastLine]
+        : syncProblem === 'network' ? ['⚠️', '최근 백업 시도 실패', `${lastLine}${waiting}. 잠시 후 다시 시도해요.`]
+        : pending ? ['⏳', `올릴 기록 ${pending}개 대기 중`, `${lastLine}. 몇 초 안에 올라가요.`]
+        : last ? ['☁️', '백업 최신 상태', `${lastLine}. 기록을 바꾸면 자동으로 올라가요.`]
+        : ['☁️', '곧 첫 백업을 해요', '먹은 기록, 냉장고, 체크리스트를 구글 시트에 올려요.'];
+    const iconEl = document.getElementById('sync-icon');
+    if (iconEl) iconEl.textContent = icon;
+    const statusEl = document.getElementById('sync-status');
+    if (statusEl) statusEl.textContent = `${icon} ${title}`;
+    const detailEl = document.getElementById('sync-detail');
+    if (detailEl) detailEl.textContent = detail;
+    const nowButton = document.getElementById('sync-now');
+    if (nowButton) {
+        nowButton.hidden = !password || syncSupported === false;
+        nowButton.disabled = syncBusy || !navigator.onLine;
+    }
 }
+
+// 백업 버튼 → 말풍선 열고 닫기 (바깥을 누르거나 Esc로도 닫힘, 열려 있는 동안 1분마다 '몇 분 전' 갱신)
+const syncButton = document.getElementById('sync-button');
+const syncBubble = document.getElementById('sync-bubble');
+let syncBubbleTimer = null;
+function toggleSyncBubble(open) {
+    syncBubble.hidden = !open;
+    syncButton.setAttribute('aria-expanded', String(open));
+    clearInterval(syncBubbleTimer);
+    if (open) { updateSyncStatus(); syncBubbleTimer = setInterval(updateSyncStatus, 60000); }
+}
+syncButton.addEventListener('click', () => toggleSyncBubble(syncBubble.hidden));
+document.getElementById('sync-now').addEventListener('click', () => syncNow());
+document.addEventListener('click', (e) => {
+    if (!syncBubble.hidden && !e.target.closest('#sync-bubble, #sync-button')) toggleSyncBubble(false);
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !syncBubble.hidden) toggleSyncBubble(false); });
 
 window.addEventListener('online', syncNow);
 window.addEventListener('offline', updateSyncStatus);

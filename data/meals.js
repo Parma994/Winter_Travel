@@ -43,6 +43,7 @@ const MEALS = [
     // ===== 면 =====
     {
         name: '알리오 올리오', fi: 'Aglio e olio', times: ['lunch', 'dinner'], category: 'noodle', desc: '물 700ml에 면을 바로 졸여 만드는 원팬 알리오 올리오',
+        image: 'aglio_olio.jpg',
         difficulty: 1, minutes: 20, kcal: 600,
         sides: ['그린 샐러드', '피클'],
         storage: '면이 금방 불어서 먹을 만큼만 만드는 게 좋아요. 남으면 냉장 1일, 팬에 물 1~2큰술 넣고 데우기.',
@@ -63,6 +64,7 @@ const MEALS = [
     },
     {
         name: '토마토 버터 파스타 + 소시지', fi: 'Tomaatti-voipasta ja makkara', times: ['lunch', 'dinner'], category: 'noodle', desc: '홀토마토 한 캔에 면을 바로 넣어 졸이는 원팬 토마토 파스타',
+        image: 'tomato_butter_pasta.jpg',
         difficulty: 1, minutes: 25, kcal: 750,
         sides: ['그린 샐러드', '치즈 가루'],
         storage: '냉장 2일. 데울 때 물을 조금 넣고 약불로.',
@@ -91,6 +93,7 @@ const MEALS = [
     },
     {
         name: '원팬 까르보나라', fi: 'Carbonara', times: ['lunch', 'dinner'], category: 'noodle', desc: '알리오 올리오 방식으로 졸인 면에 날달걀과 치즈를 버무리는 원팬 파스타',
+        image: 'carbonara.jpg',
         difficulty: 1, minutes: 20, kcal: 700,
         sides: ['그린 샐러드', '피클'],
         storage: '계란이 들어가서 바로 먹기. 남기지 않는 걸 추천해요.',
@@ -116,6 +119,7 @@ const MEALS = [
     },
     {
         name: '연어 크림 파스타', fi: 'Kermainen lohipasta', times: ['lunch', 'dinner'], category: 'noodle', desc: '크림을 부어 오븐에 구운 연어를 부숴 면과 버무리는 파스타',
+        image: 'cream_salmon_pasta.jpg',
         difficulty: 2, minutes: 30, kcal: 850,
         sides: ['루콜라 샐러드', '레몬 한 조각'],
         storage: '냉장 1일까지. 데울 때 우유를 조금 넣고 약불로 데워야 크림이 분리되지 않아요.',
@@ -141,6 +145,7 @@ const MEALS = [
     },
     {
         name: '마카로니라티코', fi: 'Makaronilaatikko', times: ['lunch', 'dinner'], category: 'noodle', desc: '다진 고기와 마카로니를 달걀물에 구운 핀란드 급식 단골',
+        image: 'makaronilaatikko.jpg',
         difficulty: 2, minutes: 60, kcal: 900, servings: 2,
         sides: ['케첩 (핀란드식 정석)', '오이 피클', '그린 샐러드'],
         storage: '식혀서 냉장 3일, 냉동 1개월. 전자레인지에 2분 데우거나 오븐에 다시 구우면 겉이 바삭해져요.',
@@ -174,6 +179,7 @@ const MEALS = [
     // ===== 밥·죽 =====
     {
         name: '리시푸로', fi: 'Riisipuuro', times: ['breakfast', 'lunch'], category: 'rice', desc: '죽용 쌀을 우유에 천천히 끓이는 핀란드 쌀 우유죽',
+        image: 'riisipuuro.jpg',
         difficulty: 1, minutes: 45, kcal: 450,
         sides: ['시나몬 설탕', '버터 한 조각', '자두 키셀리 (과일 소스)'],
         storage: '냉장 2일. 데울 때 우유를 조금 넣고 저어 가며 데우기. 차갑게 먹어도 맛있어요.',
@@ -197,6 +203,7 @@ const MEALS = [
     },
     {
         name: '칼릴라티코', fi: 'Kaalilaatikko', times: ['lunch', 'dinner'], category: 'rice', desc: '양배추와 다짐육, 쌀을 흑시럽으로 달큰하게 구운 오븐 요리',
+        image: 'kaalilaatikko.jpg',
         difficulty: 2, minutes: 100, kcal: 550, servings: 2,
         sides: ['링곤베리 잼 (정석)', '삶은 감자'],
         storage: '식혀서 냉장 3일, 냉동 1개월. 다음 날 데워 먹으면 더 맛있어요.',
@@ -223,6 +230,7 @@ const MEALS = [
     },
     {
         name: '닭고기 쌀 오븐구이', fi: 'Kana-riisivuoka', times: ['lunch', 'dinner'], category: 'rice', desc: '쌀 위에 닭고기와 채소를 올려 크림 육수로 한 번에 굽는 오븐 요리',
+        image: 'kana_riisivuoka.jpg',
         difficulty: 1, minutes: 55, kcal: 650, servings: 2,
         sides: ['그린 샐러드', '오이 피클'],
         storage: '식혀서 냉장 2~3일. 데울 때 물을 조금 뿌리고 전자레인지에.',
@@ -252,6 +260,7 @@ const MEALS = [
     // ===== 빵 =====
     {
         name: '훈제연어 호밀빵', fi: 'Lohileipä', times: ['breakfast', 'lunch'], category: 'bread', desc: '크림치즈와 훈제연어, 딜을 올린 로히레이패',
+        image: 'lohileipa.jpg',
         difficulty: 1, minutes: 5, kcal: 400,
         sides: ['삶은 계란', '레몬 한 조각', '커피'],
         storage: '만들어 두면 빵이 눅눅해지니 바로 먹기. 개봉한 훈제연어는 랩으로 싸서 냉장 2~3일.',
@@ -274,6 +283,7 @@ const MEALS = [
     },
     {
         name: '카렐리안 파이 & 달걀 버터', fi: 'Karjalanpiirakka ja munavoi', times: ['breakfast', 'lunch'], category: 'bread', desc: '마트에서 산 카렐리안 파이에 무나보이(달걀 버터)를 올려 먹기',
+        image: 'karjalanpiirakka.jpg',
         difficulty: 1, minutes: 15, kcal: 300, servings: '5회분',
         sides: ['우유나 커피', '오이 슬라이스'],
         storage: '무나보이는 밀폐 용기에 냉장 3~4일. 남은 파이는 냉장 2~3일(냉동도 가능), 오븐이나 토스터에 데우기.',
@@ -294,6 +304,7 @@ const MEALS = [
     },
     {
         name: '판누카꾸', fi: 'Pannukakku', times: ['breakfast', 'lunch'], category: 'bread', desc: '반죽을 그릇째 오븐에 굽는 두툼한 핀란드 팬케이크',
+        image: 'pannukakku.jpg',
         difficulty: 1, minutes: 70, kcal: 500, servings: 2,
         sides: ['딸기잼', '휘핑크림', '완두콩 수프 (목요일 정석 조합)'],
         storage: '식혀서 냉장했다가 오븐이나 프라이팬에 데워 먹는다.',
@@ -316,6 +327,7 @@ const MEALS = [
     },
     {
         name: '페루나리에스카', fi: 'Perunarieska', times: ['breakfast', 'lunch'], category: 'bread', desc: '으깬 감자로 반죽해 오븐에 굽는 납작한 감자빵',
+        image: 'perunarieska.jpg',
         difficulty: 1, minutes: 35, kcal: 200, servings: '5개분',
         sides: ['버터', '훈제연어', '치즈'],
         storage: '식으면 토스터나 프라이팬에 데워 먹는다.',
@@ -339,6 +351,7 @@ const MEALS = [
     // ===== 스튜·수프 =====
     {
         name: '로히케이토', fi: 'Lohikeitto', times: ['lunch', 'dinner'], category: 'stew', desc: '핀란드식 연어 크림 수프, 추운 날 딱',
+        image: 'lohikeitto.jpg',
         difficulty: 2, minutes: 40, kcal: 550, servings: 2,
         sides: ['호밀빵 & 버터', '레몬 한 조각'],
         storage: '냉장 2일. 다시 데울 때 팔팔 끓이면 연어가 부서지고 크림이 분리되니 약불로. 감자 식감이 변해서 냉동은 비추천.',
@@ -369,6 +382,7 @@ const MEALS = [
     },
     {
         name: '마카라케이토', fi: 'Makkarakeitto', times: ['lunch', 'dinner'], category: 'stew', desc: '소시지와 감자, 수프용 채소를 푹 끓인 핀란드 가정식 수프',
+        image: 'makkarakeitto.jpg',
         difficulty: 1, minutes: 40, kcal: 500, servings: 3,
         sides: ['호밀빵', '머스터드'],
         storage: '냉장 2~3일. 감자 식감이 변해서 냉동은 비추천. 데울 때 물을 조금 더 넣기.',
@@ -397,6 +411,7 @@ const MEALS = [
     },
     {
         name: '헤르네케이토', fi: 'Hernekeitto', times: ['lunch', 'dinner'], category: 'stew', desc: '핀란드 목요일 전통 메뉴, 마트 완두콩 수프 캔으로 간단하게',
+        image: 'hernekeitto.jpg',
         difficulty: 1, minutes: 15, kcal: 500,
         sides: ['판누카꾸 (디저트로)', '호밀빵'],
         storage: '남은 수프는 용기에 옮겨 냉장 2~3일, 냉동 1개월. 데우면 되직해지니 물을 조금 넣기.',
@@ -419,6 +434,7 @@ const MEALS = [
     },
     {
         name: '시에니케이토', fi: 'Sienikeitto', times: ['lunch', 'dinner'], category: 'stew', desc: '양송이를 볶아 크림으로 끓이는 숲의 수프',
+        image: 'sienikeitto.jpg',
         difficulty: 1, minutes: 30, kcal: 350, servings: 2,
         sides: ['호밀빵 & 버터', '치즈 토스트'],
         storage: '냉장 2일. 크림이 들어가서 약불로 저어 가며 데우기. 냉동하면 분리될 수 있어요.',
@@ -447,6 +463,7 @@ const MEALS = [
     // ===== 감자 요리 =====
     {
         name: '포론캐리스튀스', fi: 'Poronkäristys', times: ['dinner'], category: 'plate', desc: '냉동 순록 고기를 버터에 볶아 끓이는 라플란드 요리, 매시드 포테이토와 링곤베리를 곁들여',
+        image: 'poronkaristys.jpg',
         difficulty: 2, minutes: 40, kcal: 650,
         sides: ['오이 피클'],
         storage: '냉장 2일, 냉동 1개월. 물을 조금 넣고 약불로 데우기.',
@@ -471,6 +488,7 @@ const MEALS = [
     },
     {
         name: '마카라카스티케', fi: 'Makkarakastike', times: ['lunch', 'dinner'], category: 'plate', desc: '링 소시지를 토마토 크림소스에 끓인 핀란드 급식 맛, 삶은 감자와 함께',
+        image: 'makkarakastike.jpg',
         difficulty: 1, minutes: 25, kcal: 650, servings: 2,
         sides: ['삶은 감자', '오이 피클', '강판에 간 당근 샐러드'],
         storage: '냉장 2~3일. 소스는 냉동 1개월도 가능, 감자는 그때그때 삶기.',
@@ -499,6 +517,7 @@ const MEALS = [
     },
     {
         name: '마카라스트로가노프', fi: 'Makkarastroganoff', times: ['lunch', 'dinner'], category: 'plate', desc: '소시지를 토마토와 후추 크림소스에 끓여 삶은 감자와 먹는 핀란드식 스트로가노프',
+        image: 'makkarastroganoff.jpg',
         difficulty: 1, minutes: 25, kcal: 650, servings: 2,
         sides: ['삶은 감자', '오이 피클'],
         storage: '냉장 2~3일. 소스는 냉동 1개월도 가능, 감자는 그때그때 삶기.',
@@ -525,6 +544,7 @@ const MEALS = [
     },
     {
         name: '퓌티판누', fi: 'Pyttipannu', times: ['breakfast', 'lunch'], category: 'plate', desc: '깍둑 감자, 양파, 소시지를 볶고 달걀프라이를 올리는 한 판 요리',
+        image: 'pyttipannu.jpg',
         difficulty: 1, minutes: 25, kcal: 650,
         sides: ['절임 비트 (정석)', '오이 피클', '케첩'],
         storage: '냉장 2일, 팬에 다시 볶기. 달걀프라이는 먹을 때 새로 부치기.',
@@ -554,6 +574,7 @@ const MEALS = [
     // ===== 간단식 =====
     {
         name: '스크램블 에그', fi: 'Munakokkeli', times: ['breakfast'], category: 'quick', desc: '버터에 빠르게 익히는 5분 스크램블 에그, 빵과 함께',
+        image: 'scrambled_egg.jpg',
         difficulty: 1, minutes: 5, kcal: 300,
         sides: ['빵', '토마토 슬라이스', '커피'],
         storage: '바로 먹는 메뉴라 보관은 비추천.',
@@ -573,6 +594,7 @@ const MEALS = [
     },
     {
         name: '카우라푸로', fi: 'Kaurapuuro', times: ['breakfast'], category: 'quick', desc: '전자레인지로 3분이면 되는 핀란드의 가장 흔한 아침 귀리죽',
+        image: 'kaurapuuro.jpg',
         difficulty: 1, minutes: 5, kcal: 300,
         sides: ['과일 잼', '냉동 베리', '커피'],
         storage: '냉장 1~2일. 굳으면 물이나 우유를 조금 넣고 전자레인지에 1분.',
@@ -591,6 +613,7 @@ const MEALS = [
     },
     {
         name: '마랴라카', fi: 'Marjarahka', times: ['breakfast'], category: 'quick', desc: '거품 낸 바닐라 소스에 쿼크와 베리를 섞는 불 없는 한 그릇',
+        image: 'marjarahka.jpg',
         difficulty: 1, minutes: 10, kcal: 150, servings: 2,
         sides: ['뮤즐리나 그래놀라', '커피'],
         storage: '뚜껑을 덮어 냉장고에 보관하면 된다. 하루이틀 안에 먹기.',
@@ -610,6 +633,7 @@ const MEALS = [
     },
     {
         name: '레이패유스토', fi: 'Leipäjuusto', times: ['breakfast'], category: 'quick', desc: '마트에서 파는 뽀득한 빵치즈를 굽거나 커피에 넣거나, 네 가지로 즐기기',
+        image: 'leipajuusto.jpg',
         difficulty: 1, minutes: 10, kcal: 350,
         sides: ['커피', '베리 잼'],
         storage: '남은 치즈는 랩으로 싸서 냉장, 포장지 날짜까지. 먹기 전에 팬이나 오븐에 다시 데우기.',
