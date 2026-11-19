@@ -519,31 +519,73 @@
             <div id="stockholm-days" class="mb-10"></div>
         </section>
 
-        <!-- 5. 잉글랜드 탭 -->
+        <!-- 5. 런던 탭 (헬싱키·스톡홀름 탭과 같은 형식, 일정은 data/england.js) -->
         <section id="tab-england" class="tab-content max-w-3xl mx-auto px-4 md:px-8 pt-6">
             <!-- 탭 배너: images/backgrounds 폴더에 London.jpg를 넣으면 사진, 없으면 남색·빨강 그라데이션 -->
             <div class="relative h-40 -mx-4 -mt-6 md:mx-0 md:mt-0 md:rounded-xl overflow-hidden mb-6 bg-gradient-to-br from-indigo-900 via-slate-800 to-red-700">
                 <img src="images/backgrounds/London.jpg" onerror="this.remove()" alt="" class="absolute inset-0 w-full h-full object-cover" style="object-position: center 50%">
                 <div class="absolute inset-0 bg-gradient-to-t from-gray-950/80 via-gray-950/20 to-transparent"></div>
                 <div class="absolute bottom-0 left-0 p-5 text-white">
-                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md">프리미어리그 직관 · 런던</p>
+                    <p class="text-xs font-medium tracking-wider opacity-80 drop-shadow-md"><span id="england-week"></span> · 1.15 ~ 1.18 · 프리미어리그 직관</p>
                     <h2 class="text-2xl font-bold drop-shadow-lg">🇬🇧 런던 토트넘 원정</h2>
                 </div>
             </div>
-            <!-- 잉글랜드 강조색 복구 (검정/회색) -->
-            <div class="bg-white dark:bg-nordic-900 p-5 rounded-xl shadow-sm mb-6 border-t-4 border-gray-900 dark:border-gray-100">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg">⚽ 토트넘 홋스퍼 직관</h3>
-                    <span id="england-week" class="bg-gray-100 dark:bg-gray-800 text-xs px-2 py-1 rounded"></span>
+            <!-- 여행 개요 (탭 위, 여행 전체를 한눈에) -->
+            <div class="bg-red-50 dark:bg-red-900/20 p-5 rounded-xl mb-6 border border-red-100 dark:border-red-800">
+                <div class="flex justify-between items-center gap-2 mb-2">
+                    <h3 class="font-bold text-red-800 dark:text-red-300">📍 여행 개요</h3>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 whitespace-nowrap">1.15 ~ 1.18 · 3박 4일</span>
                 </div>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">탐페레(또는 헬싱키)에서 항공편을 이용해 런던으로 이동하여 프리미어리그 홈경기를 관람합니다.</p>
-                <h4 class="font-semibold text-sm mb-2 text-gray-500">체크리스트</h4>
-                <ul class="text-sm space-y-2">
-                    <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>토트넘 경기 일정 및 티켓 확정</span></label>
-                    <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>런던행 왕복 항공권 예약</span></label>
-                    <label class="flex items-center gap-3"><input type="checkbox" class="w-4 h-4"><span>런던 2박 3일 숙소 예약</span></label>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">금요일 밤 헬싱키에서 라이언에어로 런던 스탠스테드에 새벽 도착해 웸블리 숙소로 가요. 토요일 오후 3시 토트넘 홋스퍼 홈경기를 직관하고, 일요일은 런던 시내를 둘러본 뒤 월요일 오후 비행기로 헬싱키를 거쳐 탐페레로 돌아와요.</p>
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold mb-4">
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">🚄 탐페레</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">✈️ 헬싱키 공항</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">🛬 스탠스테드</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">🏨 웸블리</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">⚽ 토트넘</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">🏙️ 런던 시내</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">✈️ 헬싱키</span>
+                    <span class="text-gray-400">→</span>
+                    <span class="px-2 py-0.5 rounded-full bg-white dark:bg-nordic-900 text-red-800 dark:text-red-300 border border-red-200 dark:border-red-800">🚄 탐페레</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="bg-white/70 dark:bg-nordic-900/60 rounded-lg p-3">
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">✈️ 항공</p>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-100">라이언에어 왕복</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">FR2345 1.15 23:40 / FR2344 1.18 15:00</p>
+                    </div>
+                    <div class="bg-white/70 dark:bg-nordic-900/60 rounded-lg p-3">
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">🏨 숙소</p>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-100">프리미어 인 웸블리 스타디움 3박</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">웸블리 파크역 근처 · 1.16 새벽 3시쯤 도착</p>
+                    </div>
+                    <div class="bg-white/70 dark:bg-nordic-900/60 rounded-lg p-3">
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">💷 돈</p>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-100">영국은 파운드(GBP)</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">지하철·버스도 컨택리스 카드로 바로 탑승</p>
+                    </div>
+                    <div class="bg-white/70 dark:bg-nordic-900/60 rounded-lg p-3">
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">⏰ 시차</p>
+                        <p class="text-sm font-bold text-gray-800 dark:text-gray-100">영국은 핀란드보다 2시간 느려요</p>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400">항공권 시각은 출발·도착지 현지 시각</p>
+                    </div>
+                </div>
+                <ul class="text-xs text-gray-600 dark:text-gray-400 space-y-1.5">
+                    <li class="flex gap-2"><span>🛂</span><span><b>ETA(전자여행허가) 필수:</b> 한국 여권은 영국 입국 전 GOV.UK 또는 공식 앱에서 신청 (2026년 4월부터 £20). 없으면 탑승 거절될 수 있어요</span></li>
+                    <li class="flex gap-2"><span>🎒</span><span>라이언에어 무료 가방은 좌석 밑에 들어가는 40×30×20cm 하나. 온라인 체크인 필수, 탑승권은 앱으로</span></li>
+                    <li class="flex gap-2"><span>🌙</span><span>스탠스테드 도착이 새벽 0시 50분이라 A6 공항버스로 핀칠리 로드까지 간 뒤 주빌리선 나이트 튜브로 웸블리 파크까지 (금요일 밤이라 운행)</span></li>
                 </ul>
             </div>
+
+            <!-- Day 1~4 탭 (좌우 전환): data/england.js 데이터로 render.js가 그려줍니다 -->
+            <div id="england-days" class="mb-10"></div>
+
         </section>
 
         <!-- 5-1. 북극권 탭 (로바니에미 + 트롬쇠, 체크 상태는 app.js 13번 로직이 기기에 저장) -->
@@ -792,6 +834,7 @@
     <script src="data/currency.js"></script>
     <script src="data/helsinki.js"></script>
     <script src="data/stockholm.js"></script>
+    <script src="data/england.js"></script>
     <script src="data/packing.js"></script>
     <script src="data/budget.js"></script>
     <script src="data/prep.js"></script>

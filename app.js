@@ -55,7 +55,7 @@ function switchTab(tabId, btnElement) {
     if(tabId === 'tab-finland' && mapTampere) {
         setTimeout(() => mapTampere.invalidateSize(), 100);
     }
-    if(tabId === 'tab-helsinki' || tabId === 'tab-stockholm') {
+    if(tabId === 'tab-helsinki' || tabId === 'tab-stockholm' || tabId === 'tab-england') {
         Object.values(stayMaps).forEach(stayMap => setTimeout(() => stayMap.invalidateSize(), 100));
     }
     setTimeout(() => initPlaceMaps(document.getElementById(tabId)), 100);
@@ -371,7 +371,7 @@ function initMap() {
     }
 
     // 헬싱키/스톡홀름 숙소 지도 (data/helsinki.js·stockholm.js의 stay.coords 위치에 마커)
-    [...HELSINKI_DAYS, ...STOCKHOLM_DAYS].filter(day => day.stay).forEach(({ stay }) => {
+    [...HELSINKI_DAYS, ...STOCKHOLM_DAYS, ...ENGLAND_DAYS].filter(day => day.stay).forEach(({ stay }) => {
         if (stayMaps[stay.mapId] || !document.getElementById(stay.mapId)) return;
         const stayMap = L.map(stay.mapId, { zoomControl: false });
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

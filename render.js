@@ -22,7 +22,8 @@ const TIMELINE_TONES = {
 // 1-1. 여행지별 강조색 (Day 배지, 숙소 배지에 사용 / 탭 배너와 안내 상자 색은 index.html에서 같은 색으로)
 const PLACE_THEMES = {
     blue:  'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-    amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
+    amber: 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300',
+    red:   'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
 };
 
 // 2. 타임라인 항목 1개
@@ -57,7 +58,8 @@ function renderPlaces(places) {
     return `${mapBox}<ul class="mt-2 space-y-1.5 text-xs">${list}</ul>`;
 }
 
-function renderTimelineItem(item) {
+// extra: 이 일정 바로 아래에 붙일 화면 조각 (예: 숙소 카드)
+function renderTimelineItem(item, extra = '') {
     const tone = TIMELINE_TONES[item.tone] || TIMELINE_TONES.gray;
     return `
         <div class="relative pl-4">
@@ -68,13 +70,15 @@ function renderTimelineItem(item) {
             </div>
             ${item.desc ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${item.desc}</p>` : ''}
             ${item.places ? renderPlaces(item.places) : ''}
+            ${extra}
         </div>`;
 }
 
 // 3. 숙소 카드 (지도 포함)
-function renderStayCard(stay, theme = 'blue') {
+// inline: 일정 항목 안에 붙일 때 (위 간격을 좁게)
+function renderStayCard(stay, theme = 'blue', inline = false) {
     return `
-        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-3 mt-6">
+        <div class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-3 ${inline ? 'mt-3' : 'mt-6'}">
             <div class="flex justify-between items-start mb-2">
                 <div>
                     <span class="${PLACE_THEMES[theme]} text-[10px] font-bold px-2 py-0.5 rounded">${stay.badge}</span>
@@ -117,10 +121,21 @@ function renderAccordion({ badge, badgeClass, title, bodyClass, body }) {
 
 // 5. Day 탭 (사진 배너 바로 아래, Day 1 | Day 2 | Day 3 을 좌우로 넘겨 보기), theme은 PLACE_THEMES의 키
 // 탭에는 Day 번호 + day.title의 ' : ' 앞(날짜)만, 제목 전체는 본문 맨 위 / 전환은 app.js 12-1
+// 숙소 카드는 보통 그날 일정 맨 아래, day.stayAfter: '03:00'처럼 시각을 적으면 그 일정 바로 밑에
+// day.flight: 그날 탭 맨 아래에 항공편 바우처 (출발 전 탭과 같은 renderFlightLeg 모양, 펼친 상태로)
 const DAY_TAB_ACTIVE = {
     blue: 'aria-selected:border-blue-500 aria-selected:text-blue-700 dark:aria-selected:text-blue-400',
-    amber: 'aria-selected:border-amber-500 aria-selected:text-amber-700 dark:aria-selected:text-amber-400'
+    amber: 'aria-selected:border-amber-500 aria-selected:text-amber-700 dark:aria-selected:text-amber-400',
+    red: 'aria-selected:border-red-500 aria-selected:text-red-700 dark:aria-selected:text-red-400'
 };
+function renderDayFlight(flight) {
+    const tone = FLIGHT_TONES[flight.tone] || FLIGHT_TONES.blue;
+    return `
+        <div class="mt-6">
+            <p class="flex items-center gap-2 mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">✈️ 항공편 바우처 <span class="${tone.badge} text-xs font-bold px-2 py-0.5 rounded-md">${flight.badge}</span></p>
+            ${flight.legs.map((leg, i) => renderFlightLeg(leg, i === flight.legs.length - 1)).join('')}
+        </div>`;
+}
 function renderDayTabs(days, theme = 'blue') {
     const tabs = days.map((day, i) => {
         const date = day.title.includes(' : ') ? day.title.split(' : ')[0] : '';
@@ -134,9 +149,10 @@ function renderDayTabs(days, theme = 'blue') {
         <div role="tabpanel" data-day-panel="${i}" class="px-3 pb-4 pt-3 sm:px-4"${i === 0 ? '' : ' hidden'}>
             <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-1"><span class="${PLACE_THEMES[theme]} text-xs font-bold px-2 py-0.5 rounded-md mr-1.5 align-middle">Day ${day.day}</span>${day.title}</h4>
             <div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-1.5 mt-4 mb-2 space-y-6">
-                ${day.items.map(renderTimelineItem).join('')}
+                ${day.items.map(item => renderTimelineItem(item, day.stay && item.time === day.stayAfter ? renderStayCard(day.stay, theme, true) : '')).join('')}
             </div>
-            ${day.stay ? renderStayCard(day.stay, theme) : ''}
+            ${day.stay && !day.items.some(item => item.time === day.stayAfter) ? renderStayCard(day.stay, theme) : ''}
+            ${day.flight ? renderDayFlight(day.flight) : ''}
         </div>`).join('');
     return `
         <div data-day-tabs class="bg-white dark:bg-nordic-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
@@ -437,7 +453,7 @@ function renderFinlandDay(date, todayKey) {
     const todayBadge = isToday ? ' <span class="ml-1 text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded">오늘</span>' : '';
     const body = items.length
         ? `<div class="relative border-l-2 border-dashed border-gray-200 dark:border-gray-700 ml-1.5 mt-2 mb-2 space-y-6">
-               ${items.map(renderTimelineItem).join('')}
+               ${items.map(item => renderTimelineItem(item)).join('')}
            </div>`
         : `<p class="text-xs text-gray-400 py-2 text-center">아직 등록된 일정이 없어요.</p>`;
     const badgeClass = isWeekend
@@ -909,6 +925,7 @@ function renderInto(containerId, html) {
 renderInto('helsinki-days', renderDayTabs(HELSINKI_DAYS, 'blue'));
 renderInto('helsinki-week', HELSINKI_WEEK_LABEL);
 renderInto('stockholm-days', renderDayTabs(STOCKHOLM_DAYS, 'amber'));
+renderInto('england-days', renderDayTabs(ENGLAND_DAYS, 'red'));
 const stockholmWeek = findTripWeek('stockholm');
 renderInto('stockholm-week', stockholmWeek ? stockholmWeek.label : '주차 미정');
 renderInto('packing-list', PACKING_BAGS.map(renderPackingBag).join(''));
@@ -926,7 +943,7 @@ renderInto('route-chips', renderRouteChips());
 const departure = parseDate(OUTBOUND_FIRST.from.date);
 renderInto('departure-day', `${pad2(departure.getMonth() + 1)}.${pad2(departure.getDate())}`);
 const englandWeek = findTripWeek('england');
-renderInto('england-week', englandWeek ? `${englandWeek.label} 주말` : '주차 미정');
+renderInto('england-week', englandWeek ? englandWeek.label : '주차 미정');
 // 탐페레 생활 진행 막대 (입주 전 D-N → 생활 중 N일째 → 끝)
 const lifeStart = parseDate(FINLAND_WEEKS[0].start);
 const lifeTotal = Math.round((parseDate(FINLAND_WEEKS[FINLAND_WEEKS.length - 1].end) - lifeStart) / 86400000) + 1;
